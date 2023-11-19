@@ -7,10 +7,9 @@
 #define UNI_SOCKET_DEFAULT_SERVER_BUFLEN 512
 
 #ifdef _WIN32
-
+#define _WIN32_WINNT 0x501
 #include <winsock2.h>
 #include <ws2tcpip.h>
-#pragma comment(lib, "Ws2_32.lib")
 
 typedef SOCKET UniSocket;
 typedef struct addrinfo* UniAddrInfo; //TODO - make universal interface

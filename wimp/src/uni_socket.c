@@ -195,7 +195,7 @@ int32_t TEST_EXCHANGE_LOOP(UniSocket server_socket, UniSocket client_socket)
         }
         else if (iResult == 0)
         {
-            printf("Connection closing...\n");
+            printf("Connection closing\n");
         }
         else
         {
