@@ -21,8 +21,9 @@ MSVC (Visual Studio 16 2019 preferred, any version should work however):
 
 Prerequisite: Ensure you have a visual studio sdk installed, cd to root directory of project
 
-1. cmake .. -G "Visual Studio 16 2019"
-2. Use the produced solution file to compile, setting the startup project to the desired project
+1. mkdir build && cd build
+2. cmake .. -G "Visual Studio 16 2019"
+3. Use the produced solution file to compile, setting the startup project to the desired project
 
 Linux
 ---
