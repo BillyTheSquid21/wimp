@@ -1,147 +1,70 @@
-#include <winsock2.h>
-#include <ws2tcpip.h>
 #include <stdio.h>
 #include <stdint.h>
-#include <socket.h>
+#include <uni_socket.h>
 
-#pragma comment(lib, "Ws2_32.lib")
-
-#define DEFAULT_PORT "27015"
-#define DEFAULT_BUFLEN 512
+#define DEFAULT_PORT 27015
 
 int main(void) 
 {
     printf("Starting Server\n");
-    printf("%d", test());
 
     //Initialize Winsock.
-    WSADATA wsaData;
-
-    int32_t iResult;
-
-    // Initialise Winsock
-    iResult = WSAStartup(MAKEWORD(2,2), &wsaData);
-    if (iResult != 0)
+    if (init_uni_socket_system() != 0)
     {
-        printf("WSAStartup failed: %d\n", iResult);
         return 1;
     }
 
     //Create a socket.
-    struct addrinfo *result = NULL, *ptr = NULL, hints;
-
-    ZeroMemory(&hints, sizeof(hints));
-    hints.ai_family = AF_INET;
-    hints.ai_socktype = SOCK_STREAM;
-    hints.ai_protocol = IPPROTO_TCP;
-    hints.ai_flags = AI_PASSIVE;
-
-    // Resolve the local address and port to be used by the server
-    iResult = getaddrinfo(NULL, DEFAULT_PORT, &hints, &result);
-    if (iResult != 0) {
-        printf("getaddrinfo failed: %d\n", iResult);
-        WSACleanup();
-        return 1;
-    }
-
-    // Create socket object
-    SOCKET ListenSocket = INVALID_SOCKET;
-
-    // Create a SOCKET for the server to listen for client connections
-    ListenSocket = socket(result->ai_family, result->ai_socktype, result->ai_protocol);
-
-    if (ListenSocket == INVALID_SOCKET) {
-        printf("Error at socket(): %ld\n", WSAGetLastError());
-        freeaddrinfo(result);
-        WSACleanup();
+    UniSocket ListenSocket;
+    UniAddrInfo result;
+    if (create_uni_socket(NULL, &ListenSocket, &result, DEFAULT_PORT, AF_INET, SOCK_STREAM, IPPROTO_TCP, AI_PASSIVE) != 0)
+    {
+        shutdown_uni_socket_system();
         return 1;
     }
 
     //Bind the socket.
-
-    // Setup the TCPlistening socket
-    iResult = bind(ListenSocket, result->ai_addr, (int32_t)result->ai_addrlen);
-    freeaddrinfo(result);
-    if (iResult == SOCKET_ERROR)
+    if (bind_uni_socket(&ListenSocket, result) != 0)
     {
-        printf("bind failed with error: %d\n", WSAGetLastError());
-        closesocket(ListenSocket);
-        WSACleanup();
+        shutdown_uni_socket_system();
         return 1;
     }
+    free_uni_addr_info(result);
 
     //Listen on the socket for a client.
-    if (listen(ListenSocket, SOMAXCONN) == SOCKET_ERROR)
+    if (listen_uni_socket(ListenSocket) != 0)
     {
-        printf("Listen failed with error: %ld\n", WSAGetLastError());
-        closesocket(ListenSocket);
-        WSACleanup();
+        shutdown_uni_socket_system();
+        close_uni_socket(ListenSocket);
         return 1;
     }
 
+    printf("Waiting for connection\n");
     //Accept a connection from a client.
-    SOCKET ClientSocket = INVALID_SOCKET;
-    // Accept a client socket
-    ClientSocket = accept(ListenSocket, NULL, NULL);
-    if (ClientSocket == INVALID_SOCKET)
+    UniSocket ClientSocket = INVALID_UNI_SOCKET;
+    if (accept_client_uni_socket(ListenSocket, &ClientSocket) != UNI_SOCKET_SUCCESS)
     {
-        printf("accept failed: %d\n", WSAGetLastError());
-        closesocket(ListenSocket);
-        WSACleanup();
+        close_uni_socket(ListenSocket);
+        shutdown_uni_socket_system();
         return 1;
     }
+    printf("Client connected!\n");
 
     //Receive and send data.
-    int8_t recvbuf[DEFAULT_BUFLEN];
-    int32_t iSendResult;
-    int32_t recvbuflen = DEFAULT_BUFLEN;
-
-    do
+    if (TEST_EXCHANGE_LOOP(ListenSocket, ClientSocket) != UNI_SOCKET_SUCCESS)
     {
-        iResult = recv(ClientSocket, recvbuf, recvbuflen, 0);
-        if (iResult)
-        {
-            printf("Bytes recieved: %d\n", iResult);
-
-            // Echo the buffer back to the sender
-            iSendResult = send(ClientSocket, recvbuf, iResult, 0);
-            if (iSendResult == SOCKET_ERROR)
-            {
-                printf("send failed: %d\n", WSAGetLastError());
-                closesocket(ClientSocket);
-                WSACleanup();
-                return 1;
-            }
-            printf("Bytes sent: %d\n", iSendResult);
-        }
-        else if (iResult == 0)
-        {
-            printf("Connection closing...\n");
-        }
-        else
-        {
-            printf("recv failed: %d\n", WSAGetLastError());
-            closesocket(ClientSocket);
-            WSACleanup();
-            return 1;
-        }
+        shutdown_uni_socket_system();
+        close_uni_socket(ListenSocket);
     }
-    while (iResult);
 
     //Disconnect.
     // shutdown the send half of the connection since no more data will be sent
-    iResult = shutdown(ClientSocket, SD_SEND);
-    if (iResult == SOCKET_ERROR) {
-        printf("shutdown failed: %d\n", WSAGetLastError());
-        closesocket(ClientSocket);
-        WSACleanup();
-        return 1;
-    }
+    shutdown_uni_socket_connection(ClientSocket, SEND_UNI_SOCKET);
 
     // cleanup
-    closesocket(ClientSocket);
-    closesocket(ListenSocket);
-    WSACleanup();
+    close_uni_socket(ClientSocket);
+    close_uni_socket(ListenSocket);
+    shutdown_uni_socket_system();
 
     return 0;
 }
