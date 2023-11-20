@@ -36,46 +36,37 @@ int main(int argc, char** argv)
 	// returned by getaddrinfo and print an error message
 	free_uni_addr_info(result);
 
-	//Send and receive data.
-
-	int recvbuflen = DEFAULT_BUFLEN;
-
-	const char* sendbuf = "this is a test\n";
-	const char* sendbuf2 = "this is another test\n";
-
-	char recvbuf[DEFAULT_BUFLEN];
-
-	// Send an initial buffer
-	int32_t iResult = send(ConnectSocket, sendbuf, (int)strlen(sendbuf), 0);
-	if (iResult == SOCKET_ERROR)
+	//Once connected to the server, loop until tell to disconnect
+	bool disconnect = false;
+	while (!disconnect)
 	{
-		printf("send failed: %d\n", WSAGetLastError());
-		closesocket(ConnectSocket);
-		WSACleanup();
-		return 1;
-	}
-	iResult = send(ConnectSocket, sendbuf2, (int)strlen(sendbuf2), 0);
+		char messageBuffer[DEFAULT_BUFLEN];
+		printf("Input: ");
+		fgets(messageBuffer, DEFAULT_BUFLEN, stdin);
 
-	printf("Bytes Sent: %ld\n", iResult);
+		printf("Input recieved: %s\n", messageBuffer);
 
-	// shutdown the connection for sending since no more data will be sent
-	// the client can still use the ConnectSocket for receiving data
-	shutdown_uni_socket_connection(ConnectSocket, SEND_UNI_SOCKET);
-
-	// Receive data until the server closes the connection
-	do
-	{
-		iResult = recv(ConnectSocket, recvbuf, recvbuflen, 0);
-		if (iResult > 0)
+		//Once message recieved, send to the server
+		int32_t iSendResult = send(ConnectSocket, messageBuffer, (int)strlen(messageBuffer), 0);
+		if (iSendResult == SOCKET_ERROR)
 		{
-			printf("Bytes received: %d\n", iResult);
-			printf("Message recieved: %.*s\n", iResult, recvbuf);
+			printf("send failed: %d\n", WSAGetLastError());
 		}
-		else if (iResult == 0)
-			printf("Connection closed\n");
-		else
-			printf("recv failed: %d\n", WSAGetLastError());
-	} while (iResult > 0);
+
+		//Wait for the response
+		char recvbuf[DEFAULT_BUFLEN];
+		int32_t iRecieveResult = recv(ConnectSocket, recvbuf, DEFAULT_BUFLEN, 0);
+		if (iRecieveResult > 0)
+		{
+			printf("Bytes received: %d\n", iRecieveResult);
+			printf("Message recieved: %.*s\n", iRecieveResult, recvbuf);
+
+			if (iRecieveResult == 9 && strncmp(recvbuf, "shutdown", 8) == 0)
+			{
+				disconnect = true;
+			}
+		}
+	}
 
 	// cleanup
 	close_uni_socket(ConnectSocket);

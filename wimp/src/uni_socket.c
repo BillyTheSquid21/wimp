@@ -169,48 +169,6 @@ int32_t shutdown_uni_socket_connection(UniSocket client_socket, int32_t connect_
 #endif
 }
 
-int32_t TEST_EXCHANGE_LOOP(UniSocket server_socket, UniSocket client_socket)
-{
-#ifdef _WIN32
-    int8_t recvbuf[UNI_SOCKET_DEFAULT_SERVER_BUFLEN];
-    int32_t iSendResult;
-    int32_t recvbuflen = UNI_SOCKET_DEFAULT_SERVER_BUFLEN;
-    int32_t iResult;
-
-    do
-    {
-        iResult = recv(client_socket, recvbuf, recvbuflen, 0);
-        if (iResult)
-        {
-            printf("Bytes recieved: %d\n", iResult);
-
-            // Echo the buffer back to the sender
-            iSendResult = send(client_socket, recvbuf, iResult, 0);
-            if (iSendResult == SOCKET_ERROR)
-            {
-                printf("send failed: %d\n", WSAGetLastError());
-                return 1;
-            }
-            printf("Bytes sent: %d\n", iSendResult);
-        }
-        else if (iResult == 0)
-        {
-            printf("Connection closing\n");
-        }
-        else
-        {
-            printf("recv failed: %d\n", WSAGetLastError());
-            return 1;
-        }
-    }
-    while (iResult);
-
-    return UNI_SOCKET_SUCCESS;
-#else
-
-#endif
-}
-
 int32_t close_uni_socket(UniSocket uni_socket)
 {
 #ifdef _WIN32

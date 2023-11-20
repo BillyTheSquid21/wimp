@@ -6,6 +6,14 @@
 #define UNI_SOCKET_SUCCESS 0
 #define UNI_SOCKET_DEFAULT_SERVER_BUFLEN 512
 
+//Define the core commands that can tell the server what to do
+//Very simple now, and won't be how I continue to do it
+//But want an easy way to get some non deterministic behaviour going
+//Separate by \n delimiter
+#define UNI_SOCKET_DISCONNECT_FROM_SERVER "disconnect"
+#define UNI_SOCKET_ECHO_MESSAGE "echo"
+#define UNI_SOCKET_GET_DOMAIN "domain"
+
 #ifdef _WIN32
 #define _WIN32_WINNT 0x501
 #include <winsock2.h>
@@ -49,9 +57,6 @@ int32_t accept_client_uni_socket(UniSocket server_socket, UniSocket* client_sock
 
 //Shut send or recieve connection
 int32_t shutdown_uni_socket_connection(UniSocket client_socket, int32_t connect_type);
-
-//Exchange data until a signal to stop is given - TODO dont do this
-int32_t TEST_EXCHANGE_LOOP(UniSocket server_socket, UniSocket client_socket);
 
 //Close uni socket
 int32_t close_uni_socket(UniSocket uni_socket);
