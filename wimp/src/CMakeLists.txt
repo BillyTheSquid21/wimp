@@ -4,7 +4,11 @@ set(WIMP_SOURCE_FILES uni_socket.c uni_socket.h)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
 add_library(${PROJECT_NAME} STATIC ${WIMP_SOURCE_FILES})
+target_include_directories(${PROJECT_NAME} PRIVATE ${DEPENDENCIES_DIRECTORY}/plibsys/src)
 
 if (WIN32)
 	target_link_libraries(${PROJECT_NAME} ws2_32)
 endif()
+
+add_dependencies(${PROJECT_NAME} plibsys)
+target_link_libraries(${PROJECT_NAME} plibsys)
