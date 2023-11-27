@@ -1,13 +1,13 @@
 #include <stdio.h>
 #include <stdint.h>
-#include <uni_socket.h>
+#include <wimp_reciever.h>
+#include <wimp_process.h>
 
 #define MAX_MESSAGE_LENGTH 1024
 #define SERVER_PORT 5432
 
-int main(void) 
+int main2(int argc, char** argv)
 {
-	p_libsys_init();
 	char buffer[MAX_MESSAGE_LENGTH + 1]; // Supports messages up to max length (plus null character that terminates the string, since we're sending text)
 
 	PSocketAddress* addr;
@@ -49,17 +49,19 @@ int main(void)
 	// Forever, try to accept incoming connections.
 	while (1)
 	{
+		printf("WAITING FOR CONNECTION...\n");
 		// Blocks until connection accept happens by default -- this can be changed
 		PSocket* con = p_socket_accept(sock, NULL);
-
+		printf("Recieved from: %d\n", p_socket_get_fd(con));
 		if (con != NULL)
 		{
-			// Send "Message from server" to the client, and terminate their connection.
 			printf("Sending message...\n");
-			strcpy(buffer, "Message from server");
-			p_socket_send(con, buffer, strlen(buffer), NULL);
-			
-			p_socket_close(con, NULL);
+			uint32_t* potential_handshake = ((uint32_t*)((void*)buffer));
+			*potential_handshake = WIMP_RECIEVER_HANDSHAKE;
+			p_socket_send(con, buffer, WIMP_RECIEVER_HANDSHAKE_LENGTH, NULL);
+
+			//Send handshake again to trigger the write
+			p_socket_send(con, buffer, WIMP_RECIEVER_HANDSHAKE_LENGTH, NULL);
 		}
 		else
 			printf("Can't make con, tried and failed...\n");
@@ -68,6 +70,26 @@ int main(void)
 	// Cleanup
 	p_socket_address_free(addr);
 	p_socket_close(sock, NULL);
+	return 0;
+}
+
+int main(void) 
+{
+	p_libsys_init();
+
+	// Start child process
+	int32_t writebuffer = 0;
+	wimp_start_library_process("client", &main2, "127.0.0.1", SERVER_PORT, &writebuffer);
+	
+	// Forever, read if the data is written to the buffer
+	while (writebuffer == 0)
+	{
+		printf("NOT WRITTEN\n");
+		p_uthread_sleep(200);
+	}
+	printf("WRITTEN!");
+
+	// Cleanup
 	p_libsys_shutdown();
 	return 0;
 }
