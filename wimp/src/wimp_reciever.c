@@ -11,14 +11,8 @@ void wimp_reciever_recieve(RecieverArgs* args)
     PSocket* reciever_socket;
     PSocketAddress* reciever_address;
 
-    //Get arguments from data struct
-    const char* domain = args->domain;
-    int32_t port_number = args->port_number;
-    uint8_t* writebuff =  args->writebuff;
-    free(args);
-
     //Construct address for client, which should be listening
-    reciever_address = p_socket_address_new(domain, port_number);
+    reciever_address = p_socket_address_new(args->domain, args->target_port_number);
     if (reciever_address == NULL)
     {
         p_uthread_exit(WIMP_RECIEVER_FAIL);
@@ -38,6 +32,7 @@ void wimp_reciever_recieve(RecieverArgs* args)
     {
         p_socket_address_free(reciever_address);
         p_socket_free(reciever_socket);
+        printf("END PROCESS NOT WAITING!\n");
         p_uthread_exit(WIMP_RECIEVER_FAIL);
         return;
     }
@@ -68,7 +63,7 @@ void wimp_reciever_recieve(RecieverArgs* args)
         if (recieve_length > 0)
         {
             //WRITE INSTRUCTIONS ALSO CHECK IF SHUTDOWN OF END THREAD HAS HAPPENED
-            *writebuff = 1; //TEMPORARY CHECK TO SHOW IS WORKING
+            *args->writebuff = 1; //TEMPORARY CHECK TO SHOW IS WORKING
             disconnect = true;
         }
     }

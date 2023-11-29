@@ -13,11 +13,23 @@
 
 typedef int (*MAIN_FUNC_PTR)(int, const char*); //Main function type pointer
 
+typedef struct
+{
+	int argc;
+	char** argv;
+} MainEntry;
+
 enum WIMP_ProcessType
 {
 	WIMP_ProcessType_Library = 0,	//Spins off a thread that uses a main() function from a library included in the master thread implementation
 	WIMP_ProcessType_Executable = 1,//Spins off a thread that starts a separate executable
 };
 
-int32_t wimp_start_library_process(const char* process_name, MAIN_FUNC_PTR main_func, const char* domain, int32_t port_number, uint8_t* writebuff);
+int32_t wimp_start_library_process(const char* process_name, MAIN_FUNC_PTR main_func, const char* domain, int32_t master_port, int32_t end_port, uint8_t* writebuff);
+
+/*
+* Gets an unused local port from the OS by binding a dummy socket
+*/
+int32_t wimp_assign_unused_local_port();
+
 #endif

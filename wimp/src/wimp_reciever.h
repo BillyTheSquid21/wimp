@@ -18,10 +18,14 @@
 
 typedef int (*RECIEVER_FUNC_PTR)(const char* int32_t); //Reciever function type pointer
 
+/*
+* Struct containing the arguments for the reciever, with a target domain
+* and port number.
+*/
 typedef struct
 {
 	const char* domain;
-	int32_t port_number;
+	int32_t target_port_number;
 	uint8_t* writebuff;
 } RecieverArgs;
 
