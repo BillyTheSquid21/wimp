@@ -1,100 +1,55 @@
 #include <wimp_reciever.h>
 
-/*
-* Starts by establishing connection on the specified port with a handshake
-*/
-void wimp_reciever_recieve(RecieverArgs* args)
+RecieverArgs wimp_get_reciever_args(const char* recfrom_domain, int32_t recfrom_port, const char* process_domain, int32_t process_port, uint8_t* wrtbuff)
 {
-    uint8_t recieve_buffer[WIMP_RECIEVER_MESSAGE_BUFFER_SIZE];
-    uint8_t send_buffer[WIMP_RECIEVER_MESSAGE_BUFFER_SIZE];
+	RecieverArgs recargs = malloc(sizeof(struct _RecieverArgs));
+	if (recargs == NULL)
+	{
+		return NULL;
+	}
 
-    PSocket* reciever_socket;
-    PSocketAddress* reciever_address;
+	//Assume all the strings provided are valid
+	size_t recfrom_bytes = (strlen(recfrom_domain) + 1) * sizeof(char);
+	size_t process_bytes = (strlen(process_domain) + 1) * sizeof(char);
+	recargs->recfrom_domain = malloc(recfrom_bytes);
+	recargs->process_domain = malloc(process_bytes);
 
-    //Construct address for client, which should be listening
-    reciever_address = p_socket_address_new(args->domain, args->target_port_number);
-    if (reciever_address == NULL)
-    {
-        p_uthread_exit(WIMP_RECIEVER_FAIL);
-        return;
-    }
+	if (recargs->recfrom_domain == NULL || recargs->process_domain == NULL)
+	{
+		return NULL;
+	}
 
-    //Create the main listen/recieve socket - currently hard coded
-    reciever_socket = p_socket_new(P_SOCKET_FAMILY_INET, P_SOCKET_TYPE_STREAM, P_SOCKET_PROTOCOL_TCP, NULL);
-    if (reciever_socket == NULL)
-    {
-        p_uthread_exit(WIMP_RECIEVER_FAIL);
-        return;
-    }
+	memcpy(recargs->recfrom_domain, recfrom_domain, recfrom_bytes);
+	memcpy(recargs->process_domain, process_domain, process_bytes);
 
-    //Connect to end process, which should be waiting to accept
-    if (!p_socket_connect(reciever_socket, reciever_address, NULL))
-    {
-        p_socket_address_free(reciever_address);
-        p_socket_free(reciever_socket);
-        printf("END PROCESS NOT WAITING!\n");
-        p_uthread_exit(WIMP_RECIEVER_FAIL);
-        return;
-    }
-
-    //Recieve the message, which should be the handshake code
-    int handshake_size = p_socket_receive(reciever_socket, recieve_buffer, WIMP_RECIEVER_MESSAGE_BUFFER_SIZE, NULL);
-
-    //Check the equality - as is the first 4 bytes convert to uint
-    uint32_t potential_handshake = *((uint32_t*)((void*)recieve_buffer));
-    if (potential_handshake != WIMP_RECIEVER_HANDSHAKE)
-    {
-        printf("HANDSHAKE FAILED!\n");
-        p_socket_address_free(reciever_address);
-        p_socket_close(reciever_socket, NULL);
-        p_uthread_exit(WIMP_RECIEVER_FAIL);
-        return;
-    }
-    printf("HANDSHAKE SUCCESS!\n");
-    
-    //Send a handshake back to the client so it knows to continue
-    p_socket_send(reciever_socket, recieve_buffer, WIMP_RECIEVER_HANDSHAKE_LENGTH, NULL);
-
-    //Now sit around waiting for commands, to write them to the table and loop
-    bool disconnect = false;
-    while (!disconnect)
-    {
-        int32_t recieve_length = p_socket_receive(reciever_socket, recieve_buffer, WIMP_RECIEVER_MESSAGE_BUFFER_SIZE, NULL);
-        if (recieve_length > 0)
-        {
-            //WRITE INSTRUCTIONS ALSO CHECK IF SHUTDOWN OF END THREAD HAS HAPPENED
-            *args->writebuff = 1; //TEMPORARY CHECK TO SHOW IS WORKING
-            disconnect = true;
-        }
-    }
-
-    p_socket_address_free(reciever_address);
-    p_socket_close(reciever_socket, NULL);
-
-    printf("Reciever thread closed: %d\n", reciever_socket);
-    p_uthread_exit(WIMP_RECIEVER_SUCCESS);
-    return;
+	recargs->process_port = process_port;
+	recargs->recfrom_port = recfrom_port;
+	recargs->writebuff = wrtbuff;
+	return recargs;
 }
 
-
-
-
-
-
-
-bool check_buffer_command(const char* buffer, const char* command, size_t buffer_len, size_t command_len)
+void wimp_free_reciever_args(RecieverArgs args)
 {
-    //Check the buffer is at least the length of the command
-    if (buffer_len < command_len)
-    {
-        return false;
-    }
+	free(args->process_domain);
+	free(args->recfrom_domain);
+	free(args);
+}
 
-    //Check the buffer up to the last character, ignoring the command null terminator
-    if (strncmp(buffer, command, command_len - 1) != 0)
-    {
-        return false;
-    }
+void wimp_reciever_recieve(RecieverArgs args)
+{
+	printf("HELLO RECIEVER! %s, %s\n", args->process_domain, args->recfrom_domain);
+	wimp_free_reciever_args(args);
+	return;
+}
 
-    return true;
+int32_t wimp_start_reciever_thread(const char* reciever_name, RecieverArgs args)
+{
+	printf("Starting Reciever: %s!\n", reciever_name);
+	PUThread* process_thread = p_uthread_create(&wimp_reciever_recieve, args, false, reciever_name);
+	if (process_thread == NULL)
+	{
+		printf("Failed to create thread: %s", reciever_name);
+		return WIMP_RECIEVER_FAIL;
+	}
+	return WIMP_RECIEVER_SUCCESS;
 }

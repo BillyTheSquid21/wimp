@@ -1,93 +1,64 @@
 #include <wimp_process.h>
 
-//Starts the reciever and keeps track of it
-int32_t wimp_start_reciever_process(const char* process_name, const char* domain, int32_t port_number, uint8_t* writebuff);
-
-/*
-* The thread started from here is responsible for itself, is essentially fire and forget
-*/
-int32_t wimp_start_library_process(const char* process_name, MAIN_FUNC_PTR main_func, const char* domain, int32_t master_port, int32_t end_port, uint8_t* writebuff)
+int32_t wimp_start_library_process(const char* process_name, MAIN_FUNC_PTR main_func, WimpMainEntry entry)
 {
-	//argc argv system with arg --port and --master-port
-	//TODO - make so can append more args
-	//Have the null returns to make intellisense shut up
-	MainEntry* main_entry = malloc(sizeof(MainEntry));
-	if (main_entry == NULL)
-	{
-		return WIMP_PROCESS_FAIL;
-	}
-
-	main_entry->argc = 4;
-	main_entry->argv = malloc(4 * sizeof(char*));
-	if (main_entry->argv == NULL)
-	{
-		return WIMP_PROCESS_FAIL;
-	}
-
-	main_entry->argv[0] = malloc(7 * sizeof(char));
-	main_entry->argv[1] = malloc(2 * sizeof(char));
-	main_entry->argv[2] = malloc(14 * sizeof(char));
-	main_entry->argv[3] = malloc(2 * sizeof(char));
-	for (int i = 0; i < main_entry->argc; ++i)
-	{
-		if (main_entry->argv[i] == NULL)
-		{
-			return WIMP_PROCESS_FAIL;
-		}
-	}
-
-	strcpy(main_entry->argv[0], "--port");
-	sprintf(main_entry->argv[1], "%d", end_port);
-	strcpy(main_entry->argv[2], "--master-port");
-	sprintf(main_entry->argv[3], "%d", master_port);
-
-	PUThread* process_thread = p_uthread_create(main_func, main_entry, false, process_name);
+	printf("Starting %s!\n", process_name);
+	PUThread* process_thread = p_uthread_create(main_func, entry, false, process_name);
 	if (process_thread == NULL)
 	{
 		printf("Failed to create thread: %s", process_name);
 		return WIMP_PROCESS_FAIL;
 	}
-
-	if (wimp_start_reciever_process(process_name, domain, end_port, writebuff) == WIMP_PROCESS_FAIL)
-	{
-		printf("Failed to create reciever thread: %s", process_name);
-		return WIMP_RECIEVER_FAIL;
-	}
-
 	return WIMP_PROCESS_SUCCESS;
 }
 
-int32_t wimp_start_reciever_process(const char* process_name, const char* domain, int32_t port_number, uint8_t* writebuff)
+WimpMainEntry wimp_get_entry(int32_t argc, ...)
 {
-	if (process_name == NULL)
+	va_list argp;
+	va_start(argp, argc);
+	WimpMainEntry main_entry = malloc(sizeof(struct _WimpMainEntry));
+	if (main_entry == NULL)
 	{
-		return WIMP_PROCESS_FAIL;
+		return NULL;
 	}
 
-	RECIEVER_FUNC_PTR reciever_func = &wimp_reciever_recieve;
-	//size_t process_name_length = sizeof(process_name);
-	//char* reciever_name = malloc(process_name_length + 2);
-	//if (reciever_name == NULL)
-	//{
-	//	return WIMP_PROCESS_FAIL;
-	//}
-
-	//TODO - figure out if this is dumb - the strings i dont get yet
-	//strcpy(reciever_name, process_name); //Due to check previously, ignore warning
-	//strcpy(reciever_name-3, "_r");
-	
-	//The arguments will be freed in the receiver thread so do use malloc
-	//Is done as would otherwise go out of scope after the p_uthread_create
-	RecieverArgs* args = malloc(sizeof(RecieverArgs));
-	if (args == NULL)
+	//Process the command line args supplied
+	main_entry->argc = argc;
+	main_entry->argv = malloc(argc * sizeof(char*));
+	if (main_entry->argv == NULL)
 	{
-		return WIMP_PROCESS_FAIL;
+		return NULL;
 	}
 
-	args->domain = domain; args->target_port_number = port_number; args->writebuff = writebuff;
+	for (size_t i = 0; i < argc; ++i)
+	{
+		const char* arg = va_arg(argp, const char*);
+		if (arg == NULL)
+		{
+			return NULL;
+		}
+		
+		int arg_bytes = (strlen(arg) + 1) * sizeof(char); //Include the null terminator
+		main_entry->argv[i] = malloc(arg_bytes);
+		if (main_entry->argv[i] == NULL)
+		{
+			return NULL;
+		}
 
-	PUThread* reciever_thread = p_uthread_create(reciever_func, (ppointer)args, false, "reciever");
-	return WIMP_PROCESS_SUCCESS;
+		memcpy(main_entry->argv[i], arg, arg_bytes);
+	}
+	return main_entry;
+}
+
+void wimp_free_entry(WimpMainEntry entry)
+{
+	//Free the args first
+	for (int i = 0; i < entry->argc; ++i)
+	{
+		free(entry->argv[i]);
+	}
+	free(entry);
+	return;
 }
 
 int32_t wimp_assign_unused_local_port()
@@ -124,4 +95,11 @@ int32_t wimp_assign_unused_local_port()
 	p_socket_address_free(bound_address);
     p_socket_close(reciever_socket, NULL);
 	return port;
+}
+
+int32_t wimp_port_to_string(int32_t port, wimp_port_str* string_out)
+{
+	memset(*string_out, 0, MAX_PORT_STRING_LEN);
+	sprintf(*string_out, "%d", port);
+	return WIMP_PROCESS_SUCCESS;
 }

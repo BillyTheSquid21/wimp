@@ -22,41 +22,30 @@ typedef int (*RECIEVER_FUNC_PTR)(const char* int32_t); //Reciever function type 
 * Struct containing the arguments for the reciever, with a target domain
 * and port number.
 */
-typedef struct
+typedef struct _RecieverArgs
 {
-	const char* domain;
-	int32_t target_port_number;
+	const char* recfrom_domain;
+	int32_t recfrom_port;
+	const char* process_domain;
+	int32_t process_port;
 	uint8_t* writebuff;
-} RecieverArgs;
+} *RecieverArgs;
 
 /*
-* A WIMP reciever is the thread that recieves instructions from the end process
-* and writes them to the instruction queue, so the master thread can avoid
-* blocking. The master thread sends instructions when it needs to and does not
-* block at all. The master sends instructions using a thread pool
-* 
-* The code that actually spins up the process thread is in wimp_process.h
-* 
-* For now just use TCP for connection for instructions. Uses plibsys threads.
+* Creates a persistent collection of arguments to supply to the reciever thread.
+* Will create a heap copy of all the data supplied which is freed at the end of
+* the reciever thread.
 */
+RecieverArgs wimp_get_reciever_args(const char* recfrom_domain, int32_t recfrom_port, const char* process_domain, int32_t process_port, uint8_t* wrtbuff);
 
 /*
-* The simple loop carried out by the receiver thread. Does not start the end
-* process, as that is handled by the master thread, or may already be running.
-* 
-* As ran on other thread, pass void pointer to a struct containing:
-*	const char* domain, int32_t port_number, uint8_t* writebuff
+* Reciever loop
 */
-void wimp_reciever_recieve(RecieverArgs* args);
+void wimp_reciever_recieve(RecieverArgs args);
 
+/*
+* Starts a reciever thread
+*/
+int32_t wimp_start_reciever_thread(const char* reciever_name, RecieverArgs args);
 
-
-
-
-
-
-
-
-//Check if a command matches the recieved buffer - TODO probably put in a different header
-bool check_buffer_command(const char* buffer, const char* command, size_t buffer_len, size_t command_len);
 #endif
