@@ -1,0 +1,1 @@
+The utilities here are from outside sources, the original authors and licenses are credited in the headers. I may tweak the code in here from the originals if needed.

@@ -49,7 +49,7 @@ int main(void)
 	wimp_start_reciever_thread("rec1", args);
 
 	WimpProcessTable table = wimp_create_process_table();
-	if (wimp_process_table_add(table, "test_process", "google", 5, NULL) == WIMP_PROCESS_TABLE_FAIL)
+	if (wimp_process_table_add(&table, "test_process", "google", 5, NULL) == WIMP_PROCESS_TABLE_FAIL)
 	{
 		printf("Process table fail!\n");
 		return 1;
