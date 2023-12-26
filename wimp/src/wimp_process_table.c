@@ -1,5 +1,13 @@
 #include <wimp_process_table.h>
 
+void wimp_process_data_free(void* data)
+{
+	WimpProcessData proc_data = (WimpProcessData)data;
+	free(proc_data->process_domain);
+	free(proc_data);
+	return;
+}
+
 WimpProcessTable wimp_create_process_table()
 {
 	WimpProcessTable t;
@@ -10,6 +18,11 @@ WimpProcessTable wimp_create_process_table()
 
 int32_t wimp_process_table_add(WimpProcessTable* table, const char* process_name, const char* process_domain, int32_t process_port, PSocket* connection)
 {
+	if (table == NULL)
+	{
+		return WIMP_PROCESS_TABLE_FAIL;
+	}
+
 	//Check if a process with that name already exists before continuing
 	if (HashString_find(table->hash_table, process_name) != NULL)
 	{
@@ -44,6 +57,31 @@ int32_t wimp_process_table_add(WimpProcessTable* table, const char* process_name
 	return WIMP_PROCESS_TABLE_SUCCESS;
 }
 
+int32_t wimp_process_table_remove(WimpProcessTable* table, const char* process_name)
+{
+	if (table == NULL)
+	{
+		return WIMP_PROCESS_TABLE_FAIL;
+	}
+
+	HashStringEntry* entry = HashString_find(table->hash_table, process_name);
+	if (entry == NULL)
+	{
+		return WIMP_PROCESS_TABLE_FAIL;
+	}
+
+	wimp_process_data_free(entry->value);
+	
+	if (HashString_remove(table->hash_table, process_name) != 0)
+	{
+		table->table_length--;
+		return WIMP_PROCESS_TABLE_FAIL;
+	}
+
+	table->table_length--;
+	return WIMP_PROCESS_TABLE_SUCCESS;
+}
+
 int32_t wimp_process_table_get(WimpProcessData* data, WimpProcessTable table, const char* process_name)
 {
 	HashStringEntry* val = HashString_find(table.hash_table, process_name);
@@ -59,14 +97,6 @@ int32_t wimp_process_table_get(WimpProcessData* data, WimpProcessTable table, co
 size_t wimp_process_table_length(WimpProcessTable table)
 {
 	return table.table_length;
-}
-
-void wimp_process_data_free(void* data)
-{
-	WimpProcessData proc_data = (WimpProcessData)data;
-	free(proc_data->process_domain);
-	free(proc_data);
-	return;
 }
 
 void wimp_process_table_free(WimpProcessTable table)

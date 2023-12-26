@@ -48,28 +48,6 @@ int main(void)
 	RecieverArgs args = wimp_get_reciever_args("dom1", 1, "dom2", 2, NULL);
 	wimp_start_reciever_thread("rec1", args);
 
-	WimpProcessTable table = wimp_create_process_table();
-	if (wimp_process_table_add(&table, "test_process", "google", 5, NULL) == WIMP_PROCESS_TABLE_FAIL)
-	{
-		printf("Process table fail!\n");
-		return 1;
-	}
-
-	printf("Length: %d\n", wimp_process_table_length(table));
-
-	WimpProcessData data = NULL;
-
-
-	if (wimp_process_table_get(&data, table, "test_process") == WIMP_PROCESS_TABLE_FAIL)
-	{
-		printf("Process table read fail!\n");
-		wimp_process_table_free(table);
-		return 1;
-	}
-	printf("%s\n", data->process_domain);
-
-	wimp_process_table_free(table);
-
 	p_uthread_sleep(1000);
 
 	// Cleanup

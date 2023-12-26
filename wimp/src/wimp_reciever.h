@@ -14,9 +14,12 @@
 #define WIMP_RECIEVER_HANDSHAKE_LENGTH 4
 #define WIMP_RECIEVER_SUCCESS 0
 #define WIMP_RECIEVER_FAIL -1
-#define WIMP_RECIEVER_MESSAGE_BUFFER_SIZE 512
+#define WIMP_MESSAGE_BUFFER_BYTES 1024
+#define WIMP_ZERO_BUFFER(buffer) memset(buffer, 0, WIMP_MESSAGE_BUFFER_BYTES)
 
 typedef int (*RECIEVER_FUNC_PTR)(const char* int32_t); //Reciever function type pointer
+
+typedef uint8_t WimpMsgBuffer[WIMP_MESSAGE_BUFFER_BYTES];
 
 /*
 * Struct containing the arguments for the reciever, with a target domain

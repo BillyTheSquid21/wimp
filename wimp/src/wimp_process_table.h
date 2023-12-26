@@ -31,6 +31,8 @@ WimpProcessTable wimp_create_process_table();
 
 int32_t wimp_process_table_add(WimpProcessTable* table, const char* process_name, const char* process_domain, int32_t process_port, PSocket* connection);
 
+int32_t wimp_process_table_remove(WimpProcessTable* table, const char* process_name);
+
 int32_t wimp_process_table_get(WimpProcessData* data, WimpProcessTable table, const char* process_name);
 
 size_t wimp_process_table_length(WimpProcessTable table);
