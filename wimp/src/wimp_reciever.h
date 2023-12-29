@@ -14,6 +14,7 @@
 #define WIMP_RECIEVER_SUCCESS 0
 #define WIMP_RECIEVER_FAIL -1
 #define WIMP_MESSAGE_BUFFER_BYTES 1024
+#define WIMP_RECIEVER_PING 0x00000000 //Ping with 4 bytes of null, ignore if this comes in
 #define WIMP_ZERO_BUFFER(buffer) memset(buffer, 0, WIMP_MESSAGE_BUFFER_BYTES)
 
 /*

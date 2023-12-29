@@ -4,6 +4,7 @@
 #include <wimp_reciever.h>
 #include <wimp_process.h>
 #include <wimp_process_table.h>
+#include <wimp_server.h>
 
 int client_main_entry(int argc, char** argv)
 {
@@ -32,63 +33,29 @@ int client_main_entry(int argc, char** argv)
 		}
 	}
 
+	WimpServer server;
+	wimp_create_server(&server, "127.0.0.1", process_port);
+
 	//Process table
-	WimpProcessTable ptable = wimp_create_process_table();
-	wimp_process_table_add(&ptable, "master", "127.0.0.1", master_port, NULL);
+	wimp_process_table_add(&server.ptable, "master", "127.0.0.1", master_port, NULL);
 
 	RecieverArgs args = wimp_get_reciever_args("test_process", master_domain, master_port, NULL);
 	wimp_start_reciever_thread("master", process_domain, process_port, args);
 
-	//Create the server socket then create a connection to the test_proc reciever
-	//the master process has created
-	//Create the server socket, then create a connection to the master reciever
-	//the end process has created
-	WimpMsgBuffer recbuffer;
-	WimpMsgBuffer sendbuffer;
-	WIMP_ZERO_BUFFER(recbuffer); WIMP_ZERO_BUFFER(sendbuffer);
-
-	PSocketAddress* addr;
-	PSocket* server;
-
-	if ((addr = p_socket_address_new("127.0.0.1", process_port)) == NULL)
-	{
-		return 1;
-	}
-
-	if ((server = p_socket_new(P_SOCKET_FAMILY_INET, P_SOCKET_TYPE_STREAM, P_SOCKET_PROTOCOL_TCP, NULL)) == NULL)
-	{
-		// Failed to create socket -- cleanup
-		p_socket_address_free(addr);
-
-		return 2;
-	}
-
-	if (!p_socket_bind(server, addr, FALSE, NULL))
-	{
-		// Couldn't bind socket, cleanup
-		p_socket_address_free(addr);
-		p_socket_free(server);
-
-		return 3;
-	}
-
-	if (!p_socket_listen(server, NULL))
+	if (!p_socket_listen(server.server, NULL))
 	{
 		// Couldn't start listening, cleanup
-		p_socket_address_free(addr);
-		p_socket_close(server, NULL);
-
+		wimp_server_free(server);
 		return 4;
 	}
 
 	//Connect here - will in future call to accept connection immediately after
 	//starting process
-	wimp_process_accept(&ptable, server, recbuffer, sendbuffer);
+	wimp_server_process_accept(&server, "master");
 
 	// Cleanup
 	printf("Server thread closed: %d\n", server);
-	p_socket_address_free(addr);
-	p_socket_close(server, NULL);
+	wimp_server_free(server);
 
 	return 0;
 }
@@ -123,61 +90,27 @@ int main(void)
 	
 	wimp_start_library_process("test_process", &client_main_lib_entry, entry);
 	
+	WimpServer server;
+	wimp_create_server(&server, "127.0.0.1", master_port);
+
 	//Process table
-	WimpProcessTable ptable = wimp_create_process_table();
-	wimp_process_table_add(&ptable, "test_process", "127.0.0.1", end_process_port, NULL);
+	wimp_process_table_add(&server.ptable, "test_process", "127.0.0.1", end_process_port, NULL);
 
 	RecieverArgs args = wimp_get_reciever_args("master", "127.0.0.1", end_process_port, "127.0.0.1", master_port, NULL);
 	wimp_start_reciever_thread("test_process", "127.0.0.1", master_port, args);
 
-	//Create the server socket, then create a connection to the master reciever
-	//the end process has created
-	WimpMsgBuffer recbuffer;
-	WimpMsgBuffer sendbuffer;
-	WIMP_ZERO_BUFFER(recbuffer); WIMP_ZERO_BUFFER(sendbuffer);
-
-	PSocketAddress* addr;
-	PSocket* server;
-
-	if ((addr = p_socket_address_new("127.0.0.1", master_port)) == NULL)
-	{
-		return 1;
-	}
-
-	if ((server = p_socket_new(P_SOCKET_FAMILY_INET, P_SOCKET_TYPE_STREAM, P_SOCKET_PROTOCOL_TCP, NULL)) == NULL)
-	{
-		// Failed to create socket -- cleanup
-		p_socket_address_free(addr);
-
-		return 2;
-	}
-
-	if (!p_socket_bind(server, addr, FALSE, NULL))
-	{
-		// Couldn't bind socket, cleanup
-		p_socket_address_free(addr);
-		p_socket_free(server);
-
-		return 3;
-	}
-
-	if (!p_socket_listen(server, NULL))
-	{
-		// Couldn't start listening, cleanup
-		p_socket_address_free(addr);
-		p_socket_close(server, NULL);
-
-		return 4;
-	}
-
 	//Connect here - will in future call to accept connection immediately after
 	//starting process
-	wimp_process_accept(&ptable, server, recbuffer, sendbuffer);
+	wimp_server_process_accept(&server, "test_process");
+
+	if (wimp_server_validate_process(&server, "test_process"))
+	{
+		printf("Process Validated!\n");
+	}
 
 	// Cleanup
 	printf("Server thread closed: %d\n", server);
-	p_socket_address_free(addr);
-	p_socket_close(server, NULL);
+	wimp_server_free(server);
 
 	p_uthread_sleep(6000);
 

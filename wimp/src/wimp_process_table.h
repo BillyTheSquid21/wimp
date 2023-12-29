@@ -9,6 +9,8 @@
 #define WIMP_PROCESS_TABLE_SUCCESS 0
 #define WIMP_PROCESS_TABLE_FAIL -1
 #define WIMP_PROCESS_TABLE_MAX_LENGTH 128 //If need to track more processes, rethink
+#define WIMP_PROCESS_ACTIVE 1
+#define WIMP_PROCESS_INACTIVE 0
 
 /*
 * The data stored for a process
@@ -18,6 +20,7 @@ typedef struct _WimpProcessData
 	const char* process_domain;
 	int32_t process_port;
 	PSocket* process_connection;
+	int32_t process_active;
 } *WimpProcessData;
 
 /*
@@ -69,6 +72,16 @@ int32_t wimp_process_table_remove(WimpProcessTable* table, const char* process_n
 int32_t wimp_process_table_get(WimpProcessData* data, WimpProcessTable table, const char* process_name);
 
 /*
+* Removes the data for a process from the table
+* 
+* @param table The pointer to the process table to remove from
+* @param process_name The name of the process to remove
+* 
+* 
+*/
+int32_t wimp_process_table_remove(WimpProcessTable* table, const char* process_name);
+
+/*
 * Gets the length of the table
 * 
 * @param table The table to get the length of
@@ -83,8 +96,5 @@ size_t wimp_process_table_length(WimpProcessTable table);
 * @param table The table to free
 */
 void wimp_process_table_free(WimpProcessTable table);
-
-//TODO - move to server header - blocking
-int32_t wimp_process_accept(WimpProcessTable* table, PSocket* server, uint8_t* recbuffer, uint8_t* sendbuffer);
 
 #endif
