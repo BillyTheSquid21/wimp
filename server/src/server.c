@@ -83,64 +83,7 @@ int client_main_entry(int argc, char** argv)
 
 	//Connect here - will in future call to accept connection immediately after
 	//starting process
-	while (1)
-	{
-		printf("WAITING FOR CONNECTION...\n");
-		// Blocks until connection accept happens by default -- this can be changed
-		PSocket* con = p_socket_accept(server, NULL);
-
-		if (con != NULL)
-		{
-			//Only blocking call, recieve handshake from reciever
-			int handshake_size = p_socket_receive(con, recbuffer, WIMP_MESSAGE_BUFFER_BYTES, NULL);
-			
-			if (handshake_size <= 0)
-			{
-				printf("HANDSHAKE FAILED!\n");
-				return 1;
-			}
-
-			//Check start of handshake
-			WimpHandshakeHeader potential_handshake = *((WimpHandshakeHeader*)((void*)recbuffer));
-			size_t offset = sizeof(WimpHandshakeHeader);
-			if (potential_handshake.handshake_header != WIMP_RECIEVER_HANDSHAKE)
-			{
-				printf("HANDSHAKE FAILED!\n");
-				return 1;
-			}
-			printf("test_proces HANDSHAKE SUCCESS!\n");
-
-			//Get process name
-			char* proc_name = &recbuffer[offset];
-
-			//Add connection to the process table
-			WimpProcessData procdat = NULL;
-			printf("Adding to test_process process table: %s\n", proc_name);
-			if (wimp_process_table_get(&procdat, ptable, proc_name) == WIMP_PROCESS_TABLE_FAIL)
-			{
-				printf("Process not found! %s\n", proc_name);
-				break;
-			}
-			printf("Process added!\n");
-
-			procdat->process_connection = con;
-
-			//Clear rec buffer
-			WIMP_ZERO_BUFFER(recbuffer);
-
-			//Send handshake back with no process name this time
-			WimpHandshakeHeader* sendheader = ((WimpHandshakeHeader*)sendbuffer);
-			sendheader->handshake_header = WIMP_RECIEVER_HANDSHAKE;
-			sendheader->process_name_bytes = 0;
-
-			p_socket_send(con, sendbuffer, sizeof(WimpHandshakeHeader), NULL);
-			break;
-		}
-		else
-		{
-			printf("Can't make con, tried and failed...\n");
-		}
-	}
+	wimp_process_accept(&ptable, server, recbuffer, sendbuffer);
 
 	// Cleanup
 	printf("Server thread closed: %d\n", server);
@@ -170,10 +113,10 @@ int main(void)
 	int32_t master_port = wimp_assign_unused_local_port();
 	int32_t end_process_port = wimp_assign_unused_local_port();
 
-	wimp_port_str port_string;
+	WimpPortStr port_string;
 	wimp_port_to_string(end_process_port, &port_string);
 
-	wimp_port_str master_port_string;
+	WimpPortStr master_port_string;
 	wimp_port_to_string(master_port, &master_port_string);
 
 	WimpMainEntry entry = wimp_get_entry(4, "--master-port", master_port_string, "--process-port", port_string);
@@ -229,65 +172,7 @@ int main(void)
 
 	//Connect here - will in future call to accept connection immediately after
 	//starting process
-	while (1)
-	{
-		printf("WAITING FOR CONNECTION...\n");
-		// Blocks until connection accept happens by default -- this can be changed
-		PSocket* con = p_socket_accept(server, NULL);
-
-		if (con != NULL)
-		{
-			//Only blocking call, recieve handshake from reciever
-			int handshake_size = p_socket_receive(con, recbuffer, WIMP_MESSAGE_BUFFER_BYTES, NULL);
-			
-			if (handshake_size <= 0)
-			{
-				printf("HANDSHAKE FAILED!\n");
-				return 1;
-			}
-
-			//Check start of handshake
-			WimpHandshakeHeader potential_handshake = *((WimpHandshakeHeader*)((void*)recbuffer));
-			size_t offset = sizeof(WimpHandshakeHeader);
-			if (potential_handshake.handshake_header != WIMP_RECIEVER_HANDSHAKE)
-			{
-				printf("HANDSHAKE FAILED!\n");
-				return 1;
-			}
-			printf("MASTER HANDSHAKE SUCCESS!\n");
-
-			//Get process name
-			char* proc_name = &recbuffer[offset];
-
-			//Add connection to the process table
-			WimpProcessData procdat = NULL;
-			printf("Adding to master process table: %s\n", proc_name);
-			if (wimp_process_table_get(&procdat, ptable, proc_name) == WIMP_PROCESS_TABLE_FAIL)
-			{
-				printf("Process not found! %s\n", proc_name);
-				break;
-			}
-			printf("Process added!\n");
-
-			procdat->process_connection = con;
-
-			//Clear rec buffer
-			WIMP_ZERO_BUFFER(recbuffer);
-
-			//Send handshake back with no process name this time
-			WimpHandshakeHeader* sendheader = ((WimpHandshakeHeader*)sendbuffer);
-			sendheader->handshake_header = WIMP_RECIEVER_HANDSHAKE;
-			sendheader->process_name_bytes = 0;
-
-			p_socket_send(con, sendbuffer, sizeof(WimpHandshakeHeader), NULL);
-			WIMP_ZERO_BUFFER(sendbuffer);
-			break;
-		}
-		else
-		{
-			printf("Can't make con, tried and failed...\n");
-		}
-	}
+	wimp_process_accept(&ptable, server, recbuffer, sendbuffer);
 
 	// Cleanup
 	printf("Server thread closed: %d\n", server);

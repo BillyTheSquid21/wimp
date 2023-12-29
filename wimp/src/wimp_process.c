@@ -72,20 +72,20 @@ int32_t wimp_assign_unused_local_port()
     if (reciever_address == NULL)
     {
 		p_socket_address_free(reciever_address);
-        return 30000; //Random return value - shouldn't happen
+        return WIMP_PROCESS_FAIL;
     }
 
 	if ((reciever_socket = p_socket_new(P_SOCKET_FAMILY_INET, P_SOCKET_TYPE_STREAM, P_SOCKET_PROTOCOL_TCP, NULL)) == NULL)
 	{
 		p_socket_address_free(reciever_address);
-		return 30000;
+		return WIMP_PROCESS_FAIL;
 	}
 
 	if (!p_socket_bind(reciever_socket, reciever_address, FALSE, NULL))
 	{
 		p_socket_address_free(reciever_address);
 		p_socket_free(reciever_socket);
-		return 30000;
+		return WIMP_PROCESS_FAIL;
 	}
 
 	PSocketAddress* bound_address = p_socket_get_local_address(reciever_socket, NULL);
@@ -97,7 +97,7 @@ int32_t wimp_assign_unused_local_port()
 	return port;
 }
 
-int32_t wimp_port_to_string(int32_t port, wimp_port_str* string_out)
+int32_t wimp_port_to_string(int32_t port, WimpPortStr* string_out)
 {
 	memset(*string_out, 0, MAX_PORT_STRING_LEN);
 	sprintf(*string_out, "%d", port);

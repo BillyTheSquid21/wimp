@@ -16,12 +16,21 @@
 #define WIMP_MESSAGE_BUFFER_BYTES 1024
 #define WIMP_ZERO_BUFFER(buffer) memset(buffer, 0, WIMP_MESSAGE_BUFFER_BYTES)
 
-typedef int (*RECIEVER_FUNC_PTR)(const char* int32_t); //Reciever function type pointer
+/*
+* Reciever function type pointer
+*/
+typedef int (*RECIEVER_FUNC_PTR)(const char* int32_t);
 
+/*
+* A static buffer for the network packets to be recieved/sent from. Is of size WIMP_MESSAGE_BUFFER_BYTES.
+*/
 typedef uint8_t WimpMsgBuffer[WIMP_MESSAGE_BUFFER_BYTES];
 
 /*
 * Struct containing the handshake header information
+* 
+* @param handshake_header Header that should be equal to WIMP_RECIEVER_HANDSHAKE
+* @param process_name_bytes Length in bytes of the process name, in the buffer after the header struct. This is zero if the name overran the buffer.
 */
 typedef struct _WimpHandshakeHeader
 {
@@ -45,6 +54,11 @@ typedef struct _RecieverArgs
 
 /*
 * Creates the handshake in the supplied message buffer and returns the header
+* 
+* @param process_name The name of the process this reciever writes instructions to
+* @param message_buffer A pointer to the buffer to write the handshake into
+* 
+* @return Returns a copy of the header. This will be intialized to { 0, 0 } if function fails for any reason.
 */
 WimpHandshakeHeader wimp_create_handshake(const char* process_name, uint8_t* message_buffer);
 
@@ -52,17 +66,25 @@ WimpHandshakeHeader wimp_create_handshake(const char* process_name, uint8_t* mes
 * Creates a persistent collection of arguments to supply to the reciever thread.
 * Will create a heap copy of all the data supplied which is freed at the end of
 * the reciever thread automatically.
+* 
+* @param process_name The name of the process this reciever writes instructions to
+* @param recfrom_domain The domain of the process this reciever will recieve from
+* @param recfrom_port The port of the process this reciever will reciever from
+* 
+* @return Returns the arguments generated
 */
 RecieverArgs wimp_get_reciever_args(const char* process_name, const char* recfrom_domain, int32_t recfrom_port, uint8_t* wrtbuff);
 
 /*
-* Reciever loop
-*/
-void wimp_reciever_recieve(RecieverArgs args);
-
-/*
 * Starts a reciever thread
+* 
+* @param recfrom_name The name of the process to recieve from. Used to create the unique thread name for the reciever thread.
+* @param process_domain The domain that this reciver writes to
+* @param process_port The port that this reciever writes to
+* @param args The arguments to pass to the reciever
+* 
+* @return Returns either WIMP_RECIEVER_SUCCESS or WIMP_RECIEVER_FAIL
 */
-int32_t wimp_start_reciever_thread(const char* rec_procname, const char* process_domain, int32_t process_port, RecieverArgs args);
+int32_t wimp_start_reciever_thread(const char* recfrom_name, const char* process_domain, int32_t process_port, RecieverArgs args);
 
 #endif

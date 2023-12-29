@@ -11,8 +11,8 @@ void wimp_process_data_free(void* data)
 WimpProcessTable wimp_create_process_table()
 {
 	WimpProcessTable t;
-	t.hash_table = HashString_create(WIMP_PROCESS_TABLE_MAX_LENGTH);
-	t.table_length = 0;
+	t._hash_table = HashString_create(WIMP_PROCESS_TABLE_MAX_LENGTH);
+	t._table_length = 0;
 	return t;
 }
 
@@ -24,7 +24,7 @@ int32_t wimp_process_table_add(WimpProcessTable* table, const char* process_name
 	}
 
 	//Check if a process with that name already exists before continuing
-	if (HashString_find(table->hash_table, process_name) != NULL)
+	if (HashString_find(table->_hash_table, process_name) != NULL)
 	{
 		return WIMP_PROCESS_TABLE_FAIL;
 	}
@@ -48,11 +48,11 @@ int32_t wimp_process_table_add(WimpProcessTable* table, const char* process_name
 	process_data->process_port = process_port;
 	process_data->process_connection = connection;
 
-	if (HashString_add(table->hash_table, process_name, process_data) != 0)
+	if (HashString_add(table->_hash_table, process_name, process_data) != 0)
 	{
 		return WIMP_PROCESS_TABLE_FAIL;
 	}
-	table->table_length++;
+	table->_table_length++;
 
 	return WIMP_PROCESS_TABLE_SUCCESS;
 }
@@ -64,7 +64,7 @@ int32_t wimp_process_table_remove(WimpProcessTable* table, const char* process_n
 		return WIMP_PROCESS_TABLE_FAIL;
 	}
 
-	HashStringEntry* entry = HashString_find(table->hash_table, process_name);
+	HashStringEntry* entry = HashString_find(table->_hash_table, process_name);
 	if (entry == NULL)
 	{
 		return WIMP_PROCESS_TABLE_FAIL;
@@ -72,19 +72,19 @@ int32_t wimp_process_table_remove(WimpProcessTable* table, const char* process_n
 
 	wimp_process_data_free(entry->value);
 	
-	if (HashString_remove(table->hash_table, process_name) != 0)
+	if (HashString_remove(table->_hash_table, process_name) != 0)
 	{
-		table->table_length--;
+		table->_table_length--;
 		return WIMP_PROCESS_TABLE_FAIL;
 	}
 
-	table->table_length--;
+	table->_table_length--;
 	return WIMP_PROCESS_TABLE_SUCCESS;
 }
 
 int32_t wimp_process_table_get(WimpProcessData* data, WimpProcessTable table, const char* process_name)
 {
-	HashStringEntry* val = HashString_find(table.hash_table, process_name);
+	HashStringEntry* val = HashString_find(table._hash_table, process_name);
 	if (val == NULL)
 	{
 		return WIMP_PROCESS_TABLE_FAIL;
@@ -96,18 +96,18 @@ int32_t wimp_process_table_get(WimpProcessData* data, WimpProcessTable table, co
 
 size_t wimp_process_table_length(WimpProcessTable table)
 {
-	return table.table_length;
+	return table._table_length;
 }
 
 void wimp_process_table_free(WimpProcessTable table)
 {
 	//Iterate all the data and free, then free the table
-	if (table.table_length > 0)
+	if (table._table_length > 0)
 	{
 		HashStringEntry* entry = NULL;
 		int index = -1;
 
-		HashString_firstEntry(table.hash_table, &entry, &index);
+		HashString_firstEntry(table._hash_table, &entry, &index);
 
 		while (entry != NULL)
 		{
@@ -116,5 +116,66 @@ void wimp_process_table_free(WimpProcessTable table)
 		}
 	}
 
-	HashString_destroy(table.hash_table);
+	HashString_destroy(table._hash_table);
+}
+
+int32_t wimp_process_accept(WimpProcessTable* table, PSocket* server, uint8_t* recbuffer, uint8_t* sendbuffer)
+{
+	printf("WAITING FOR CONNECTION...\n");
+	// Blocks until connection accept happens by default -- this can be changed
+	PSocket* con = p_socket_accept(server, NULL);
+
+	if (con != NULL)
+	{
+		//Only blocking call, recieve handshake from reciever
+		int handshake_size = p_socket_receive(con, recbuffer, WIMP_MESSAGE_BUFFER_BYTES, NULL);
+			
+		if (handshake_size <= 0)
+		{
+			printf("HANDSHAKE FAILED!\n");
+			return 1;
+		}
+
+		//Check start of handshake
+		WimpHandshakeHeader potential_handshake = *((WimpHandshakeHeader*)((void*)recbuffer));
+		size_t offset = sizeof(WimpHandshakeHeader);
+		if (potential_handshake.handshake_header != WIMP_RECIEVER_HANDSHAKE)
+		{
+			printf("HANDSHAKE FAILED!\n");
+			return 1;
+		}
+		printf("test_proces HANDSHAKE SUCCESS!\n");
+
+		//Get process name
+		char* proc_name = &recbuffer[offset];
+
+		//Add connection to the process table
+		WimpProcessData procdat = NULL;
+		printf("Adding to test_process process table: %s\n", proc_name);
+		if (wimp_process_table_get(&procdat, *table, proc_name) == WIMP_PROCESS_TABLE_FAIL)
+		{
+			printf("Process not found! %s\n", proc_name);
+			return -1;
+		}
+		printf("Process added!\n");
+
+		procdat->process_connection = con;
+
+		//Clear rec buffer
+		WIMP_ZERO_BUFFER(recbuffer);
+
+		//Send handshake back with no process name this time
+		WimpHandshakeHeader* sendheader = ((WimpHandshakeHeader*)sendbuffer);
+		sendheader->handshake_header = WIMP_RECIEVER_HANDSHAKE;
+		sendheader->process_name_bytes = 0;
+
+		p_socket_send(con, sendbuffer, sizeof(WimpHandshakeHeader), NULL);
+		return 0;
+	}
+	else
+	{
+		printf("Can't make con, tried and failed...\n");
+		return -1;
+	}
+	return -1;
 }

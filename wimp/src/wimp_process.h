@@ -14,10 +14,10 @@
 
 typedef int (*MAIN_FUNC_PTR)(int, const char*); //Main function type pointer
 
-typedef const char wimp_port_str[MAX_PORT_STRING_LEN]; //String representation of a port
+typedef const char WimpPortStr[MAX_PORT_STRING_LEN]; //String representation of a port
 
 /*
-* Is basically a wrapper for the normal entry args so can be called from a
+* Is a wrapper for the normal entry args so can be called from a
 * thread.
 */
 typedef struct _WimpMainEntry
@@ -25,12 +25,6 @@ typedef struct _WimpMainEntry
 	int argc;
 	char** argv;
 } *WimpMainEntry;
-
-enum WIMP_ProcessType
-{
-	WIMP_ProcessType_Library = 0,	//Spins off a thread that uses a main() function from a library included in the master thread implementation
-	WIMP_ProcessType_Executable = 1,//Spins off a thread that starts a separate executable
-};
 
 /*
 * Defines privilege of a process so end processes can reject underprivileged
@@ -49,28 +43,47 @@ typedef enum
 
 /*
 * Starts a library process
+* 
+* @param process_name The name of the process to create
+* @param main_func The pointer to the main function, which should be set up for being a library process not an executable one
+* @param entry The entry arguments
+* 
+* @return Returns either WIMP_PROCESS_SUCCESS or WIMP_PROCESS_FAIL
 */
 int32_t wimp_start_library_process(const char* process_name, MAIN_FUNC_PTR main_func, WimpMainEntry entry);
 
 /*
-* Creates a persistent collection of arguments to supply.
-* Will create a heap copy of all the data supplied.
+* Creates a persistent collection of arguments to supply, which can be freed after the library main thread is finished
+* 
+* @param argc The number of arguments supplied
+* @param ... The arguments, which must be null terminated strings
+* 
+* @return Returns the entry arguments
 */
 WimpMainEntry wimp_get_entry(int32_t argc, ...);
 
 /*
+* Frees the entry - must be done in the child thread
+* 
+* @param entry The entry arguments
+*/
+void wimp_free_entry(WimpMainEntry entry);
+
+/*
 * Gets an unused local port from the OS by binding a dummy socket
+* 
+* @return Returns the port number if successful, otherwise returns WIMP_PROCESS_FAIL
 */
 int32_t wimp_assign_unused_local_port();
 
 /*
 * Converts the numerical port to a stack string representation
+* 
+* @param port The numerical representation of the port
+* @param string_out The location to write the string to
+* 
+* @return Returns either WIMP_PROCESS_SUCCESS or WIMP_PROCESS_FAIL
 */
-int32_t wimp_port_to_string(int32_t port, wimp_port_str* string_out);
-
-/*
-* Frees the entry - must be done in the child thread
-*/
-void wimp_free_entry(WimpMainEntry entry);
+int32_t wimp_port_to_string(int32_t port, WimpPortStr* string_out);
 
 #endif

@@ -1,21 +1,28 @@
 #include <wimp_reciever.h>
 
+/*
+* Reciever loop
+* 
+* @param args The arguments to pass to the reciever
+*/
+void wimp_reciever_recieve(RecieverArgs args);
+
 WimpHandshakeHeader wimp_create_handshake(const char* process_name, uint8_t* message_buffer)
 {
 	int32_t process_name_bytes = (int32_t)(strlen(process_name) + 1) * sizeof(char);
 	
-	WimpHandshakeHeader header;
-	header.handshake_header = WIMP_RECIEVER_HANDSHAKE;
-	header.process_name_bytes = process_name_bytes;
+	WimpHandshakeHeader header = { 0, 0 }; //Values if below fails
 
 	//Copy the header and the name
-	size_t offset = 0;
-	memcpy(message_buffer, &header, sizeof(WimpHandshakeHeader));
-	offset += sizeof(WimpHandshakeHeader);
+	size_t offset = sizeof(WimpHandshakeHeader);
 
 	if (offset + process_name_bytes < WIMP_MESSAGE_BUFFER_BYTES)
 	{
 		memcpy(&message_buffer[offset], process_name, process_name_bytes);
+		header.handshake_header = WIMP_RECIEVER_HANDSHAKE;
+		header.process_name_bytes = process_name_bytes;
+
+		memcpy(message_buffer, &header, sizeof(WimpHandshakeHeader));
 	}
 	return header;
 }
@@ -182,9 +189,9 @@ char* wimp_name_rec_thread(const char* recname, const char* recfrom, const char*
 	return name_str;
 }
 
-int32_t wimp_start_reciever_thread(const char* rec_procname, const char* process_domain, int32_t process_port, RecieverArgs args)
+int32_t wimp_start_reciever_thread(const char* recfrom_name, const char* process_domain, int32_t process_port, RecieverArgs args)
 {
-	char* recname = wimp_name_rec_thread(rec_procname, args->recfrom_domain, process_domain, args->recfrom_port, process_port);
+	char* recname = wimp_name_rec_thread(recfrom_name, args->recfrom_domain, process_domain, args->recfrom_port, process_port);
 	printf("(Receiver format: RECPROC-PROCDOM:PROCPORT-RECFROM:RECPORT)\n");
 	printf("Starting Reciever: %s!\n", recname);
 
