@@ -1,6 +1,85 @@
 #include <wimp_server.h>
+#include <utility/thread_local.h>
 
-int32_t wimp_create_server(WimpServer* server, const char* domain, int32_t port)
+/*
+* A thread can have a local server instance to make sending instructions
+* easier.
+*/
+static thread_local WimpServer* _local_server = NULL;
+
+WimpServer* wimp_get_local_server()
+{
+	return _local_server;
+}
+
+int32_t wimp_init_local_server(const char* process_name, const char* domain, int32_t port)
+{
+	if (_local_server != NULL)
+	{
+		printf("ERROR: Local server instance already exists!\n");
+		return WIMP_SERVER_FAIL;
+	}
+
+	_local_server = malloc(sizeof(WimpServer));
+	return wimp_create_server(_local_server, process_name, domain, port);
+}
+
+void wimp_close_local_server()
+{
+	if (_local_server == NULL)
+	{
+		printf("ERROR: Local server instance doesn't exist!\n");
+		return WIMP_SERVER_FAIL;
+	}
+	wimp_server_free(*_local_server);
+	_local_server = NULL;
+}
+
+void wimp_send_local_server(const char* dest, const char* instr, void* args, size_t arg_size_bytes)
+{
+	if (_local_server == NULL)
+	{
+		printf("ERROR: Local server instance doesn't exist!\n");
+		return;
+	}
+
+	//Work out formatted size
+	size_t destp_bytes = (strlen(dest) + 1) * sizeof(char);
+	size_t sourcep_bytes = (strlen(_local_server->process_name) + 1) * sizeof(char);
+	size_t instr_bytes = (strlen(instr) + 1) * sizeof(char);
+	size_t arglen_bytes = sizeof(int32_t);
+	size_t total_bytes = sourcep_bytes + destp_bytes + instr_bytes + arglen_bytes + arg_size_bytes;
+
+	//Create a buffer and add the instructions
+	uint8_t* instrbuff = malloc(total_bytes);
+	if (instrbuff == NULL)
+	{
+		return;
+	}
+
+	size_t offset = 0;
+
+	memcpy(&instrbuff[offset], dest, destp_bytes);
+	offset += destp_bytes;
+
+	memcpy(&instrbuff[offset], _local_server->process_name, sourcep_bytes);
+	offset += sourcep_bytes;
+
+	memcpy(&instrbuff[offset], instr, instr_bytes);
+	offset += instr_bytes;
+
+	memcpy(&instrbuff[offset], &arg_size_bytes, arglen_bytes);
+	offset += arglen_bytes;
+
+	if (arg_size_bytes > 0)
+	{
+		memcpy(&instrbuff[offset], args, arg_size_bytes);
+	}
+
+	wimp_instr_queue_add(&_local_server->outgoingmsg, instrbuff, total_bytes);
+}
+
+int32_t wimp_create_server(WimpServer* server, const char* process_name, const char* domain, int32_t port)
 {
 	WimpProcessTable ptable = wimp_create_process_table();
 
@@ -28,9 +107,12 @@ int32_t wimp_create_server(WimpServer* server, const char* domain, int32_t port)
 		return WIMP_SERVER_FAIL;
 	}
 
+	server->process_name = process_name;
 	server->addr = addr;
 	server->ptable = ptable;
 	server->server = s;
+	server->incomingmsg = wimp_create_instr_queue();
+	server->outgoingmsg = wimp_create_instr_queue();
 
 	return WIMP_SERVER_SUCCESS;
 }
@@ -141,10 +223,34 @@ bool wimp_server_validate_process(WimpServer* server, const char* process_name)
 	return false;
 }
 
+int32_t wimp_server_send_instructions(WimpServer* server)
+{
+	WimpInstrNode currentn = wimp_instr_queue_next(&server->outgoingmsg);
+	while (currentn != NULL)
+	{
+		//Get process con - as starts with null term string can use start
+		//of buffer as lookup
+		WimpProcessData data = NULL;
+		if (wimp_process_table_get(&data, server->ptable, currentn->instruction) == WIMP_PROCESS_TABLE_SUCCESS)
+		{
+			printf("Sending instr to: %s\n", currentn->instruction);
+			memcpy(server->sendbuffer, currentn->instruction, currentn->instruction_bytes);
+			p_socket_send(data->process_connection, server->sendbuffer, currentn->instruction_bytes, NULL);
+			WIMP_ZERO_BUFFER(server->sendbuffer);
+		}
+		wimp_instr_node_free(currentn);
+		currentn = wimp_instr_queue_next(&server->outgoingmsg);
+	}
+
+	return WIMP_SERVER_SUCCESS;
+}
+
 void wimp_server_free(WimpServer server)
 {
 	p_socket_address_free(server.addr);
 	p_socket_close(server.server, NULL);
 	wimp_process_table_free(server.ptable);
+	wimp_instr_queue_free(server.incomingmsg);
+	wimp_instr_queue_free(server.outgoingmsg);
 	WIMP_ZERO_BUFFER(server.recbuffer); WIMP_ZERO_BUFFER(server.sendbuffer);
 }

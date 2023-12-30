@@ -54,6 +54,20 @@ typedef struct _RecieverArgs
 } *RecieverArgs;
 
 /*
+* Instruction metadata that can be pulled from the buffer
+*/
+typedef struct _WimpInstrMeta
+{
+	const char* source_process;
+	const char* dest_process;
+	const char* instr;
+	int32_t arg_bytes;
+	int32_t instr_bytes;
+} WimpInstrMeta;
+
+WimpInstrMeta wimp_get_instr_from_buffer(uint8_t* buffer);
+
+/*
 * Creates the handshake in the supplied message buffer and returns the header
 * 
 * @param process_name The name of the process this reciever writes instructions to

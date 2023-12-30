@@ -5,6 +5,7 @@
 #include <wimp_process.h>
 #include <wimp_process_table.h>
 #include <wimp_server.h>
+#include <wimp_instruction.h>
 
 int client_main_entry(int argc, char** argv)
 {
@@ -33,29 +34,25 @@ int client_main_entry(int argc, char** argv)
 		}
 	}
 
-	WimpServer server;
-	wimp_create_server(&server, "127.0.0.1", process_port);
-
-	//Process table
-	wimp_process_table_add(&server.ptable, "master", "127.0.0.1", master_port, NULL);
+	wimp_init_local_server("test_process", "127.0.0.1", process_port);
+	WimpServer* server = wimp_get_local_server();
 
 	RecieverArgs args = wimp_get_reciever_args("test_process", master_domain, master_port, NULL);
 	wimp_start_reciever_thread("master", process_domain, process_port, args);
 
-	if (!p_socket_listen(server.server, NULL))
-	{
-		// Couldn't start listening, cleanup
-		wimp_server_free(server);
-		return 4;
-	}
+	//Process table
+	wimp_process_table_add(&server->ptable, "master", "127.0.0.1", master_port, NULL);
 
 	//Connect here - will in future call to accept connection immediately after
 	//starting process
-	wimp_server_process_accept(&server, "master");
+	wimp_server_process_accept(server, "master");
+
+	wimp_send_local_server("master", "test", NULL, 0);
+	wimp_server_send_instructions(server);
 
 	// Cleanup
 	printf("Server thread closed: %d\n", server);
-	wimp_server_free(server);
+	wimp_close_local_server();
 
 	return 0;
 }
@@ -90,31 +87,31 @@ int main(void)
 	
 	wimp_start_library_process("test_process", &client_main_lib_entry, entry);
 	
-	WimpServer server;
-	wimp_create_server(&server, "127.0.0.1", master_port);
+	wimp_init_local_server("master", "127.0.0.1", master_port);
+	WimpServer* server = wimp_get_local_server();
 
 	//Process table
-	wimp_process_table_add(&server.ptable, "test_process", "127.0.0.1", end_process_port, NULL);
-
 	RecieverArgs args = wimp_get_reciever_args("master", "127.0.0.1", end_process_port, "127.0.0.1", master_port, NULL);
 	wimp_start_reciever_thread("test_process", "127.0.0.1", master_port, args);
 
+	wimp_process_table_add(&server->ptable, "test_process", "127.0.0.1", end_process_port, NULL);
+
 	//Connect here - will in future call to accept connection immediately after
 	//starting process
-	wimp_server_process_accept(&server, "test_process");
+	wimp_server_process_accept(server, "test_process");
 
-	if (wimp_server_validate_process(&server, "test_process"))
+	if (wimp_server_validate_process(server, "test_process"))
 	{
 		printf("Process Validated!\n");
 	}
 
-	// Cleanup
+	//Cleanup
 	printf("Server thread closed: %d\n", server);
-	wimp_server_free(server);
+	wimp_close_local_server();
 
 	p_uthread_sleep(6000);
 
-	// Cleanup
+	//Cleanup
 	p_libsys_shutdown();
 	return 0;
 }

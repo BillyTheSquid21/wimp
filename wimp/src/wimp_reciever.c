@@ -7,6 +7,60 @@
 */
 void wimp_reciever_recieve(RecieverArgs args);
 
+WimpInstrMeta wimp_get_instr_from_buffer(uint8_t* buffer)
+{
+	WimpInstrMeta instr;
+	instr.arg_bytes = 0;
+	instr.dest_process = NULL;
+	instr.source_process = NULL;
+	instr.instr = NULL;
+	instr.instr_bytes = 0;
+
+	//Dest process must be start of buffer. If first char is \0, this is a
+	//ping packet so return as is
+	if (buffer[0] == '\0')
+	{
+		return instr;
+	}
+
+	instr.dest_process = &buffer[0];
+
+	//Find start of source process
+	char current_char = ' ';
+	size_t offset = 1;
+	while (current_char != '\0' && offset < WIMP_MESSAGE_BUFFER_BYTES - 1)
+	{
+		current_char = (char)buffer[offset];
+		offset++;
+	}
+
+	instr.source_process = &buffer[offset];
+	offset++;
+	current_char = ' ';
+
+	//Find start of instruction
+	while (current_char != '\0' && offset < WIMP_MESSAGE_BUFFER_BYTES - 1)
+	{
+		current_char = (char)buffer[offset];
+		offset++;
+	}
+
+	instr.instr = &buffer[offset];
+	offset++;
+	current_char = ' ';
+
+	//Find start of arg bytes
+	while (current_char != '\0' && offset < WIMP_MESSAGE_BUFFER_BYTES - 1)
+	{
+		current_char = (char)buffer[offset];
+		offset++;
+	}
+	offset++;
+
+	instr.arg_bytes = *(int32_t*)&buffer[offset];
+	return instr;
+}
+
 WimpHandshakeHeader wimp_create_handshake(const char* process_name, uint8_t* message_buffer)
 {
 	int32_t process_name_bytes = (int32_t)(strlen(process_name) + 1) * sizeof(char);
@@ -123,6 +177,27 @@ void wimp_reciever_recieve(RecieverArgs args)
 	}
 	printf("RECIEVER HANDSHAKE SUCCESS!\n");
 	WIMP_ZERO_BUFFER(recbuffer);
+
+	bool disconnect = false;
+	while (!disconnect)
+	{
+		pssize incoming_size = p_socket_receive(recsock, recbuffer, WIMP_MESSAGE_BUFFER_BYTES, NULL);
+		WimpInstrMeta meta = wimp_get_instr_from_buffer(recbuffer);
+		
+		if (meta.source_process != NULL && incoming_size > 0)
+		{
+			printf("\nREAL INSTRUCTION FROM: %s\n", meta.source_process);
+			printf("TO: %s\n", meta.dest_process);
+			printf("INSTR: %s\n\n", meta.instr);
+		}
+
+		if (incoming_size == 0)
+		{
+			printf("Reciever connection terminated! %s\n", args->process_name);
+			disconnect = true;
+		}
+		WIMP_ZERO_BUFFER(recbuffer);
+	}
 
 	wimp_free_reciever_args(args);
 	return;
