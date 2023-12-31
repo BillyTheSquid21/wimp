@@ -11,6 +11,10 @@ add_subdirectory(wimp)
 add_subdirectory(server)
 add_subdirectory(dependencies)
 
+if (WIMP_BUILD_TESTS)
+	add_subdirectory(tests)
+endif()
+
 set_target_properties(plibsys PROPERTIES FOLDER Dependencies)
 
 set_target_properties(plibsys

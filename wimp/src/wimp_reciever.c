@@ -20,7 +20,9 @@ WimpInstrMeta wimp_get_instr_from_buffer(uint8_t* buffer)
 	instr.dest_process = NULL;
 	instr.source_process = NULL;
 	instr.instr = NULL;
+	instr.args = NULL;
 	instr.instr_bytes = 0;
+	instr.total_bytes = 0;
 
 	//Dest process must be start of buffer. If first char is \0, this is a
 	//ping packet so return as is
@@ -61,9 +63,17 @@ WimpInstrMeta wimp_get_instr_from_buffer(uint8_t* buffer)
 		current_char = (char)buffer[offset];
 		offset++;
 	}
-	offset++;
 
 	instr.arg_bytes = *(int32_t*)&buffer[offset];
+	offset += sizeof(int32_t);
+
+	if (instr.arg_bytes != 0)
+	{
+		instr.args = &buffer[offset];
+	}
+	
+	instr.total_bytes = offset + instr.arg_bytes;
+
 	return instr;
 }
 
@@ -131,7 +141,6 @@ void wimp_reciever_recieve(RecieverArgs args)
 	//Create client socket, connect to recfrom server
 	//Then send handshake and process name
 	WimpHandshakeHeader header = wimp_create_handshake(args->process_name, sendbuffer);
-	printf("Proc Name: %s\n", args->process_name);
 
 	PSocket* recsock;
     PSocketAddress* rec_address;
@@ -140,6 +149,7 @@ void wimp_reciever_recieve(RecieverArgs args)
     rec_address = p_socket_address_new(args->recfrom_domain, args->recfrom_port);
     if (rec_address == NULL)
     {
+		wimp_free_reciever_args(args);
         p_uthread_exit(WIMP_RECIEVER_FAIL);
         return;
     }
@@ -148,6 +158,7 @@ void wimp_reciever_recieve(RecieverArgs args)
     recsock = p_socket_new(P_SOCKET_FAMILY_INET, P_SOCKET_TYPE_STREAM, P_SOCKET_PROTOCOL_TCP, NULL);
     if (recsock == NULL)
     {
+		wimp_free_reciever_args(args);
         p_uthread_exit(WIMP_RECIEVER_FAIL);
         return;
     }
@@ -155,6 +166,7 @@ void wimp_reciever_recieve(RecieverArgs args)
     //Connect to end process, which should be waiting to accept
     if (!p_socket_connect(recsock, rec_address, NULL))
     {
+		wimp_free_reciever_args(args);
         p_socket_address_free(rec_address);
         p_socket_free(recsock);
         printf("END PROCESS NOT WAITING!\n");
@@ -171,6 +183,9 @@ void wimp_reciever_recieve(RecieverArgs args)
 
 	if (handshake_size <= 0)
 	{
+		wimp_free_reciever_args(args);
+        p_socket_address_free(rec_address);
+        p_socket_free(recsock);
 		p_uthread_exit(WIMP_RECIEVER_FAIL);
         return;
 	}
@@ -180,8 +195,12 @@ void wimp_reciever_recieve(RecieverArgs args)
 	if (recheader->handshake_header != WIMP_RECIEVER_HANDSHAKE)
 	{
 		WIMP_ZERO_BUFFER(recbuffer);
+		wimp_free_reciever_args(args);
+        p_socket_address_free(rec_address);
+        p_socket_free(recsock);
 		printf("HANDSHAKE FAILED!\n");
-		return 1;
+		p_uthread_exit(WIMP_RECIEVER_FAIL);
+		return;
 	}
 	printf("RECIEVER HANDSHAKE SUCCESS!\n");
 	WIMP_ZERO_BUFFER(recbuffer);
@@ -194,10 +213,7 @@ void wimp_reciever_recieve(RecieverArgs args)
 		
 		if (meta.source_process != NULL && incoming_size > 0)
 		{
-			printf("\nREAL INSTRUCTION FROM: %s\n", meta.source_process);
-			printf("TO: %s\n", meta.dest_process);
-			printf("INSTR: %s\n", meta.instr);
-			printf("ARG SIZE: %d\n\n", meta.arg_bytes);
+			DEBUG_WIMP_PRINT_INSTRUCTION_META(meta);
 
 			if (strcmp(meta.instr, WIMP_INSTRUCTION_EXIT) == 0)
 			{
@@ -205,8 +221,8 @@ void wimp_reciever_recieve(RecieverArgs args)
 				printf("Exit signal!\n");
 			}
 
-			WimpInstr instr = wimp_reciever_allocateinstr(recbuffer, incoming_size);
-			wimp_instr_queue_add(args->incoming_queue, instr.instruction, instr.instruction_bytes);
+			WimpInstr instr = wimp_reciever_allocateinstr(recbuffer, meta.total_bytes);
+			wimp_instr_queue_add(args->incoming_queue, instr.instruction, instr.instruction_bytes);			
 		}
 
 		if (incoming_size == 0)
@@ -217,6 +233,9 @@ void wimp_reciever_recieve(RecieverArgs args)
 		WIMP_ZERO_BUFFER(recbuffer);
 	}
 
+	WIMP_ZERO_BUFFER(recbuffer);
+    p_socket_address_free(rec_address);
+    p_socket_free(recsock);
 	wimp_free_reciever_args(args);
 	return;
 }
@@ -285,8 +304,8 @@ char* wimp_name_rec_thread(const char* recname, const char* recfrom, const char*
 int32_t wimp_start_reciever_thread(const char* recfrom_name, const char* process_domain, int32_t process_port, RecieverArgs args)
 {
 	char* recname = wimp_name_rec_thread(recfrom_name, args->recfrom_domain, process_domain, args->recfrom_port, process_port);
-	printf("(Receiver format: RECPROC-PROCDOM:PROCPORT-RECFROM:RECPORT)\n");
-	printf("Starting Reciever: %s!\n", recname);
+	printf("\n(Receiver format: RECPROC-PROCDOM:PROCPORT-RECFROM:RECPORT)\n");
+	printf("Starting Reciever: %s!\n\n", recname);
 
 	PUThread* process_thread = p_uthread_create(&wimp_reciever_recieve, args, false, recname);
 	if (process_thread == NULL)

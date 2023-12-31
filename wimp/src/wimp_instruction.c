@@ -42,7 +42,7 @@ int32_t wimp_instr_queue_add(WimpInstrQueue* queue, void* instr, size_t bytes)
 	return WIMP_INSTRUCTION_SUCCESS;
 }
 
-WimpInstrNode wimp_instr_queue_next(WimpInstrQueue* queue)
+WimpInstrNode wimp_instr_queue_pop(WimpInstrQueue* queue)
 {
 	p_mutex_lock(queue->_queuemutex);
 
@@ -76,11 +76,11 @@ void wimp_instr_node_free(WimpInstrNode node)
 void wimp_instr_queue_free(WimpInstrQueue queue)
 {
 	//Iterate any remaining nodes and free their data, and the nodes themselves
-	WimpInstrNode currentnode = wimp_instr_queue_next(&queue);
+	WimpInstrNode currentnode = wimp_instr_queue_pop(&queue);
 	while (currentnode != NULL)
 	{
 		wimp_instr_node_free(currentnode);
-		currentnode = wimp_instr_queue_next(&queue);
+		currentnode = wimp_instr_queue_pop(&queue);
 	}
 
 	p_mutex_free(queue._queuemutex);

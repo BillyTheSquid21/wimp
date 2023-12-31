@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <string.h>
 #include <plibsys.h>
+#include <wimp_debug.h>
 
 #define WIMP_INSTRUCTION_SUCCESS 0
 #define WIMP_INSTRUCTION_FAIL -1
@@ -63,18 +64,48 @@ typedef struct _WimpInstrQueue
 	PMutex* _queuemutex;
 } WimpInstrQueue;
 
+/*
+* Creates a new instruction queue
+* 
+* @return Returns a new instruction queue
+*/
 WimpInstrQueue wimp_create_instr_queue();
 
+/*
+* Adds an instruction to the queue
+* 
+* @param queue The pointer to the queue to add to
+* @param instr A heap pointer to the instruction buffer, which will later be freed automatically
+* @param bytes The size of the instruction buffer in bytes
+* 
+* @return Returns either WIMP_INSTRUCTION_SUCCESS or WIMP_INSTRUCTIOn_FAIL
+*/
 int32_t wimp_instr_queue_add(WimpInstrQueue* queue, void* instr, size_t bytes);
 
 /*
+* Pops the top node off the queue, handing it to the user.
+* 
 * When a node is returned, the user is responsible for its memory and it cannot
-* be accessed from the queue anymore
+* be accessed from the queue anymore. Use wimp_instr_node_free when done.
+* 
+* @param queue The queue to pop the top instruction off
+* 
+* @return Returns a pointer to the top node, NULL if queue is empty
 */
-WimpInstrNode wimp_instr_queue_next(WimpInstrQueue* queue);
+WimpInstrNode wimp_instr_queue_pop(WimpInstrQueue* queue);
 
+/*
+* Frees the memory used for the queue node
+* 
+* @param node The node pointer to free
+*/
 void wimp_instr_node_free(WimpInstrNode node);
 
+/*
+* Frees the memory used for the instruction queue
+* 
+* @param queue The queue to free
+*/
 void wimp_instr_queue_free(WimpInstrQueue queue);
 
 #endif

@@ -1,0 +1,12 @@
+This test should do the following:
+
+- Sets up a master process, and a child process
+- Both correctly connect to each other
+- The child process sends two dummy instructions and an exit      instruction, then closes
+- The master process prints out these two instructions correctly, then exits
+
+Checks:
+
+- Validate the process is correct as in the table
+- Check the instructions are recieved as expected
+- Check the process completes with no errors

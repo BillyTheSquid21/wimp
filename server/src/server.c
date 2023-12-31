@@ -49,9 +49,8 @@ int client_main_entry(int argc, char** argv)
 
 	wimp_send_local_server("master", "test", NULL, 0);
 	wimp_send_local_server("master", "test2", NULL, 0);
+	wimp_send_local_server("master", "exit", NULL, 0);
 	wimp_server_send_instructions(server);
-
-	p_uthread_sleep(6000);
 
 	// Cleanup
 	printf("Server thread closed: %d\n", server);
@@ -109,7 +108,25 @@ int main(void)
 		printf("Process Validated!\n");
 	}
 
-	p_uthread_sleep(6000);
+	bool disconnect = false;
+	while (!disconnect)
+	{
+		WimpInstrNode currentnode = wimp_instr_queue_pop(&server->incomingmsg);
+		while (currentnode != NULL)
+		{
+			WimpInstrMeta meta = wimp_get_instr_from_buffer(currentnode->instr.instruction);
+			printf("\nSERVER RECIEVE INSTR");
+			DEBUG_WIMP_PRINT_INSTRUCTION_META(meta);
+
+			if (strcmp(meta.instr, WIMP_INSTRUCTION_EXIT) == 0)
+			{
+				disconnect = true;
+			}
+
+			wimp_instr_node_free(currentnode);
+			currentnode = wimp_instr_queue_pop(&server->incomingmsg);
+		}
+	}
 
 	//Cleanup
 	printf("Server thread closed: %d\n", server);

@@ -129,7 +129,7 @@ int32_t wimp_server_process_accept(WimpServer* server, const char* process_name)
 		return WIMP_SERVER_FAIL;
 	}
 
-	printf("WAITING FOR CONNECTION...\n");
+	printf("Server waiting to accept connection: %s\n", process_name);
 
 	//Ensures won't block for too long
 	p_socket_set_timeout(server->server, WIMP_SERVER_ACCEPT_TIMEOUT);
@@ -142,7 +142,6 @@ int32_t wimp_server_process_accept(WimpServer* server, const char* process_name)
 			
 		if (handshake_size <= 0)
 		{
-			printf("HANDSHAKE FAILED!\n");
 			return WIMP_SERVER_FAIL;
 		}
 
@@ -151,10 +150,8 @@ int32_t wimp_server_process_accept(WimpServer* server, const char* process_name)
 		size_t offset = sizeof(WimpHandshakeHeader);
 		if (potential_handshake.handshake_header != WIMP_RECIEVER_HANDSHAKE)
 		{
-			printf("HANDSHAKE FAILED!\n");
 			return WIMP_SERVER_FAIL;
 		}
-		printf("test_process HANDSHAKE SUCCESS!\n");
 
 		//Get process name
 		char* proc_name = &server->recbuffer[offset];
@@ -225,7 +222,7 @@ bool wimp_server_validate_process(WimpServer* server, const char* process_name)
 
 int32_t wimp_server_send_instructions(WimpServer* server)
 {
-	WimpInstrNode currentn = wimp_instr_queue_next(&server->outgoingmsg);
+	WimpInstrNode currentn = wimp_instr_queue_pop(&server->outgoingmsg);
 	while (currentn != NULL)
 	{
 		//Get process con - as starts with null term string can use start
@@ -233,13 +230,13 @@ int32_t wimp_server_send_instructions(WimpServer* server)
 		WimpProcessData data = NULL;
 		if (wimp_process_table_get(&data, server->ptable, currentn->instr.instruction) == WIMP_PROCESS_TABLE_SUCCESS)
 		{
-			printf("Sending instr to: %s\n", currentn->instr.instruction);
+			printf("Sending instr to: %s\n", (char*)currentn->instr.instruction);
 			memcpy(server->sendbuffer, currentn->instr.instruction, currentn->instr.instruction_bytes);
 			p_socket_send(data->process_connection, server->sendbuffer, currentn->instr.instruction_bytes, NULL);
 			WIMP_ZERO_BUFFER(server->sendbuffer);
 		}
 		wimp_instr_node_free(currentn);
-		currentn = wimp_instr_queue_next(&server->outgoingmsg);
+		currentn = wimp_instr_queue_pop(&server->outgoingmsg);
 	}
 
 	return WIMP_SERVER_SUCCESS;

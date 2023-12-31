@@ -18,6 +18,7 @@
 #define WIMP_MESSAGE_BUFFER_BYTES 1024
 #define WIMP_RECIEVER_PING 0x00000000 //Ping with 4 bytes of null, ignore if this comes in
 #define WIMP_ZERO_BUFFER(buffer) memset(buffer, 0, WIMP_MESSAGE_BUFFER_BYTES)
+#define WIMP_PRINT_INSTRS 1 //Print the incoming instructions
 
 /*
 * Reciever function type pointer
@@ -63,10 +64,39 @@ typedef struct _WimpInstrMeta
 	const char* source_process;
 	const char* dest_process;
 	const char* instr;
+	void* args;
+	size_t total_bytes;
 	int32_t arg_bytes;
 	int32_t instr_bytes;
 } WimpInstrMeta;
 
+#if defined WIMP_DEBUG && WIMP_PRINT_INSTRS
+
+static _debug_wimp_print_instruction_meta(WimpInstrMeta meta)
+{
+	printf("\nREAL INSTRUCTION FROM: %s\n", meta.source_process);
+	printf("TO: %s\n", meta.dest_process);
+	printf("INSTR: %s\n", meta.instr);
+	printf("ARG SIZE: %d\n", meta.arg_bytes);
+	printf("TOTAL SIZE: %d\n\n", meta.total_bytes);
+}
+
+//Prints incoming instructions for debugging purposes
+#define DEBUG_WIMP_PRINT_INSTRUCTION_META(meta) _debug_wimp_print_instruction_meta(meta)
+
+#else
+
+#define DEBUG_WIMP_PRINT_INSTRUCTION_META(meta)
+
+#endif
+
+/*
+* Extracts the wimp instruction metadata from a buffer. Assumes buffer starts at start of an instruction
+* 
+* @param buffer The buffer to extract from
+* 
+* @return Returns the metadata of the instruction
+*/
 WimpInstrMeta wimp_get_instr_from_buffer(uint8_t* buffer);
 
 /*
