@@ -231,11 +231,11 @@ int32_t wimp_server_send_instructions(WimpServer* server)
 		//Get process con - as starts with null term string can use start
 		//of buffer as lookup
 		WimpProcessData data = NULL;
-		if (wimp_process_table_get(&data, server->ptable, currentn->instruction) == WIMP_PROCESS_TABLE_SUCCESS)
+		if (wimp_process_table_get(&data, server->ptable, currentn->instr.instruction) == WIMP_PROCESS_TABLE_SUCCESS)
 		{
-			printf("Sending instr to: %s\n", currentn->instruction);
-			memcpy(server->sendbuffer, currentn->instruction, currentn->instruction_bytes);
-			p_socket_send(data->process_connection, server->sendbuffer, currentn->instruction_bytes, NULL);
+			printf("Sending instr to: %s\n", currentn->instr.instruction);
+			memcpy(server->sendbuffer, currentn->instr.instruction, currentn->instr.instruction_bytes);
+			p_socket_send(data->process_connection, server->sendbuffer, currentn->instr.instruction_bytes, NULL);
 			WIMP_ZERO_BUFFER(server->sendbuffer);
 		}
 		wimp_instr_node_free(currentn);

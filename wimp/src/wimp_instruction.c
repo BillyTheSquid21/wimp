@@ -2,7 +2,10 @@
 
 WimpInstrQueue wimp_create_instr_queue()
 {
-	WimpInstrQueue q = { NULL, NULL, p_mutex_new() };
+	WimpInstrQueue q;
+	q.backnode = NULL;
+	q.nextnode = NULL;
+	q._queuemutex = p_mutex_new();
 	return q;
 }
 
@@ -14,8 +17,8 @@ int32_t wimp_instr_queue_add(WimpInstrQueue* queue, void* instr, size_t bytes)
 		return WIMP_INSTRUCTION_FAIL;
 	}
 
-	new_node->instruction = instr;
-	new_node->instruction_bytes = bytes;
+	new_node->instr.instruction = instr;
+	new_node->instr.instruction_bytes = bytes;
 	new_node->nextnode = NULL;
 
 	//Must lock and unlock thread here as adding to a shared space
@@ -35,6 +38,7 @@ int32_t wimp_instr_queue_add(WimpInstrQueue* queue, void* instr, size_t bytes)
 	}
 
 	p_mutex_unlock(queue->_queuemutex);
+	printf("Added instr to incoming: %s\n", (char*)new_node->instr.instruction);
 	return WIMP_INSTRUCTION_SUCCESS;
 }
 
@@ -65,7 +69,7 @@ WimpInstrNode wimp_instr_queue_next(WimpInstrQueue* queue)
 
 void wimp_instr_node_free(WimpInstrNode node)
 {
-	free(node->instruction);
+	free(node->instr.instruction);
 	free(node);
 }
 

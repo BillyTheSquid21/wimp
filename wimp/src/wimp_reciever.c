@@ -7,6 +7,12 @@
 */
 void wimp_reciever_recieve(RecieverArgs args);
 
+/*
+* Allocates the instruction for the incoming queue
+*/
+WimpInstr wimp_reciever_allocateinstr(uint8_t* recbuffer, pssize size);
+
+
 WimpInstrMeta wimp_get_instr_from_buffer(uint8_t* buffer)
 {
 	WimpInstrMeta instr;
@@ -81,13 +87,15 @@ WimpHandshakeHeader wimp_create_handshake(const char* process_name, uint8_t* mes
 	return header;
 }
 
-RecieverArgs wimp_get_reciever_args(const char* process_name, const char* recfrom_domain, int32_t recfrom_port, uint8_t* wrtbuff)
+RecieverArgs wimp_get_reciever_args(const char* process_name, const char* recfrom_domain, int32_t recfrom_port, WimpInstrQueue* incomingq)
 {
 	RecieverArgs recargs = malloc(sizeof(struct _RecieverArgs));
 	if (recargs == NULL)
 	{
 		return NULL;
 	}
+
+	recargs->incoming_queue = incomingq;
 
 	//Assume all the strings provided are valid
 	size_t process_name_bytes = (strlen(process_name) + 1) * sizeof(char);
@@ -97,6 +105,7 @@ RecieverArgs wimp_get_reciever_args(const char* process_name, const char* recfro
 
 	if (recargs->process_name == NULL || recargs->recfrom_domain == NULL)
 	{
+		free(recargs);
 		return NULL;
 	}
 
@@ -104,7 +113,6 @@ RecieverArgs wimp_get_reciever_args(const char* process_name, const char* recfro
 	memcpy(recargs->recfrom_domain, recfrom_domain, recfrom_bytes);
 
 	recargs->recfrom_port = recfrom_port;
-	recargs->writebuff = wrtbuff;
 	return recargs;
 }
 
@@ -188,7 +196,17 @@ void wimp_reciever_recieve(RecieverArgs args)
 		{
 			printf("\nREAL INSTRUCTION FROM: %s\n", meta.source_process);
 			printf("TO: %s\n", meta.dest_process);
-			printf("INSTR: %s\n\n", meta.instr);
+			printf("INSTR: %s\n", meta.instr);
+			printf("ARG SIZE: %d\n\n", meta.arg_bytes);
+
+			if (strcmp(meta.instr, WIMP_INSTRUCTION_EXIT) == 0)
+			{
+				disconnect = true;
+				printf("Exit signal!\n");
+			}
+
+			WimpInstr instr = wimp_reciever_allocateinstr(recbuffer, incoming_size);
+			wimp_instr_queue_add(args->incoming_queue, instr.instruction, instr.instruction_bytes);
 		}
 
 		if (incoming_size == 0)
@@ -279,4 +297,20 @@ int32_t wimp_start_reciever_thread(const char* recfrom_name, const char* process
 	}
 	free(recname);
 	return WIMP_RECIEVER_SUCCESS;
+}
+
+WimpInstr wimp_reciever_allocateinstr(uint8_t* recbuffer, pssize size)
+{
+	WimpInstr instr = { NULL, 0 };
+
+	void* i = malloc(size);
+	if (i == NULL)
+	{
+		return instr;
+	}
+
+	memcpy(i, recbuffer, size);
+	instr.instruction = i;
+	instr.instruction_bytes = size;
+	return instr;
 }

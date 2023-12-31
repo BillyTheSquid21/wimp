@@ -4,7 +4,6 @@
 #include <stdint.h>
 #include <string.h>
 #include <plibsys.h>
-#include <wimp_reciever.h>
 
 #define WIMP_INSTRUCTION_SUCCESS 0
 #define WIMP_INSTRUCTION_FAIL -1
@@ -45,10 +44,15 @@
 * These will be implemented once the simplistic approach works.
 */
 
-typedef struct _WimpInstrNode
+typedef struct _WimpInstr
 {
 	void* instruction;
 	size_t instruction_bytes;
+} WimpInstr;
+
+typedef struct _WimpInstrNode
+{
+	WimpInstr instr;
 	struct _WimpInstrNode* nextnode;
 } *WimpInstrNode;
 

@@ -37,7 +37,7 @@ int client_main_entry(int argc, char** argv)
 	wimp_init_local_server("test_process", "127.0.0.1", process_port);
 	WimpServer* server = wimp_get_local_server();
 
-	RecieverArgs args = wimp_get_reciever_args("test_process", master_domain, master_port, NULL);
+	RecieverArgs args = wimp_get_reciever_args("test_process", master_domain, master_port, &server->incomingmsg);
 	wimp_start_reciever_thread("master", process_domain, process_port, args);
 
 	//Process table
@@ -48,7 +48,10 @@ int client_main_entry(int argc, char** argv)
 	wimp_server_process_accept(server, "master");
 
 	wimp_send_local_server("master", "test", NULL, 0);
+	wimp_send_local_server("master", "test2", NULL, 0);
 	wimp_server_send_instructions(server);
+
+	p_uthread_sleep(6000);
 
 	// Cleanup
 	printf("Server thread closed: %d\n", server);
@@ -84,14 +87,15 @@ int main(void)
 	wimp_port_to_string(master_port, &master_port_string);
 
 	WimpMainEntry entry = wimp_get_entry(4, "--master-port", master_port_string, "--process-port", port_string);
-	
 	wimp_start_library_process("test_process", &client_main_lib_entry, entry);
-	
+
 	wimp_init_local_server("master", "127.0.0.1", master_port);
 	WimpServer* server = wimp_get_local_server();
 
 	//Process table
-	RecieverArgs args = wimp_get_reciever_args("master", "127.0.0.1", end_process_port, "127.0.0.1", master_port, NULL);
+	WimpInstrQueue* queue = &server->incomingmsg;
+	RecieverArgs args = wimp_get_reciever_args("master", "127.0.0.1", end_process_port, &server->incomingmsg);
+
 	wimp_start_reciever_thread("test_process", "127.0.0.1", master_port, args);
 
 	wimp_process_table_add(&server->ptable, "test_process", "127.0.0.1", end_process_port, NULL);
@@ -105,11 +109,11 @@ int main(void)
 		printf("Process Validated!\n");
 	}
 
+	p_uthread_sleep(6000);
+
 	//Cleanup
 	printf("Server thread closed: %d\n", server);
 	wimp_close_local_server();
-
-	p_uthread_sleep(6000);
 
 	//Cleanup
 	p_libsys_shutdown();

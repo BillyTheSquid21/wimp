@@ -10,6 +10,8 @@
 #include <ptypes.h>
 #include <perrortypes.h>
 
+#include <wimp_instruction.h>
+
 #define WIMP_RECIEVER_HANDSHAKE 0x706d6977 //HEX for "wimp"
 #define WIMP_RECIEVER_SUCCESS 0
 #define WIMP_RECIEVER_FAIL -1
@@ -50,7 +52,7 @@ typedef struct _RecieverArgs
 	const char* process_name;
 	const char* recfrom_domain;
 	int32_t recfrom_port;
-	uint8_t* writebuff;
+	WimpInstrQueue* incoming_queue;
 } *RecieverArgs;
 
 /*
@@ -85,10 +87,11 @@ WimpHandshakeHeader wimp_create_handshake(const char* process_name, uint8_t* mes
 * @param process_name The name of the process this reciever writes instructions to
 * @param recfrom_domain The domain of the process this reciever will recieve from
 * @param recfrom_port The port of the process this reciever will reciever from
+* @param incomingq The queue to add the incoming instructions to
 * 
 * @return Returns the arguments generated
 */
-RecieverArgs wimp_get_reciever_args(const char* process_name, const char* recfrom_domain, int32_t recfrom_port, uint8_t* wrtbuff);
+RecieverArgs wimp_get_reciever_args(const char* process_name, const char* recfrom_domain, int32_t recfrom_port, WimpInstrQueue* incomingq);
 
 /*
 * Starts a reciever thread
