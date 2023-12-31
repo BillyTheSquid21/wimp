@@ -28,4 +28,10 @@ Prerequisite: Ensure you have a visual studio sdk installed, cd to root director
 Linux
 ---
 
+Additional Flags
+---
+
+To build the tests:
+-DWIMP_BUILD_TESTS=1
+
 Currently there is not a unix based implementation, this will be changed in the future
