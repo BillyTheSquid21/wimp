@@ -3,7 +3,7 @@
 int32_t wimp_start_library_process(const char* process_name, MAIN_FUNC_PTR main_func, WimpMainEntry entry)
 {
 	printf("Starting %s!\n", process_name);
-	PUThread* process_thread = p_uthread_create(main_func, entry, false, process_name);
+	PUThread* process_thread = p_uthread_create((PUThreadFunc)main_func, entry, false, process_name);
 	if (process_thread == NULL)
 	{
 		printf("Failed to create thread: %s", process_name);
@@ -19,14 +19,17 @@ WimpMainEntry wimp_get_entry(int32_t argc, ...)
 	WimpMainEntry main_entry = malloc(sizeof(struct _WimpMainEntry));
 	if (main_entry == NULL)
 	{
+		va_end(argp);
 		return NULL;
 	}
 
 	//Process the command line args supplied
 	main_entry->argc = argc;
-	main_entry->argv = malloc(argc * sizeof(char*));
+	main_entry->argv = malloc((size_t)argc * sizeof(char*));
 	if (main_entry->argv == NULL)
 	{
+		free(main_entry);
+		va_end(argp);
 		return NULL;
 	}
 
@@ -35,18 +38,31 @@ WimpMainEntry wimp_get_entry(int32_t argc, ...)
 		const char* arg = va_arg(argp, const char*);
 		if (arg == NULL)
 		{
+			for(int32_t j = (int32_t)i - 1; j >= 0; j--)
+			{
+				free(main_entry->argv[j]); //Free all the previous malloc args
+			}
+			free(main_entry);
+			va_end(argp);
 			return NULL;
 		}
 		
-		int arg_bytes = (strlen(arg) + 1) * sizeof(char); //Include the null terminator
-		main_entry->argv[i] = malloc(arg_bytes);
-		if (main_entry->argv[i] == NULL)
+		size_t arg_bytes = (strlen(arg) + 1) * sizeof(char); //Include the null terminator
+		char* argv = malloc(arg_bytes);
+		if (argv == NULL)
 		{
+			for(int32_t j = (int32_t)i - 1; j >= 0; j--)
+			{
+				free(main_entry->argv[j]); //Free all the previous malloc args
+			}
+			free(main_entry);
+			va_end(argp);
 			return NULL;
 		}
-
+		main_entry->argv[i] = argv;
 		memcpy(main_entry->argv[i], arg, arg_bytes);
 	}
+	va_end(argp);
 	return main_entry;
 }
 
@@ -97,9 +113,9 @@ int32_t wimp_assign_unused_local_port()
 	return port;
 }
 
-int32_t wimp_port_to_string(int32_t port, WimpPortStr* string_out)
+int32_t wimp_port_to_string(int32_t port, char* string_out)
 {
-	memset(*string_out, 0, MAX_PORT_STRING_LEN);
-	sprintf(*string_out, "%d", port);
+	memset(string_out, 0, MAX_PORT_STRING_LEN);
+	sprintf(string_out, "%d", port);
 	return WIMP_PROCESS_SUCCESS;
 }

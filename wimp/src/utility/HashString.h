@@ -54,16 +54,16 @@ HashString* HashString_create( int size );
 void HashString_destroy( HashString* hash );
 
 /* Hash Given String for Given Table ( Determine Array Index ) */
-unsigned int HashString_hash( HashString* hash, unsigned char* key );
+unsigned int HashString_hash( HashString* hash, const unsigned char* key );
 
 /* Find Entry with Given Key within Given HashString ( if any ) */
-HashStringEntry* HashString_find( HashString* hash, char* key );
+HashStringEntry* HashString_find( HashString* hash, const char* key );
 
 /* Add Entry with (copy of) Given Key, Value in Given Table - Edited */
-int HashString_add( HashString* hash, char* key, void* value );
+int HashString_add( HashString* hash, const char* key, void* value );
 
 /* Removes Entry with Given Key From Given Table ( if any ) and free it's Memory */
-int HashString_remove( HashString* hash, char* key );
+int HashString_remove( HashString* hash, const char* key );
 
 /* Finds First Entry in Given HashString and Sets Given Pointers
  *  Towards it

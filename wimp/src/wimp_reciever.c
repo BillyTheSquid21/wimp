@@ -253,7 +253,7 @@ char* wimp_name_rec_thread(const char* recname, const char* recfrom, const char*
 	//Name is: RECPROC-PROCDOM:PROCPORT-RECFROM:RECPORT
 	char recportstr[6];  //Max port is 5 chars long
 	char procportstr[6];
-	itoa(recport, recportstr, 10); itoa(procport, procportstr, 10);
+	_itoa(recport, recportstr, 10); _itoa(procport, procportstr, 10);
 
 	size_t procname_s_bytes = strlen(recname) * sizeof(char);
 	size_t recfrom_s_bytes = strlen(recfrom) * sizeof(char);
@@ -307,7 +307,7 @@ int32_t wimp_start_reciever_thread(const char* recfrom_name, const char* process
 	printf("\n(Receiver format: RECPROC-PROCDOM:PROCPORT-RECFROM:RECPORT)\n");
 	printf("Starting Reciever: %s!\n\n", recname);
 
-	PUThread* process_thread = p_uthread_create(&wimp_reciever_recieve, args, false, recname);
+	PUThread* process_thread = p_uthread_create((PUThreadFunc)&wimp_reciever_recieve, args, false, recname);
 	if (process_thread == NULL)
 	{
 		printf("Failed to create thread: %s", recname);

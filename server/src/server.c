@@ -11,8 +11,6 @@ int client_main_entry(int argc, char** argv)
 {
 	printf("Test process!\n");
 
-	int32_t writebuffer = 0;
-
 	//Default this domain and port
 	const char* process_domain = "127.0.0.1";
 	int32_t process_port = 8001;
@@ -53,7 +51,7 @@ int client_main_entry(int argc, char** argv)
 	wimp_server_send_instructions(server);
 
 	// Cleanup
-	printf("Server thread closed: %d\n", server);
+	printf("Server thread closed: %p\n", server->server);
 	wimp_close_local_server();
 
 	return 0;
@@ -72,7 +70,6 @@ int main(void)
 	p_libsys_init();
 
 	// Start child process and launches a reciever that recieves from the end process
-	int32_t writebuffer = 0;
 
 	//Need a port for the master the end reciever reads from
 	//And a port for the end process the master reciever reads from
@@ -80,19 +77,18 @@ int main(void)
 	int32_t end_process_port = wimp_assign_unused_local_port();
 
 	WimpPortStr port_string;
-	wimp_port_to_string(end_process_port, &port_string);
+	wimp_port_to_string(end_process_port, port_string);
 
 	WimpPortStr master_port_string;
-	wimp_port_to_string(master_port, &master_port_string);
+	wimp_port_to_string(master_port, master_port_string);
 
 	WimpMainEntry entry = wimp_get_entry(4, "--master-port", master_port_string, "--process-port", port_string);
-	wimp_start_library_process("test_process", &client_main_lib_entry, entry);
+	wimp_start_library_process("test_process", (MAIN_FUNC_PTR)&client_main_lib_entry, entry);
 
 	wimp_init_local_server("master", "127.0.0.1", master_port);
 	WimpServer* server = wimp_get_local_server();
 
 	//Process table
-	WimpInstrQueue* queue = &server->incomingmsg;
 	RecieverArgs args = wimp_get_reciever_args("master", "127.0.0.1", end_process_port, &server->incomingmsg);
 
 	wimp_start_reciever_thread("test_process", "127.0.0.1", master_port, args);
@@ -129,7 +125,7 @@ int main(void)
 	}
 
 	//Cleanup
-	printf("Server thread closed: %d\n", server);
+	printf("Server thread closed: %p\n", server->server);
 	wimp_close_local_server();
 
 	//Cleanup

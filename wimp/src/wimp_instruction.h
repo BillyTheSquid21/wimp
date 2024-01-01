@@ -69,7 +69,7 @@ typedef struct _WimpInstrQueue
 * 
 * @return Returns a new instruction queue
 */
-WimpInstrQueue wimp_create_instr_queue();
+WimpInstrQueue wimp_create_instr_queue(void);
 
 /*
 * Adds an instruction to the queue

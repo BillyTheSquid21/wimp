@@ -14,7 +14,7 @@
 
 typedef int (*MAIN_FUNC_PTR)(int, const char*); //Main function type pointer
 
-typedef const char WimpPortStr[MAX_PORT_STRING_LEN]; //String representation of a port
+typedef char WimpPortStr[MAX_PORT_STRING_LEN]; //String representation of a port
 
 /*
 * Is a wrapper for the normal entry args so can be called from a
@@ -22,8 +22,8 @@ typedef const char WimpPortStr[MAX_PORT_STRING_LEN]; //String representation of 
 */
 typedef struct _WimpMainEntry
 {
-	int argc;
 	char** argv;
+	int argc;
 } *WimpMainEntry;
 
 /*
@@ -74,7 +74,7 @@ void wimp_free_entry(WimpMainEntry entry);
 * 
 * @return Returns the port number if successful, otherwise returns WIMP_PROCESS_FAIL
 */
-int32_t wimp_assign_unused_local_port();
+int32_t wimp_assign_unused_local_port(void);
 
 /*
 * Converts the numerical port to a stack string representation
@@ -84,6 +84,6 @@ int32_t wimp_assign_unused_local_port();
 * 
 * @return Returns either WIMP_PROCESS_SUCCESS or WIMP_PROCESS_FAIL
 */
-int32_t wimp_port_to_string(int32_t port, WimpPortStr* string_out);
+int32_t wimp_port_to_string(int32_t port, char* string_out);
 
 #endif

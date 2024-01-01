@@ -29,7 +29,7 @@ void wimp_close_local_server()
 	if (_local_server == NULL)
 	{
 		printf("ERROR: Local server instance doesn't exist!\n");
-		return WIMP_SERVER_FAIL;
+		return;
 	}
 	wimp_server_free(*_local_server);
 	_local_server = NULL;
@@ -138,7 +138,7 @@ int32_t wimp_server_process_accept(WimpServer* server, const char* process_name)
 	if (con != NULL)
 	{
 		//Only blocking call, recieve handshake from reciever
-		int handshake_size = p_socket_receive(con, server->recbuffer, WIMP_MESSAGE_BUFFER_BYTES, NULL);
+		pssize handshake_size = p_socket_receive(con, server->recbuffer, WIMP_MESSAGE_BUFFER_BYTES, NULL);
 			
 		if (handshake_size <= 0)
 		{
@@ -210,7 +210,7 @@ bool wimp_server_validate_process(WimpServer* server, const char* process_name)
 	}
 
 	int32_t ping = WIMP_RECIEVER_PING;
-	if (p_socket_send(procdat->process_connection, &ping, sizeof(int32_t), NULL) != -1)
+	if (p_socket_send(procdat->process_connection, (const pchar*)&ping, sizeof(int32_t), NULL) != -1)
 	{
 		return true;
 	}

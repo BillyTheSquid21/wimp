@@ -125,7 +125,7 @@ void HashString_destroy( HashString* hash )
  *  @returns unsigned int, the Index within hash for key, or the Hash
  *  @returns  if hash == NULL
  */
-unsigned int HashString_hash( HashString* hash, unsigned char* key )
+unsigned int HashString_hash( HashString* hash, const unsigned char* key )
 {
   /** The Value of the FNV1a Hash of key */
   unsigned int hashValue = FNV_OFFSET_BASIS;
@@ -189,7 +189,7 @@ unsigned int HashString_hash( HashString* hash, unsigned char* key )
  *  @returns unsigned int, the Index within hash for key, or the Hash
  *  @returns  if hash == NULL
  */
-unsigned int HashString_hash( HashString* hash, unsigned char* key )
+unsigned int HashString_hash( HashString* hash, const unsigned char* key )
 {
   /** Length of key in 8-bit Bytes */
   unsigned int len;
@@ -264,7 +264,7 @@ unsigned int HashString_hash( HashString* hash, unsigned char* key )
  *  @returns HashStringEntry* to the Entry if Found
  *  @returns NULL if Entry is not Found
  */
-HashStringEntry* HashString_find( HashString* hash, char* key )
+HashStringEntry* HashString_find( HashString* hash, const char* key )
 {
   HashStringEntry* entry;  /**< The Current Entry Being Parsed */
   unsigned int hashValue = HashString_hash( hash, key ); /**< The Result of the Hash Function */
@@ -297,7 +297,7 @@ HashStringEntry* HashString_find( HashString* hash, char* key )
  *  @returns 2 - malloc Failed
  *  @returns 3 - NULL Pointer Given
  */
-int HashString_add( HashString* hash, char* key, void* value )
+int HashString_add( HashString* hash, const char* key, void* value )
 {
   HashStringEntry* oldEntry;  /**< The Exisiting Entry with the Same Key, NULL for None */
   HashStringEntry* newEntry;  /**< The New Entry to Insert into the HashString */
@@ -374,7 +374,7 @@ int HashString_add( HashString* hash, char* key, void* value )
  *  @returns 0 - Entry Found and Deleted
  *  @returns 1 - Entry not Found, No Change Made
  */
-int HashString_remove( HashString* hash, char* key )
+int HashString_remove( HashString* hash, const char* key )
 {
   HashStringEntry* prevEntry; /**< Entry Before Entry to Remove, Linked-List Pointer Must Change */
   HashStringEntry* currEntry;  /**< Current Entry to Look at */

@@ -50,10 +50,10 @@ typedef struct _WimpHandshakeHeader
 */
 typedef struct _RecieverArgs
 {
-	const char* process_name;
-	const char* recfrom_domain;
-	int32_t recfrom_port;
+	char* process_name;
+	char* recfrom_domain;
 	WimpInstrQueue* incoming_queue;
+	int32_t recfrom_port;
 } *RecieverArgs;
 
 /*
@@ -72,13 +72,13 @@ typedef struct _WimpInstrMeta
 
 #if defined WIMP_DEBUG && WIMP_PRINT_INSTRS
 
-static _debug_wimp_print_instruction_meta(WimpInstrMeta meta)
+static void _debug_wimp_print_instruction_meta(WimpInstrMeta meta)
 {
 	printf("\nREAL INSTRUCTION FROM: %s\n", meta.source_process);
 	printf("TO: %s\n", meta.dest_process);
 	printf("INSTR: %s\n", meta.instr);
 	printf("ARG SIZE: %d\n", meta.arg_bytes);
-	printf("TOTAL SIZE: %d\n\n", meta.total_bytes);
+	printf("TOTAL SIZE: %d\n\n", (int32_t)meta.total_bytes);
 }
 
 //Prints incoming instructions for debugging purposes

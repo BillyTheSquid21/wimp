@@ -17,9 +17,9 @@
 */
 typedef struct _WimpProcessData
 {
-	const char* process_domain;
-	int32_t process_port;
+	char* process_domain;
 	PSocket* process_connection;
+	int32_t process_port;
 	int32_t process_active;
 } *WimpProcessData;
 
@@ -35,7 +35,7 @@ typedef struct _WimpProcessTable
 /*
 * Creates a new process table.
 */
-WimpProcessTable wimp_create_process_table();
+WimpProcessTable wimp_create_process_table(void);
 
 /*
 * Adds a new process to the table.

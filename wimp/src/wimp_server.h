@@ -11,7 +11,7 @@
 
 typedef struct _WimpServer
 {
-	const char* process_name;
+	char* process_name;
 	PSocketAddress* addr;
 	PSocket* server;
 	WimpProcessTable ptable;
@@ -31,7 +31,7 @@ typedef struct _WimpServer
 * 
 * @return Returns the handle to the threads local server. Is null if uninitialized.
 */
-WimpServer* wimp_get_local_server();
+WimpServer* wimp_get_local_server(void);
 
 /*
 * Initializes the local thread server. Must be closed afterwards. The local thread
@@ -43,12 +43,12 @@ WimpServer* wimp_get_local_server();
 * 
 * @return Returns either WIMP_SERVER_SUCCESS or WIMP_SERVER_FAIL
 */
-int32_t wimp_init_local_server(const char* process_name, const char* domain, int32_t port);
+int32_t wimp_init_local_server(const char* process_name, char* domain, int32_t port);
 
 /*
 * Closes the local thread server.
 */
-void wimp_close_local_server();
+void wimp_close_local_server(void);
 
 /*
 * Sends instructions from the local server to another server via a reciever.
