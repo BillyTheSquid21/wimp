@@ -11,7 +11,7 @@
 
 typedef struct _WimpServer
 {
-	char* process_name;
+	const char* process_name;
 	PSocketAddress* addr;
 	PSocket* server;
 	WimpProcessTable ptable;
