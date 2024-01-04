@@ -230,8 +230,6 @@ int32_t wimp_server_send_instructions(WimpServer* server)
 		WimpProcessData data = NULL;
 		if (wimp_process_table_get(&data, server->ptable, currentn->instr.instruction) == WIMP_PROCESS_TABLE_SUCCESS)
 		{
-			printf("\nSending instr to: %s\n", (char*)currentn->instr.instruction);
-
 			memcpy(server->sendbuffer, currentn->instr.instruction, currentn->instr.instruction_bytes);
 			
 			//Print the instr
