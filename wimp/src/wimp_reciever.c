@@ -245,7 +245,6 @@ void wimp_reciever_recieve(RecieverArgs args)
 				if (strcmp(meta.instr, WIMP_INSTRUCTION_EXIT) == 0)
 				{
 					disconnect = true;
-					printf("Exit signal!\n");
 				}
 
 				WimpInstr instr = wimp_reciever_allocateinstr(&recbuffer[offset], meta.total_bytes);

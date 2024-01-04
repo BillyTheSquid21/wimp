@@ -34,6 +34,10 @@
 * - A thread_local server pointer limits instructions to being added from the
 *   server thread. This is a limit that could be changed.
 * 
+* - Currently all threads have equal priority when adding/popping - need to
+*   ensure that the server/popping thread has priority, otherwise if too
+*   many instructions are added the master thread may not be able to move on
+* 
 * These will be implemented once the simplistic approach works.
 */
 
