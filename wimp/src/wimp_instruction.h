@@ -1,16 +1,8 @@
-#ifndef WIMP_INSTRUCTION_H
-#define WIMP_INSTRUCTION_H
-
-#include <stdint.h>
-#include <string.h>
-#include <plibsys.h>
-#include <wimp_debug.h>
-
-#define WIMP_INSTRUCTION_SUCCESS 0
-#define WIMP_INSTRUCTION_FAIL -1
-#define WIMP_INSTRUCTION_EXIT "exit"
-
 /*
+* @file
+*
+* This header defines the interfaces to wimp instructions
+*
 * An instruction is formatted as such:
 * 
 * DESTPROCESS\0-SOURCEPROCESS\0-INSTRUCTION\0-ARG_BYTES-...
@@ -44,6 +36,18 @@
 * 
 * These will be implemented once the simplistic approach works.
 */
+
+#ifndef WIMP_INSTRUCTION_H
+#define WIMP_INSTRUCTION_H
+
+#include <stdint.h>
+#include <string.h>
+#include <plibsys.h>
+#include <wimp_debug.h>
+
+#define WIMP_INSTRUCTION_SUCCESS 0
+#define WIMP_INSTRUCTION_FAIL -1
+#define WIMP_INSTRUCTION_EXIT "exit"
 
 typedef struct _WimpInstr
 {

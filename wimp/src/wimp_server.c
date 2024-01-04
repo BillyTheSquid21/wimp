@@ -230,9 +230,18 @@ int32_t wimp_server_send_instructions(WimpServer* server)
 		WimpProcessData data = NULL;
 		if (wimp_process_table_get(&data, server->ptable, currentn->instr.instruction) == WIMP_PROCESS_TABLE_SUCCESS)
 		{
-			printf("Sending instr to: %s\n", (char*)currentn->instr.instruction);
+			printf("\nSending instr to: %s\n", (char*)currentn->instr.instruction);
+
 			memcpy(server->sendbuffer, currentn->instr.instruction, currentn->instr.instruction_bytes);
-			p_socket_send(data->process_connection, server->sendbuffer, currentn->instr.instruction_bytes, NULL);
+			
+			//Print the instr
+			WimpInstrMeta meta = wimp_get_instr_from_buffer(server->sendbuffer);
+			DEBUG_WIMP_PRINT_INSTRUCTION_META(meta);
+
+			if (currentn->instr.instruction_bytes < WIMP_MESSAGE_BUFFER_BYTES)
+			{
+				pssize sendres = p_socket_send(data->process_connection, server->sendbuffer, currentn->instr.instruction_bytes, NULL);
+			}
 			WIMP_ZERO_BUFFER(server->sendbuffer);
 		}
 		wimp_instr_node_free(currentn);

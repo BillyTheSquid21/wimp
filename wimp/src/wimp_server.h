@@ -1,3 +1,9 @@
+/**
+ * @file
+ *
+ * This header defines the interfaces to the wimp_server
+ */
+
 #ifndef WIMP_SERVER_H
 #define WIMP_SERVER_H
 
@@ -43,7 +49,7 @@ WimpServer* wimp_get_local_server(void);
 * 
 * @return Returns either WIMP_SERVER_SUCCESS or WIMP_SERVER_FAIL
 */
-int32_t wimp_init_local_server(const char* process_name, char* domain, int32_t port);
+int32_t wimp_init_local_server(const char* process_name, const char* domain, int32_t port);
 
 /*
 * Closes the local thread server.

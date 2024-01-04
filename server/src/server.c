@@ -111,9 +111,9 @@ int main(void)
 		while (currentnode != NULL)
 		{
 			WimpInstrMeta meta = wimp_get_instr_from_buffer(currentnode->instr.instruction);
-			printf("\nSERVER RECIEVE INSTR");
+			printf("\nSERVER RECIEVE INSTR\n");
 			DEBUG_WIMP_PRINT_INSTRUCTION_META(meta);
-
+			
 			if (strcmp(meta.instr, WIMP_INSTRUCTION_EXIT) == 0)
 			{
 				disconnect = true;
@@ -122,6 +122,7 @@ int main(void)
 			wimp_instr_node_free(currentnode);
 			currentnode = wimp_instr_queue_pop(&server->incomingmsg);
 		}
+		p_uthread_sleep(10); //CURRENTLY INSTRUCTIONS SEEM TO BE ABLE TO GET LOST
 	}
 
 	//Cleanup

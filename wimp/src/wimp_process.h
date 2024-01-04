@@ -1,3 +1,9 @@
+/**
+ * @file
+ *
+ * This header defines the interfaces to the wimp_process
+ */
+
 #ifndef WIMP_PROCESS_H
 #define WIMP_PROCESS_H
 

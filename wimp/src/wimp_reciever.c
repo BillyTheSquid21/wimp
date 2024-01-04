@@ -12,6 +12,17 @@ void wimp_reciever_recieve(RecieverArgs args);
 */
 WimpInstr wimp_reciever_allocateinstr(uint8_t* recbuffer, pssize size);
 
+/*
+* Initializes the sockets for the reciever and checks the handshake
+* 
+* @param recsock Pointer to the reciever socket
+* @param rec_address Pointer to the reciever address
+* @param args Reciever args
+* 
+* @return Returns either WIMP_RECIEVER_SUCCESS or WIMP_RECIEVER_FAIL
+*/
+int32_t wimp_reciever_init(PSocket** recsock, PSocketAddress** rec_address, RecieverArgs args);
+
 
 WimpInstrMeta wimp_get_instr_from_buffer(uint8_t* buffer)
 {
@@ -132,8 +143,8 @@ void wimp_free_reciever_args(RecieverArgs args)
 	free(args);
 }
 
-void wimp_reciever_recieve(RecieverArgs args)
-{	
+int32_t wimp_reciever_init(PSocket** recsock, PSocketAddress** rec_address, RecieverArgs args)
+{
 	WimpMsgBuffer recbuffer;
 	WimpMsgBuffer sendbuffer;
 	WIMP_ZERO_BUFFER(recbuffer); WIMP_ZERO_BUFFER(sendbuffer);
@@ -142,93 +153,112 @@ void wimp_reciever_recieve(RecieverArgs args)
 	//Then send handshake and process name
 	WimpHandshakeHeader header = wimp_create_handshake(args->process_name, sendbuffer);
 
-	PSocket* recsock;
-    PSocketAddress* rec_address;
-
-    //Construct address for client, which should be listening
-    rec_address = p_socket_address_new(args->recfrom_domain, args->recfrom_port);
-    if (rec_address == NULL)
+	//Construct address for client, which should be listening
+    *rec_address = p_socket_address_new(args->recfrom_domain, args->recfrom_port);
+    if (*rec_address == NULL)
     {
-		wimp_free_reciever_args(args);
-        p_uthread_exit(WIMP_RECIEVER_FAIL);
-        return;
+		WIMP_ZERO_BUFFER(sendbuffer);
+        return WIMP_RECIEVER_FAIL;
     }
 
     //Create the main listen/recieve socket - currently hard coded
-    recsock = p_socket_new(P_SOCKET_FAMILY_INET, P_SOCKET_TYPE_STREAM, P_SOCKET_PROTOCOL_TCP, NULL);
-    if (recsock == NULL)
+    *recsock = p_socket_new(P_SOCKET_FAMILY_INET, P_SOCKET_TYPE_STREAM, P_SOCKET_PROTOCOL_TCP, NULL);
+    if (*recsock == NULL)
     {
-		wimp_free_reciever_args(args);
-        p_uthread_exit(WIMP_RECIEVER_FAIL);
-        return;
+		WIMP_ZERO_BUFFER(sendbuffer);
+        return WIMP_RECIEVER_FAIL;
     }
 
     //Connect to end process, which should be waiting to accept
-    if (!p_socket_connect(recsock, rec_address, NULL))
+    if (!p_socket_connect(*recsock, *rec_address, NULL))
     {
-		wimp_free_reciever_args(args);
-        p_socket_address_free(rec_address);
-        p_socket_free(recsock);
+        p_socket_address_free(*rec_address);
+        p_socket_free(*recsock);
+		WIMP_ZERO_BUFFER(sendbuffer);
         printf("END PROCESS NOT WAITING!\n");
-        p_uthread_exit(WIMP_RECIEVER_FAIL);
-        return;
+        return WIMP_RECIEVER_FAIL;
     }
 
 	//Send the handshake
-	p_socket_send(recsock, sendbuffer, sizeof(WimpHandshakeHeader) + header.process_name_bytes, NULL);
+	p_socket_send(*recsock, sendbuffer, sizeof(WimpHandshakeHeader) + header.process_name_bytes, NULL);
 	WIMP_ZERO_BUFFER(sendbuffer);
 
 	//Read next handshake
-	pssize handshake_size = p_socket_receive(recsock, recbuffer, WIMP_MESSAGE_BUFFER_BYTES, NULL);
+	pssize handshake_size = p_socket_receive(*recsock, recbuffer, WIMP_MESSAGE_BUFFER_BYTES, NULL);
 
 	if (handshake_size <= 0)
 	{
-		wimp_free_reciever_args(args);
-        p_socket_address_free(rec_address);
-        p_socket_free(recsock);
-		p_uthread_exit(WIMP_RECIEVER_FAIL);
-        return;
+        p_socket_address_free(*rec_address);
+        p_socket_free(*recsock);
+		WIMP_ZERO_BUFFER(recbuffer);
+        return WIMP_RECIEVER_FAIL;
 	}
 
 	//Check start of handshake
 	WimpHandshakeHeader* recheader = (WimpHandshakeHeader*)recbuffer;
 	if (recheader->handshake_header != WIMP_RECIEVER_HANDSHAKE)
 	{
+        p_socket_address_free(*rec_address);
+        p_socket_free(*recsock);
 		WIMP_ZERO_BUFFER(recbuffer);
-		wimp_free_reciever_args(args);
-        p_socket_address_free(rec_address);
-        p_socket_free(recsock);
 		printf("HANDSHAKE FAILED!\n");
+		return WIMP_RECIEVER_FAIL;
+	}
+	WIMP_ZERO_BUFFER(recbuffer);
+
+	printf("RECIEVER HANDSHAKE SUCCESS!\n");
+	return WIMP_RECIEVER_SUCCESS;
+}
+
+void wimp_reciever_recieve(RecieverArgs args)
+{	
+	WimpMsgBuffer recbuffer;
+	WimpMsgBuffer sendbuffer;
+	WIMP_ZERO_BUFFER(recbuffer); WIMP_ZERO_BUFFER(sendbuffer);
+
+	//Initialize the sockets for the reciever and send handshake
+	PSocket* recsock;
+    PSocketAddress* rec_address;
+	if (wimp_reciever_init(&recsock, &rec_address, args) == WIMP_RECIEVER_FAIL)
+	{
+		wimp_free_reciever_args(args);
 		p_uthread_exit(WIMP_RECIEVER_FAIL);
 		return;
 	}
-	printf("RECIEVER HANDSHAKE SUCCESS!\n");
-	WIMP_ZERO_BUFFER(recbuffer);
 
 	bool disconnect = false;
 	while (!disconnect)
 	{
 		pssize incoming_size = p_socket_receive(recsock, recbuffer, WIMP_MESSAGE_BUFFER_BYTES, NULL);
-		WimpInstrMeta meta = wimp_get_instr_from_buffer(recbuffer);
 		
-		if (meta.source_process != NULL && incoming_size > 0)
+		//Go get instruction at each offset (may be multiple)
+		//Should not be able to overrun, as if a malicious target says they sent more bytes than they actually did, will just send
+		//a load of zeros - I hope!
+		pssize offset = 0;
+		while (offset < incoming_size)
 		{
-			DEBUG_WIMP_PRINT_INSTRUCTION_META(meta);
-
-			if (strcmp(meta.instr, WIMP_INSTRUCTION_EXIT) == 0)
+			WimpInstrMeta meta = wimp_get_instr_from_buffer(&recbuffer[offset]);
+			if (meta.source_process != NULL && incoming_size > 0)
 			{
-				disconnect = true;
-				printf("Exit signal!\n");
+				DEBUG_WIMP_PRINT_INSTRUCTION_META(meta);
+
+				if (strcmp(meta.instr, WIMP_INSTRUCTION_EXIT) == 0)
+				{
+					disconnect = true;
+					printf("Exit signal!\n");
+				}
+
+				WimpInstr instr = wimp_reciever_allocateinstr(&recbuffer[offset], meta.total_bytes);
+				wimp_instr_queue_add(args->incoming_queue, instr.instruction, instr.instruction_bytes);			
 			}
 
-			WimpInstr instr = wimp_reciever_allocateinstr(recbuffer, meta.total_bytes);
-			wimp_instr_queue_add(args->incoming_queue, instr.instruction, instr.instruction_bytes);			
-		}
-
-		if (incoming_size == 0)
-		{
-			printf("Reciever connection terminated! %s\n", args->process_name);
-			disconnect = true;
+			if (incoming_size == 0)
+			{
+				printf("Reciever connection terminated! %s\n", args->process_name);
+				disconnect = true;
+			}
+			
+			offset += meta.total_bytes;
 		}
 		WIMP_ZERO_BUFFER(recbuffer);
 	}

@@ -1,3 +1,9 @@
+/**
+ * @file
+ *
+ * This header defines the interfaces to the wimp_reciever
+ */
+
 #ifndef WIMP_RECIEVER_H
 #define WIMP_RECIEVER_H
 

@@ -38,7 +38,6 @@ int32_t wimp_instr_queue_add(WimpInstrQueue* queue, void* instr, size_t bytes)
 	}
 
 	p_mutex_unlock(queue->_queuemutex);
-	printf("Added instr to incoming: %s\n", (char*)new_node->instr.instruction);
 	return WIMP_INSTRUCTION_SUCCESS;
 }
 
