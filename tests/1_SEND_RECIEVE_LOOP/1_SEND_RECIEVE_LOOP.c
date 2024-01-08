@@ -158,7 +158,7 @@ int main(void)
 		WimpInstrNode currentnode = wimp_instr_queue_pop(&server->incomingmsg);
 		while (currentnode != NULL)
 		{
-			WimpInstrMeta meta = wimp_get_instr_from_buffer(currentnode->instr.instruction);
+			WimpInstrMeta meta = wimp_get_instr_from_buffer(currentnode->instr.instruction, currentnode->instr.instruction_bytes);
 			printf("\nMaster recieved instruction:");
 			DEBUG_WIMP_PRINT_INSTRUCTION_META(meta);
 

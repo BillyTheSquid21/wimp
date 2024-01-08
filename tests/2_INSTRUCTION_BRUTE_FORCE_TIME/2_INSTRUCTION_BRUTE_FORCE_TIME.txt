@@ -2,7 +2,7 @@ This test should do the following:
 
 - Sets up a master process, and a child process
 - Both correctly connect to each other
-- The child then sends 1,000,000 short instructions to the master, then 50,000 long ones with the time per instruction average being measured (each instruction only increments a counter)
+- The child then sends 1,000,000 short instructions to the master, then 500,000 long ones with the time per instruction average being measured (each instruction only increments a counter)
 
 Checks:
 
