@@ -1,6 +1,16 @@
 #include <wimp_reciever.h>
 
 /*
+* Represents the state the reciever is in
+*/
+enum RecieverState
+{
+	REC_IDLE,
+	REC_READING_INSTRUCTION,
+	//TODO - add other states
+};
+
+/*
 * Reciever loop
 * 
 * @param args The arguments to pass to the reciever
@@ -10,7 +20,7 @@ void wimp_reciever_recieve(RecieverArgs args);
 /*
 * Allocates the instruction for the incoming queue
 */
-WimpInstr wimp_reciever_allocateinstr(uint8_t* recbuffer, pssize size);
+WimpInstr wimp_reciever_allocateinstr(pssize size);
 
 /*
 * Initializes the sockets for the reciever and checks the handshake
@@ -24,7 +34,7 @@ WimpInstr wimp_reciever_allocateinstr(uint8_t* recbuffer, pssize size);
 int32_t wimp_reciever_init(PSocket** recsock, PSocketAddress** rec_address, RecieverArgs args);
 
 
-WimpInstrMeta wimp_get_instr_from_buffer(uint8_t* buffer)
+WimpInstrMeta wimp_get_instr_from_buffer(uint8_t* buffer, size_t buffsize)
 {
 	WimpInstrMeta instr;
 	instr.arg_bytes = 0;
@@ -35,19 +45,26 @@ WimpInstrMeta wimp_get_instr_from_buffer(uint8_t* buffer)
 	instr.instr_bytes = 0;
 	instr.total_bytes = 0;
 
-	//Dest process must be start of buffer. If first char is \0, this is a
+	//if buffer is nullptr, was unable to allocate!
+	if (buffer == NULL)
+	{
+		printf("Attempting to get instr from invalid buffer!\n");
+		return instr;
+	}
+
+	//Size of the full instruction is the start of the buffer - if is \0 is a
 	//ping packet so return as is
 	if (buffer[0] == '\0')
 	{
 		return instr;
 	}
 
-	instr.dest_process = &buffer[0];
+	instr.dest_process = &buffer[WIMP_INSTRUCTION_DEST_OFFSET];
 
 	//Find start of source process
 	char current_char = ' ';
-	size_t offset = 1;
-	while (current_char != '\0' && offset < WIMP_MESSAGE_BUFFER_BYTES - 1)
+	size_t offset = WIMP_INSTRUCTION_DEST_OFFSET + 1;
+	while (current_char != '\0' && offset < buffsize)
 	{
 		current_char = (char)buffer[offset];
 		offset++;
@@ -58,7 +75,7 @@ WimpInstrMeta wimp_get_instr_from_buffer(uint8_t* buffer)
 	current_char = ' ';
 
 	//Find start of instruction
-	while (current_char != '\0' && offset < WIMP_MESSAGE_BUFFER_BYTES - 1)
+	while (current_char != '\0' && offset < buffsize)
 	{
 		current_char = (char)buffer[offset];
 		offset++;
@@ -69,7 +86,7 @@ WimpInstrMeta wimp_get_instr_from_buffer(uint8_t* buffer)
 	current_char = ' ';
 
 	//Find start of arg bytes
-	while (current_char != '\0' && offset < WIMP_MESSAGE_BUFFER_BYTES - 1)
+	while (current_char != '\0' && offset < buffsize)
 	{
 		current_char = (char)buffer[offset];
 		offset++;
@@ -83,9 +100,14 @@ WimpInstrMeta wimp_get_instr_from_buffer(uint8_t* buffer)
 		instr.args = &buffer[offset];
 	}
 	
-	instr.total_bytes = offset + instr.arg_bytes;
+	instr.total_bytes = *(int32_t*)&buffer[0];
 
 	return instr;
+}
+
+int32_t wimp_get_instr_size(uint8_t* buffer)
+{
+	return *(uint32_t*)buffer;
 }
 
 WimpHandshakeHeader wimp_create_handshake(const char* process_name, uint8_t* message_buffer)
@@ -226,40 +248,95 @@ void wimp_reciever_recieve(RecieverArgs args)
 		return;
 	}
 
+	//Test connecting packets - if a packet gets split, rebuild it here
+	WimpMsgBuffer repbuffer;
+	WIMP_ZERO_BUFFER(repbuffer);
+
+	int32_t reciever_state = REC_IDLE;
+	int32_t instr_size_read = 0;
+	size_t recbuff_offset = 0;
+	WimpInstr instr;
+
+	pssize incoming_size = 0;
 	bool disconnect = false;
 	while (!disconnect)
 	{
-		pssize incoming_size = p_socket_receive(recsock, recbuffer, WIMP_MESSAGE_BUFFER_BYTES, NULL);
-		
-		//Go get instruction at each offset (may be multiple)
-		//Should not be able to overrun, as if a malicious target says they sent more bytes than they actually did, will just send
-		//a load of zeros - I hope!
-		pssize offset = 0;
-		while (offset < incoming_size)
+		//IDLE STATE
+		//Idle will sit and poll recieve
+		if (reciever_state == REC_IDLE)
 		{
-			WimpInstrMeta meta = wimp_get_instr_from_buffer(&recbuffer[offset]);
-			if (meta.source_process != NULL && incoming_size > 0)
-			{
-				DEBUG_WIMP_PRINT_INSTRUCTION_META(meta);
-
-				if (strcmp(meta.instr, WIMP_INSTRUCTION_EXIT) == 0)
-				{
-					disconnect = true;
-				}
-
-				WimpInstr instr = wimp_reciever_allocateinstr(&recbuffer[offset], meta.total_bytes);
-				wimp_instr_queue_add(args->incoming_queue, instr.instruction, instr.instruction_bytes);			
-			}
-
+			incoming_size = p_socket_receive(recsock, recbuffer, WIMP_MESSAGE_BUFFER_BYTES, NULL);
 			if (incoming_size == 0)
 			{
-				printf("Reciever connection terminated! %s\n", args->process_name);
+				continue;
+			}
+
+			//If something recieved, is reading instr state from idle
+			reciever_state = REC_READING_INSTRUCTION;
+		}
+
+		//READING INSTR STATE
+		//Reading will pull in all availible instructions until an empty point is hit
+		if (reciever_state == REC_READING_INSTRUCTION)
+		{
+			int32_t instr_size_bytes = wimp_get_instr_size(&recbuffer[recbuff_offset]);
+			if (instr_size_bytes == 0)
+			{
+				reciever_state = REC_IDLE;
+				instr_size_read = 0;
+				recbuff_offset = 0;
+				instr.instruction = NULL;
+				instr.instruction_bytes = 0;
+				WIMP_ZERO_BUFFER(recbuffer);
+				continue;
+			}
+
+			//Allocate instr and loop until read
+			instr = wimp_reciever_allocateinstr(instr_size_bytes);
+			while (instr_size_read < instr_size_bytes)
+			{
+				int32_t size_left = instr_size_bytes - instr_size_read;
+				int32_t bytes_to_buff_end = WIMP_MESSAGE_BUFFER_BYTES - recbuff_offset;
+
+				if (size_left <= bytes_to_buff_end)
+				{
+					memcpy(&instr.instruction[instr_size_read], &recbuffer[recbuff_offset], size_left);
+					instr_size_read += size_left;
+					if (size_left == bytes_to_buff_end)
+					{
+						recbuff_offset = 0;
+					}
+					else
+					{
+						recbuff_offset += size_left;
+					}
+					break;
+				}
+				
+				//Otherwise read what can be read and rec
+				memcpy(&instr.instruction[instr_size_read], &recbuffer[recbuff_offset], bytes_to_buff_end);
+				instr_size_read += bytes_to_buff_end;
+
+				WIMP_ZERO_BUFFER(recbuffer);
+				incoming_size = p_socket_receive(recsock, recbuffer, WIMP_MESSAGE_BUFFER_BYTES, NULL);
+				recbuff_offset = 0;
+			}
+
+			//Add the complete instruction
+			//Ensure to check for the special signals here
+			WimpInstrMeta meta = wimp_get_instr_from_buffer(instr.instruction, instr.instruction_bytes);
+			if (strcmp(meta.instr, "exit") == 0)
+			{
+				printf("Reciever thread closing!: %s\n", args->process_name);
 				disconnect = true;
 			}
-			
-			offset += meta.total_bytes;
+			DEBUG_WIMP_PRINT_INSTRUCTION_META(meta);
+
+			wimp_instr_queue_add(args->incoming_queue, instr.instruction, instr.instruction_bytes);
+			instr.instruction = NULL;
+			instr.instruction_bytes = 0;
+			instr_size_read = 0;
 		}
-		WIMP_ZERO_BUFFER(recbuffer);
 	}
 
 	WIMP_ZERO_BUFFER(recbuffer);
@@ -347,7 +424,7 @@ int32_t wimp_start_reciever_thread(const char* recfrom_name, const char* process
 	return WIMP_RECIEVER_SUCCESS;
 }
 
-WimpInstr wimp_reciever_allocateinstr(uint8_t* recbuffer, pssize size)
+WimpInstr wimp_reciever_allocateinstr(pssize size)
 {
 	WimpInstr instr = { NULL, 0 };
 
@@ -356,8 +433,7 @@ WimpInstr wimp_reciever_allocateinstr(uint8_t* recbuffer, pssize size)
 	{
 		return instr;
 	}
-
-	memcpy(i, recbuffer, size);
+	
 	instr.instruction = i;
 	instr.instruction_bytes = size;
 	return instr;

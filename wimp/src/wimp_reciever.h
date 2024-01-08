@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include <assert.h>
 
 #include <plibsys.h>
 #include <pmacros.h>
@@ -103,7 +104,16 @@ static void _debug_wimp_print_instruction_meta(WimpInstrMeta meta)
 * 
 * @return Returns the metadata of the instruction
 */
-WimpInstrMeta wimp_get_instr_from_buffer(uint8_t* buffer);
+WimpInstrMeta wimp_get_instr_from_buffer(uint8_t* buffer, size_t buffsize);
+
+/*
+* Gets the instruction size header
+* 
+* @param buffer The buffer to extract from
+* 
+* @return Returns the size of the instruction
+*/
+int32_t wimp_get_instr_size(uint8_t* buffer);
 
 /*
 * Creates the handshake in the supplied message buffer and returns the header

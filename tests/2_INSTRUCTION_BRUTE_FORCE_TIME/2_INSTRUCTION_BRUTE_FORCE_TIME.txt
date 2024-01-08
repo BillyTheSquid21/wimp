@@ -8,3 +8,4 @@ Checks:
 
 - Processes are set up correctly
 - Program runs to completion
+- All instructions arrived

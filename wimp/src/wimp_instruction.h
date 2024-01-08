@@ -5,7 +5,7 @@
 *
 * An instruction is formatted as such:
 * 
-* DESTPROCESS\0-SOURCEPROCESS\0-INSTRUCTION\0-ARG_BYTES-...
+* TOTAL_BYTES-DESTPROCESS\0-SOURCEPROCESS\0-INSTRUCTION\0-ARG_BYTES-...
 * 
 * An individual instruction can only be up to WIMP_MESSAGE_BUFFER_BYTES long.
 * 
@@ -47,15 +47,17 @@
 #include <stdint.h>
 #include <string.h>
 #include <plibsys.h>
+#include <assert.h>
 #include <wimp_debug.h>
 
 #define WIMP_INSTRUCTION_SUCCESS 0
 #define WIMP_INSTRUCTION_FAIL -1
 #define WIMP_INSTRUCTION_EXIT "exit"
+#define WIMP_INSTRUCTION_DEST_OFFSET sizeof(int32_t)
 
 typedef struct _WimpInstr
 {
-	void* instruction;
+	uint8_t* instruction;
 	size_t instruction_bytes;
 } WimpInstr;
 

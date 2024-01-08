@@ -11,11 +11,15 @@
 PASSMAT PASS_MATRIX[] =
 {
 	{ "PROCESS VALIDATION", false },
+	{ "SHORT INSTRUCTIONS ARRIVED", false},
+	{ "LONG INSTRUCTIONS ARRIVED", false}
 };
 
 enum TEST_ENUMS
 {
 	STEP_PROCESS_VALIDATION,
+	SHORT_INSTRUCTIONS_ARRIVED,
+	LONG_INSTRUCTIONS_ARRIVED,
 };
 
 #define SHORT_INSTR_COUNT 1000000
@@ -108,6 +112,11 @@ int client_main_entry(int argc, char** argv)
 	wimp_server_send_instructions(server);
 	printf("Done!\n");
 
+	//Exit
+	wimp_send_local_server("master", "exit", NULL, 0);
+	wimp_server_send_instructions(server);
+	p_uthread_sleep(10000);
+
 	//This should also shut down the reciever
 	printf("Client thread closed\n");
 	wimp_close_local_server();
@@ -179,7 +188,7 @@ int main(void)
 		WimpInstrNode currentnode = wimp_instr_queue_pop(&server->incomingmsg);
 		while (currentnode != NULL)
 		{
-			WimpInstrMeta meta = wimp_get_instr_from_buffer(currentnode->instr.instruction);
+			WimpInstrMeta meta = wimp_get_instr_from_buffer(currentnode->instr.instruction, currentnode->instr.instruction_bytes);
 			if (strcmp(meta.instr, "incr_sht") == 0)
 			{
 				if (inc_sht_counter % (SHORT_INSTR_COUNT / 10) == 0)
@@ -214,6 +223,17 @@ int main(void)
 		p_uthread_sleep(1); //Ensures the queue doesn't lock up
 	}
 
+	//Validate all instructions arrived
+	if (inc_sht_counter / SHORT_INSTR_COUNT == 1)
+	{
+		PASS_MATRIX[SHORT_INSTRUCTIONS_ARRIVED].status = true;
+	}
+
+	if (inc_lng_counter / LONG_INSTR_COUNT == 1)
+	{
+		PASS_MATRIX[LONG_INSTRUCTIONS_ARRIVED].status = true;
+	}
+
 	//Cleanup
 	printf("Master thread closed\n");
 	wimp_close_local_server();
@@ -221,6 +241,6 @@ int main(void)
 	//Cleanup
 	p_libsys_shutdown();
 
-	wimp_test_validate_passmat(PASS_MATRIX, 1);
+	wimp_test_validate_passmat(PASS_MATRIX, 3);
 	return 0;
 }

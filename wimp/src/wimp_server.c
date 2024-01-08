@@ -44,11 +44,12 @@ void wimp_send_local_server(const char* dest, const char* instr, void* args, siz
 	}
 
 	//Work out formatted size
+	size_t header_bytes = sizeof(int32_t);
 	size_t destp_bytes = (strlen(dest) + 1) * sizeof(char);
 	size_t sourcep_bytes = (strlen(_local_server->process_name) + 1) * sizeof(char);
 	size_t instr_bytes = (strlen(instr) + 1) * sizeof(char);
 	size_t arglen_bytes = sizeof(int32_t);
-	size_t total_bytes = sourcep_bytes + destp_bytes + instr_bytes + arglen_bytes + arg_size_bytes;
+	size_t total_bytes = header_bytes + sourcep_bytes + destp_bytes + instr_bytes + arglen_bytes + arg_size_bytes;
 
 	//Create a buffer and add the instructions
 	uint8_t* instrbuff = malloc(total_bytes);
@@ -58,6 +59,9 @@ void wimp_send_local_server(const char* dest, const char* instr, void* args, siz
 	}
 
 	size_t offset = 0;
+
+	memcpy(&instrbuff[offset], &total_bytes, header_bytes);
+	offset += header_bytes;
 
 	memcpy(&instrbuff[offset], dest, destp_bytes);
 	offset += destp_bytes;
@@ -228,12 +232,12 @@ int32_t wimp_server_send_instructions(WimpServer* server)
 		//Get process con - as starts with null term string can use start
 		//of buffer as lookup
 		WimpProcessData data = NULL;
-		if (wimp_process_table_get(&data, server->ptable, currentn->instr.instruction) == WIMP_PROCESS_TABLE_SUCCESS)
+		if (wimp_process_table_get(&data, server->ptable, &currentn->instr.instruction[WIMP_INSTRUCTION_DEST_OFFSET]) == WIMP_PROCESS_TABLE_SUCCESS)
 		{
 			memcpy(server->sendbuffer, currentn->instr.instruction, currentn->instr.instruction_bytes);
 			
 			//Print the instr
-			WimpInstrMeta meta = wimp_get_instr_from_buffer(server->sendbuffer);
+			WimpInstrMeta meta = wimp_get_instr_from_buffer(server->sendbuffer, WIMP_MESSAGE_BUFFER_BYTES);
 			DEBUG_WIMP_PRINT_INSTRUCTION_META(meta);
 
 			if (currentn->instr.instruction_bytes < WIMP_MESSAGE_BUFFER_BYTES)
