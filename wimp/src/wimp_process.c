@@ -1,12 +1,13 @@
 #include <wimp_process.h>
+#include <wimp_log.h>
 
 int32_t wimp_start_library_process(const char* process_name, MAIN_FUNC_PTR main_func, WimpMainEntry entry)
 {
-	printf("Starting %s!\n", process_name);
+	wimp_log("Starting %s!\n", process_name);
 	PUThread* process_thread = p_uthread_create((PUThreadFunc)main_func, entry, false, process_name);
 	if (process_thread == NULL)
 	{
-		printf("Failed to create thread: %s", process_name);
+		wimp_log("Failed to create thread: %s", process_name);
 		return WIMP_PROCESS_FAIL;
 	}
 	return WIMP_PROCESS_SUCCESS;
@@ -116,6 +117,6 @@ int32_t wimp_assign_unused_local_port()
 int32_t wimp_port_to_string(int32_t port, char* string_out)
 {
 	memset(string_out, 0, MAX_PORT_STRING_LEN);
-	sprintf(string_out, "%d", port);
+	swimp_log(string_out, "%d", port);
 	return WIMP_PROCESS_SUCCESS;
 }

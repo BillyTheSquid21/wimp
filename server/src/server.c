@@ -9,7 +9,7 @@
 
 int client_main_entry(int argc, char** argv)
 {
-	printf("Test process!\n");
+	wimp_log("Test process!\n");
 
 	//Default this domain and port
 	const char* process_domain = "127.0.0.1";
@@ -45,13 +45,13 @@ int client_main_entry(int argc, char** argv)
 	//starting process
 	wimp_server_process_accept(server, "master");
 
-	wimp_send_local_server("master", "test", NULL, 0);
-	wimp_send_local_server("master", "test2", NULL, 0);
-	wimp_send_local_server("master", "exit", NULL, 0);
+	wimp_add_local_server("master", "test", NULL, 0);
+	wimp_add_local_server("master", "test2", NULL, 0);
+	wimp_add_local_server("master", "exit", NULL, 0);
 	wimp_server_send_instructions(server);
 
 	// Cleanup
-	printf("Server thread closed: %p\n", server->server);
+	wimp_log("Server thread closed: %p\n", server->server);
 	wimp_close_local_server();
 
 	return 0;
@@ -61,7 +61,7 @@ int client_main_lib_entry(WimpMainEntry entry)
 {
 	int res = client_main_entry(entry->argc, entry->argv);
 	wimp_free_entry(entry);
-	printf("Finishing test process!\n");
+	wimp_log("Finishing test process!\n");
 	return res;
 }
 
@@ -101,7 +101,7 @@ int main(void)
 
 	if (wimp_server_validate_process(server, "test_process"))
 	{
-		printf("Process Validated!\n");
+		wimp_log("Process Validated!\n");
 	}
 
 	bool disconnect = false;
@@ -124,7 +124,7 @@ int main(void)
 	}
 
 	//Cleanup
-	printf("Server thread closed: %p\n", server->server);
+	wimp_log("Server thread closed: %p\n", server->server);
 	wimp_close_local_server();
 
 	//Cleanup

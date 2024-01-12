@@ -7,6 +7,7 @@
 #include <wimp_server.h>
 #include <wimp_instruction.h>
 #include <wimp_test.h>
+#include <wimp_log.h>
 
 PASSMAT PASS_MATRIX[] =
 {
@@ -26,8 +27,8 @@ enum TEST_ENUMS
 	LONG_BATCH_ARRIVED
 };
 
-#define SHORT_INSTR_COUNT 50000000
-#define LONG_INSTR_COUNT 10000000
+#define SHORT_INSTR_COUNT 500000
+#define LONG_INSTR_COUNT 100000
 
 /*
 * This is an example client main. It takes the domains and ports as cmd arguments and creates and starts a server.
@@ -35,7 +36,7 @@ enum TEST_ENUMS
 */
 int client_main_entry(int argc, char** argv)
 {
-	printf("Test process!\n");
+	wimp_log("Test process!\n");
 
 	int32_t writebuffer = 0;
 
@@ -61,7 +62,7 @@ int client_main_entry(int argc, char** argv)
 	}
 
 	//Create a server local to this thread
-	wimp_init_local_server("test_process", "127.0.0.1", process_port);
+	wimp_init_local_server("test_process", "127.0.0.1", process_port, WIMP_SERVERTYPE_MASTER);
 	WimpServer* server = wimp_get_local_server();
 
 	//Start a reciever thread for the master process that called this thread
@@ -78,104 +79,104 @@ int client_main_entry(int argc, char** argv)
 	
 	//Instruction 1 - This sends the short instruction - in one go
 	timer_start(&PASS_MATRIX[SHORT_INSTRUCTIONS_ARRIVED].timer);
-	printf("Sending %d short instructions...\n", SHORT_INSTR_COUNT);
+	wimp_log("Sending %d short instructions...\n", SHORT_INSTR_COUNT);
 	for (int32_t i = 0; i < SHORT_INSTR_COUNT; ++i)
 	{
-		wimp_send_local_server("master", "incr_sht", NULL, 0);
+		wimp_add_local_server("master", "incr_sht", NULL, 0);
 		if (i % (SHORT_INSTR_COUNT / 10) == 0)
 		{
 			float pc = (float)i / (float)SHORT_INSTR_COUNT;
 			pc *= 100.0f;
 
-			printf("%f pc added!\n", pc);
+			wimp_log("%f pc added!\n", pc);
 		}
 	}
-	printf("Done!\n");
+	wimp_log("Done!\n");
 
 	//This tells the server to send off the instructions
-	printf("Sending...\n");
+	wimp_log("Sending...\n");
 	wimp_server_send_instructions(server);
-	printf("Done!\n");
+	wimp_log("Done!\n");
 
 	//Instruction 2 - This sends the long instruction - in one go
 	timer_start(&PASS_MATRIX[LONG_INSTRUCTIONS_ARRIVED].timer);
 	int32_t long_instr_args[64];
 	memset(long_instr_args, 64, 64);
 
-	printf("Sending %d long instructions...\n", LONG_INSTR_COUNT);
+	wimp_log("Sending %d long instructions...\n", LONG_INSTR_COUNT);
 	for (int32_t i = 0; i < LONG_INSTR_COUNT; ++i)
 	{
-		wimp_send_local_server("master", "increment_counter_long", &long_instr_args[0], 64 * sizeof(int32_t));
+		wimp_add_local_server("master", "increment_counter_long", &long_instr_args[0], 64 * sizeof(int32_t));
 		if (i % (LONG_INSTR_COUNT / 10) == 0)
 		{
 			float pc = (float)i / (float)LONG_INSTR_COUNT;
 			pc *= 100.0f;
 
-			printf("%f pc added!\n", pc);
+			wimp_log("%f pc added!\n", pc);
 		}
 	}
-	printf("Done!\n");
+	wimp_log("Done!\n");
 
 	//This tells the server to send off the instructions
-	printf("Sending...\n");
+	wimp_log("Sending...\n");
 	wimp_server_send_instructions(server);
-	printf("Done!\n");
+	wimp_log("Done!\n");
 
 	//Instruction 3 - This sends the short instruction - in batches of 1000 of the total
 	timer_start(&PASS_MATRIX[SHORT_BATCH_ARRIVED].timer);
-	printf("Sending %d short instructions in batch...\n", SHORT_INSTR_COUNT);
+	wimp_log("Sending %d short instructions in batch...\n", SHORT_INSTR_COUNT);
 	for (int32_t i = 0; i < SHORT_INSTR_COUNT; ++i)
 	{
-		wimp_send_local_server("master", "shrt_btc", NULL, 0);
+		wimp_add_local_server("master", "shrt_btc", NULL, 0);
 		if (i % (SHORT_INSTR_COUNT / 10) == 0)
 		{
 			float pc = (float)i / (float)SHORT_INSTR_COUNT;
 			pc *= 100.0f;
 
-			printf("%f pc added!\n", pc);
+			wimp_log("%f pc added!\n", pc);
 		}
 		if (i % 1000 == 0)
 		{
 			wimp_server_send_instructions(server);
 		}
 	}
-	printf("Done!\n");
+	wimp_log("Done!\n");
 
-	printf("Sending...\n");
+	wimp_log("Sending...\n");
 	wimp_server_send_instructions(server); //just in case
-	printf("Done!\n");
+	wimp_log("Done!\n");
 
 	//Instruction 4 - This sends the long instruction - in batches of 1000 of the total
 	timer_start(&PASS_MATRIX[LONG_BATCH_ARRIVED].timer);
-	printf("Sending %d long instructions in batch...\n", LONG_INSTR_COUNT);
+	wimp_log("Sending %d long instructions in batch...\n", LONG_INSTR_COUNT);
 	for (int32_t i = 0; i < LONG_INSTR_COUNT; ++i)
 	{
-		wimp_send_local_server("master", "batched64_counter_long", NULL, 0);
+		wimp_add_local_server("master", "batched64_counter_long", NULL, 0);
 		if (i % (LONG_INSTR_COUNT / 10) == 0)
 		{
 			float pc = (float)i / (float)LONG_INSTR_COUNT;
 			pc *= 100.0f;
 
-			printf("%f pc added!\n", pc);
+			wimp_log("%f pc added!\n", pc);
 		}
 		if (i % 1000 == 0)
 		{
 			wimp_server_send_instructions(server);
 		}
 	}
-	printf("Done!\n");
+	wimp_log("Done!\n");
 
-	printf("Sending...\n");
+	wimp_log("Sending...\n");
 	wimp_server_send_instructions(server); //just in case
-	printf("Done!\n");
+	wimp_log("Done!\n");
 
 	//Exit
-	wimp_send_local_server("master", "exit", NULL, 0);
+	wimp_add_local_server("master", "exit", NULL, 0);
 	wimp_server_send_instructions(server);
 	p_uthread_sleep(10000);
 
 	//This should also shut down the reciever
-	printf("Client thread closed\n");
+	wimp_log("Client thread closed\n");
 	wimp_close_local_server();
 
 	return 0;
@@ -216,7 +217,7 @@ int main(void)
 	wimp_start_library_process("test_process", &client_main_lib_entry, entry);
 
 	//Start a local server for the master process
-	wimp_init_local_server("master", "127.0.0.1", master_port);
+	wimp_init_local_server("master", "127.0.0.1", master_port, WIMP_SERVERTYPE_MASTER);
 	WimpServer* server = wimp_get_local_server();
 
 	//Start a reciever thread for the client process that the master started
@@ -232,7 +233,7 @@ int main(void)
 	//Validate that the process correctly started. Sends a ping packet to make sure is listening
 	if (wimp_server_validate_process(server, "test_process"))
 	{
-		printf("Process validated!\n");
+		wimp_log("Process validated!\n");
 		PASS_MATRIX[STEP_PROCESS_VALIDATION].status = true;
 	}
 
@@ -255,7 +256,7 @@ int main(void)
 					float pc = (float)inc_sht_counter / (float)SHORT_INSTR_COUNT;
 					pc *= 100.0f;
 
-					printf("%f pc short recieved!\n", pc);
+					wimp_log("%f pc short recieved!\n", pc);
 				}
 				inc_sht_counter++;
 
@@ -271,7 +272,7 @@ int main(void)
 					float pc = (float)inc_lng_counter / (float)LONG_INSTR_COUNT;
 					pc *= 100.0f;
 
-					printf("%f pc long recieved!\n", pc);
+					wimp_log("%f pc long recieved!\n", pc);
 				}
 				inc_lng_counter++;
 
@@ -287,7 +288,7 @@ int main(void)
 					float pc = (float)inc_sht_btch_counter / (float)SHORT_INSTR_COUNT;
 					pc *= 100.0f;
 
-					printf("%f pc short batch recieved!\n", pc);
+					wimp_log("%f pc short batch recieved!\n", pc);
 				}
 				inc_sht_btch_counter++;
 
@@ -303,7 +304,7 @@ int main(void)
 					float pc = (float)inc_lng_btch_counter / (float)LONG_INSTR_COUNT;
 					pc *= 100.0f;
 
-					printf("%f pc long batch recieved!\n", pc);
+					wimp_log("%f pc long batch recieved!\n", pc);
 				}
 				inc_lng_btch_counter++;
 
@@ -314,7 +315,7 @@ int main(void)
 			}
 			else if (strcmp(meta.instr, WIMP_INSTRUCTION_EXIT) == 0)
 			{
-				printf("\n");
+				wimp_log("\n");
 				disconnect = true;
 			}
 
@@ -347,27 +348,27 @@ int main(void)
 
 	//Print benchmark status as this is not a default thing
 	float s1time = get_time_elapsed(PASS_MATRIX[SHORT_INSTRUCTIONS_ARRIVED].timer);
-	printf("\nStep 1 time taken: %f s\n", s1time);
-	printf("\nStep 1 time per instr: %f ms\n", (s1time / (float)SHORT_INSTR_COUNT) * 1000.0f);
-	printf("\nStep 1 instr per second: %f\n", (float)SHORT_INSTR_COUNT / s1time);
+	wimp_log("\nStep 1 time taken: %f s\n", s1time);
+	wimp_log("\nStep 1 time per instr: %f ms\n", (s1time / (float)SHORT_INSTR_COUNT) * 1000.0f);
+	wimp_log("\nStep 1 instr per second: %f\n", (float)SHORT_INSTR_COUNT / s1time);
 
 	float s2time = get_time_elapsed(PASS_MATRIX[LONG_INSTRUCTIONS_ARRIVED].timer);
-	printf("\nStep 2 time taken: %f s\n", s2time);
-	printf("\nStep 2 time per instr: %f ms\n", (s2time / (float)LONG_INSTR_COUNT) * 1000.0f);
-	printf("\nStep 2 instr per second: %f\n", (float)LONG_INSTR_COUNT / s2time);
+	wimp_log("\nStep 2 time taken: %f s\n", s2time);
+	wimp_log("\nStep 2 time per instr: %f ms\n", (s2time / (float)LONG_INSTR_COUNT) * 1000.0f);
+	wimp_log("\nStep 2 instr per second: %f\n", (float)LONG_INSTR_COUNT / s2time);
 
 	float s3time = get_time_elapsed(PASS_MATRIX[SHORT_BATCH_ARRIVED].timer);
-	printf("\nStep 3 time taken: %f s\n", s3time);
-	printf("\nStep 3 time per instr: %f ms\n", (s3time / (float)SHORT_INSTR_COUNT) * 1000.0f);
-	printf("\nStep 3 instr per second: %f\n", (float)SHORT_INSTR_COUNT / s3time);
+	wimp_log("\nStep 3 time taken: %f s\n", s3time);
+	wimp_log("\nStep 3 time per instr: %f ms\n", (s3time / (float)SHORT_INSTR_COUNT) * 1000.0f);
+	wimp_log("\nStep 3 instr per second: %f\n", (float)SHORT_INSTR_COUNT / s3time);
 
 	float s4time = get_time_elapsed(PASS_MATRIX[LONG_BATCH_ARRIVED].timer);
-	printf("\nStep 4 time taken: %f s\n", s4time);
-	printf("\nStep 4 time per instr: %f ms\n", (s4time / (float)LONG_INSTR_COUNT) * 1000.0f);
-	printf("\nStep 4 instr per second: %f\n", (float)LONG_INSTR_COUNT / s4time);
+	wimp_log("\nStep 4 time taken: %f s\n", s4time);
+	wimp_log("\nStep 4 time per instr: %f ms\n", (s4time / (float)LONG_INSTR_COUNT) * 1000.0f);
+	wimp_log("\nStep 4 instr per second: %f\n", (float)LONG_INSTR_COUNT / s4time);
 
 	//Cleanup
-	printf("Master thread closed\n");
+	wimp_log("Master thread closed\n");
 	wimp_close_local_server();
 
 	//Cleanup

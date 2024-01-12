@@ -1,4 +1,5 @@
 #include <wimp_reciever.h>
+#include <wimp_log.h>
 
 /*
 * Represents the state the reciever is in
@@ -48,7 +49,7 @@ WimpInstrMeta wimp_get_instr_from_buffer(uint8_t* buffer, size_t buffsize)
 	//if buffer is nullptr, was unable to allocate!
 	if (buffer == NULL)
 	{
-		printf("Attempting to get instr from invalid buffer!\n");
+		wimp_log("Attempting to get instr from invalid buffer!\n");
 		return instr;
 	}
 
@@ -197,7 +198,7 @@ int32_t wimp_reciever_init(PSocket** recsock, PSocketAddress** rec_address, Reci
         p_socket_address_free(*rec_address);
         p_socket_free(*recsock);
 		WIMP_ZERO_BUFFER(sendbuffer);
-        printf("END PROCESS NOT WAITING!\n");
+        wimp_log("END PROCESS NOT WAITING!\n");
         return WIMP_RECIEVER_FAIL;
     }
 
@@ -223,12 +224,12 @@ int32_t wimp_reciever_init(PSocket** recsock, PSocketAddress** rec_address, Reci
         p_socket_address_free(*rec_address);
         p_socket_free(*recsock);
 		WIMP_ZERO_BUFFER(recbuffer);
-		printf("HANDSHAKE FAILED!\n");
+		wimp_log("HANDSHAKE FAILED!\n");
 		return WIMP_RECIEVER_FAIL;
 	}
 	WIMP_ZERO_BUFFER(recbuffer);
 
-	printf("RECIEVER HANDSHAKE SUCCESS!\n");
+	wimp_log("RECIEVER HANDSHAKE SUCCESS!\n");
 	return WIMP_RECIEVER_SUCCESS;
 }
 
@@ -385,7 +386,7 @@ void wimp_reciever_recieve(RecieverArgs args)
 			WimpInstrMeta meta = wimp_get_instr_from_buffer(instr.instruction, instr.instruction_bytes);
 			if (strcmp(meta.instr, "exit") == 0)
 			{
-				printf("Reciever thread closing!: %s\n", args->process_name);
+				wimp_log("Reciever thread closing!: %s\n", args->process_name);
 				disconnect = true;
 			}
 			DEBUG_WIMP_PRINT_INSTRUCTION_META(meta);
@@ -476,13 +477,13 @@ char* wimp_name_rec_thread(const char* recname, const char* recfrom, const char*
 int32_t wimp_start_reciever_thread(const char* recfrom_name, const char* process_domain, int32_t process_port, RecieverArgs args)
 {
 	char* recname = wimp_name_rec_thread(recfrom_name, args->recfrom_domain, process_domain, args->recfrom_port, process_port);
-	printf("\n(Receiver format: RECPROC-PROCDOM:PROCPORT-RECFROM:RECPORT)\n");
-	printf("Starting Reciever: %s!\n\n", recname);
+	wimp_log("\n(Receiver format: RECPROC-PROCDOM:PROCPORT-RECFROM:RECPORT)\n");
+	wimp_log("Starting Reciever: %s!\n\n", recname);
 
 	PUThread* process_thread = p_uthread_create((PUThreadFunc)&wimp_reciever_recieve, args, false, recname);
 	if (process_thread == NULL)
 	{
-		printf("Failed to create thread: %s", recname);
+		wimp_log("Failed to create thread: %s", recname);
 		free(recname);
 		return WIMP_RECIEVER_FAIL;
 	}
@@ -495,7 +496,7 @@ WimpInstr wimp_reciever_allocateinstr(pssize size)
 	WimpInstr instr = { NULL, 0 };
 	if (size > WIMP_MESSAGE_BUFFER_BYTES)
 	{
-		printf("An instruction was attempted to be allocated larger than the maximum size!\n");
+		wimp_log("An instruction was attempted to be allocated larger than the maximum size!\n");
 		return instr;
 	}
 

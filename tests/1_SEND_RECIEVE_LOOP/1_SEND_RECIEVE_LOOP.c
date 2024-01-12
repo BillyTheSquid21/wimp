@@ -32,7 +32,7 @@ enum TEST_ENUMS
 */
 int client_main_entry(int argc, char** argv)
 {
-	printf("Test process!\n");
+	wimp_log("Test process!\n");
 
 	int32_t writebuffer = 0;
 
@@ -58,7 +58,7 @@ int client_main_entry(int argc, char** argv)
 	}
 
 	//Create a server local to this thread
-	wimp_init_local_server("test_process", "127.0.0.1", process_port);
+	wimp_init_local_server("test_process", "127.0.0.1", process_port, WIMP_SERVERTYPE_MASTER);
 	WimpServer* server = wimp_get_local_server();
 
 	//Start a reciever thread for the master process that called this thread
@@ -74,23 +74,23 @@ int client_main_entry(int argc, char** argv)
 	//This server won't loop, so send some instructions to the master thread
 	
 	//Instruction 1 - This sends a simple instr that the master will ignore. It has no additional arguments
-	wimp_send_local_server("master", "blank_instr", NULL, 0);
+	wimp_add_local_server("master", "blank_instr", NULL, 0);
 
 	//Instruction 2 - This sends a simple instr that tells the master to say hello. It has no additional arguments
-	wimp_send_local_server("master", "say_hello", NULL, 0);
+	wimp_add_local_server("master", "say_hello", NULL, 0);
 
 	//Instruction 3 - This sends a more complex instr, that tells the master to echo the string sent.
 	const char* echo_string = "Echo!";
-	wimp_send_local_server("master", "echo", echo_string, (strlen(echo_string) + 1) * sizeof(char));
+	wimp_add_local_server("master", "echo", echo_string, (strlen(echo_string) + 1) * sizeof(char));
 
 	//Instruction 4 - This simple tells the master to exit - TODO: This implementation may change in the future
-	wimp_send_local_server("master", "exit", NULL, 0);
+	wimp_add_local_server("master", "exit", NULL, 0);
 
 	//This tells the server to send off the instructions
 	wimp_server_send_instructions(server);
 
 	//This should also shut down the reciever
-	printf("Client thread closed\n");
+	wimp_log("Client thread closed\n");
 	wimp_close_local_server();
 
 	return 0;
@@ -131,7 +131,7 @@ int main(void)
 	wimp_start_library_process("test_process", &client_main_lib_entry, entry);
 
 	//Start a local server for the master process
-	wimp_init_local_server("master", "127.0.0.1", master_port);
+	wimp_init_local_server("master", "127.0.0.1", master_port, WIMP_SERVERTYPE_MASTER);
 	WimpServer* server = wimp_get_local_server();
 
 	//Start a reciever thread for the client process that the master started
@@ -147,7 +147,7 @@ int main(void)
 	//Validate that the process correctly started. Sends a ping packet to make sure is listening
 	if (wimp_server_validate_process(server, "test_process"))
 	{
-		printf("Process validated!\n");
+		wimp_log("Process validated!\n");
 		PASS_MATRIX[STEP_PROCESS_VALIDATION].status = true;
 	}
 
@@ -159,7 +159,7 @@ int main(void)
 		while (currentnode != NULL)
 		{
 			WimpInstrMeta meta = wimp_get_instr_from_buffer(currentnode->instr.instruction, currentnode->instr.instruction_bytes);
-			printf("\nMaster recieved instruction:");
+			wimp_log("\nMaster recieved instruction:");
 			DEBUG_WIMP_PRINT_INSTRUCTION_META(meta);
 
 			if (strcmp(meta.instr, "blank_instr") == 0)
@@ -168,14 +168,14 @@ int main(void)
 			}
 			else if (strcmp(meta.instr, "say_hello") == 0)
 			{
-				printf("HELLO!\n");
+				wimp_log("HELLO!\n");
 				PASS_MATRIX[STEP_INSTRUCTION_2].status = true;
 			}
 			else if (strcmp(meta.instr, "echo") == 0)
 			{
 				//Get the arguments
 				const char* echo_string = (const char*)meta.args;
-				printf("%s\n", echo_string);
+				wimp_log("%s\n", echo_string);
 
 				if (strcmp(echo_string, "Echo!") == 0)
 				{
@@ -184,7 +184,7 @@ int main(void)
 			}
 			else if (strcmp(meta.instr, WIMP_INSTRUCTION_EXIT) == 0)
 			{
-				printf("\n");
+				wimp_log("\n");
 				PASS_MATRIX[STEP_INSTRUCTION_4].status = true;
 				disconnect = true;
 			}
@@ -195,7 +195,7 @@ int main(void)
 	}
 
 	//Cleanup
-	printf("Master thread closed\n");
+	wimp_log("Master thread closed\n");
 	wimp_close_local_server();
 
 	//Cleanup

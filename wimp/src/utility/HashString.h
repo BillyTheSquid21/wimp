@@ -16,6 +16,8 @@
 #ifndef _HASH_STRING_H
 #define _HASH_STRING_H
 
+#include <wimp_log.h>
+
 /** @struct HashStringEntry
  *  @brief Holds an Entry in a Hash of Strings, Linked List
  *
@@ -92,9 +94,9 @@ void HashString_nextEntry( HashString* hash, HashStringEntry** entry, int* i );
  *    // Somewhere Later, After Creating hash + Filling with Entries
  *    HASH_STRING_ITER( hash, entry, i )
  *    {
- *      printf("Index = %d\n", i);
- *      printf("Key = %s\n", entry->key);
- *      printf("Value = %s\n", entry->value);
+ *      wimp_log("Index = %d\n", i);
+ *      wimp_log("Key = %s\n", entry->key);
+ *      wimp_log("Value = %s\n", entry->value);
  *    }
  *
  *  @param[in] hash HashString* to the hash to Iterate over

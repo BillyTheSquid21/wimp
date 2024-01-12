@@ -53,6 +53,7 @@
 #define WIMP_INSTRUCTION_SUCCESS 0
 #define WIMP_INSTRUCTION_FAIL -1
 #define WIMP_INSTRUCTION_EXIT "exit"
+#define WIMP_INSTRUCTION_LOG "log"
 #define WIMP_INSTRUCTION_DEST_OFFSET sizeof(int32_t)
 
 typedef struct _WimpInstr

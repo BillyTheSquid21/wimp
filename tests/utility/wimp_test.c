@@ -34,27 +34,27 @@ bool wimp_test_validate_passmat(PASSMAT* matrix, size_t entries)
 {
 	bool haspassed = true;
 
-	printf("\n\n\nTest Results:\n");
+	wimp_log("\n\n\nTest Results:\n");
 
 	for (size_t i = 0; i < entries; ++i)
 	{
 		PASSMAT m = matrix[i];
 		haspassed &= m.status;
-		printf("%s: %s", m.step, m.status ? "PASSED" : "FAILED");
+		wimp_log("%s: %s", m.step, m.status ? "PASSED" : "FAILED");
 		if (m.timer.s.time != 0 && m.timer.e.time != 0)
 		{
-			printf(" %f\s", get_time_elapsed(m.timer));
+			wimp_log(" %f\s", get_time_elapsed(m.timer));
 		}
-		printf("\n");
+		wimp_log("\n");
 	}
 
 	if (haspassed)
 	{
-		printf("Test case has passed!\n");
+		wimp_log("Test case has passed!\n");
 	}
 	else
 	{
-		printf("Test case has failed!\n");
+		wimp_log("Test case has failed!\n");
 	}
 
 	return haspassed;

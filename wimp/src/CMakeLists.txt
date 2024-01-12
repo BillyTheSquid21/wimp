@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.5)
 
-set(WIMP_SOURCE_FILES wimp_reciever.c wimp_reciever.h wimp_process.h wimp_process.c wimp_process_table.h wimp_process_table.c wimp_server.h wimp_server.c wimp_instruction.h wimp_instruction.c wimp_debug.h utility/HashString.h utility/HashString.c utility/thread_local.h)
+set(WIMP_SOURCE_FILES wimp_reciever.c wimp_reciever.h wimp_process.h wimp_process.c wimp_process_table.h wimp_process_table.c wimp_server.h wimp_server.c wimp_instruction.h wimp_instruction.c wimp_debug.h wimp_log.h wimp_log.c utility/HashString.h utility/HashString.c utility/thread_local.h)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
 add_library(${PROJECT_NAME} STATIC ${WIMP_SOURCE_FILES})

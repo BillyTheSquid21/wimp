@@ -18,6 +18,7 @@
 #include <perrortypes.h>
 
 #include <wimp_instruction.h>
+#include <wimp_log.h>
 
 #define WIMP_RECIEVER_HANDSHAKE 0x706d6977 //HEX for "wimp"
 #define WIMP_RECIEVER_SUCCESS 0
@@ -81,11 +82,11 @@ typedef struct _WimpInstrMeta
 
 static void _debug_wimp_print_instruction_meta(WimpInstrMeta meta)
 {
-	printf("\nREAL INSTRUCTION FROM: %s\n", meta.source_process);
-	printf("TO: %s\n", meta.dest_process);
-	printf("INSTR: %s\n", meta.instr);
-	printf("ARG SIZE: %d\n", meta.arg_bytes);
-	printf("TOTAL SIZE: %d\n\n", (int32_t)meta.total_bytes);
+	wimp_log("\nREAL INSTRUCTION FROM: %s\n", meta.source_process);
+	wimp_log("TO: %s\n", meta.dest_process);
+	wimp_log("INSTR: %s\n", meta.instr);
+	wimp_log("ARG SIZE: %d\n", meta.arg_bytes);
+	wimp_log("TOTAL SIZE: %d\n\n", (int32_t)meta.total_bytes);
 }
 
 //Prints incoming instructions for debugging purposes
