@@ -232,6 +232,16 @@ int32_t wimp_reciever_init(PSocket** recsock, PSocketAddress** rec_address, Reci
 	return WIMP_RECIEVER_SUCCESS;
 }
 
+inline void wimp_set_reciever_state_idle(int32_t* state, WimpInstr* instr, int32_t* instr_size_read, int32_t* recbuff_offset, uint8_t* recbuff)
+{
+	*state = REC_IDLE;
+	*instr_size_read = 0;
+	*recbuff_offset = 0;
+	instr->instruction = NULL;
+	instr->instruction_bytes = 0;
+	WIMP_ZERO_BUFFER(recbuff);
+}
+
 void wimp_reciever_recieve(RecieverArgs args)
 {	
 	WimpMsgBuffer recbuffer;
@@ -247,10 +257,6 @@ void wimp_reciever_recieve(RecieverArgs args)
 		p_uthread_exit(WIMP_RECIEVER_FAIL);
 		return;
 	}
-
-	//Test connecting packets - if a packet gets split, rebuild it here
-	WimpMsgBuffer repbuffer;
-	WIMP_ZERO_BUFFER(repbuffer);
 
 	int32_t reciever_state = REC_IDLE;
 	int32_t instr_size_read = 0;
@@ -279,20 +285,72 @@ void wimp_reciever_recieve(RecieverArgs args)
 		//Reading will pull in all availible instructions until an empty point is hit
 		if (reciever_state == REC_READING_INSTRUCTION)
 		{
-			int32_t instr_size_bytes = wimp_get_instr_size(&recbuffer[recbuff_offset]);
+			int32_t instr_size_bytes = -1;
+			if (WIMP_MESSAGE_BUFFER_BYTES - recbuff_offset >= 4) //If can read at least 4 bytes
+			{
+				instr_size_bytes = wimp_get_instr_size(&recbuffer[recbuff_offset]);
+				recbuff_offset += sizeof(int32_t);
+
+				//If offset is at size, request another packet
+				if (recbuff_offset == WIMP_MESSAGE_BUFFER_BYTES)
+				{
+					WIMP_ZERO_BUFFER(recbuffer);
+					incoming_size = p_socket_receive(recsock, recbuffer, WIMP_MESSAGE_BUFFER_BYTES, NULL);
+					recbuff_offset = 0;
+				}
+			}
+			else //Handle the edge case where the total bytes is split accross the buffer
+			{
+				uint8_t* bytes_addr = (uint8_t*)&instr_size_bytes;
+
+				//Get how many bytes can be read (first part)
+				int32_t bytes_to_read = WIMP_MESSAGE_BUFFER_BYTES - recbuff_offset;
+				memcpy(bytes_addr, &recbuffer[recbuff_offset], bytes_to_read);
+
+				//Request another packet and copy the rest
+				WIMP_ZERO_BUFFER(recbuffer);
+				incoming_size = p_socket_receive(recsock, recbuffer, WIMP_MESSAGE_BUFFER_BYTES, NULL);
+				recbuff_offset = 0;
+
+				int32_t bytes_left_to_read = sizeof(int32_t) - bytes_to_read;
+				memcpy(&bytes_addr[bytes_to_read], &recbuffer[0], bytes_left_to_read);
+				recbuff_offset += bytes_left_to_read;
+			}
+			
 			if (instr_size_bytes == 0)
 			{
-				reciever_state = REC_IDLE;
-				instr_size_read = 0;
-				recbuff_offset = 0;
-				instr.instruction = NULL;
-				instr.instruction_bytes = 0;
-				WIMP_ZERO_BUFFER(recbuffer);
+				wimp_set_reciever_state_idle(
+					&reciever_state,
+					&instr, 
+					&instr_size_read, 
+					&recbuff_offset, 
+					recbuffer
+				);
 				continue;
 			}
 
 			//Allocate instr and loop until read
 			instr = wimp_reciever_allocateinstr(instr_size_bytes);
+
+			//If fails, return to idling and YELL AT THE USER
+			if (instr.instruction == NULL)
+			{
+				wimp_set_reciever_state_idle(
+					&reciever_state, 
+					&instr, 
+					&instr_size_read, 
+					&recbuff_offset, 
+					recbuffer
+				);
+				continue;
+			}
+
+			//First off however, copy the instr_size_bytes from the variable not
+			//the buffer! - this is because the first 4 bytes can be split in the
+			//edge case - the recbuff offset has been advanced
+			memcpy(instr.instruction, &instr_size_bytes, sizeof(int32_t));
+			instr_size_read += sizeof(int32_t);
+
 			while (instr_size_read < instr_size_bytes)
 			{
 				int32_t size_left = instr_size_bytes - instr_size_read;
@@ -333,6 +391,14 @@ void wimp_reciever_recieve(RecieverArgs args)
 			DEBUG_WIMP_PRINT_INSTRUCTION_META(meta);
 
 			wimp_instr_queue_add(args->incoming_queue, instr.instruction, instr.instruction_bytes);
+
+			//If at the end of the written to buffer (e.g. recieved 900 bytes and there's 1024 total)
+			//Set to idling state
+			if (recbuff_offset >= incoming_size)
+			{
+				wimp_set_reciever_state_idle(&reciever_state, &instr, &instr_size_read, &recbuff_offset, recbuffer);
+			}
+
 			instr.instruction = NULL;
 			instr.instruction_bytes = 0;
 			instr_size_read = 0;
@@ -427,6 +493,11 @@ int32_t wimp_start_reciever_thread(const char* recfrom_name, const char* process
 WimpInstr wimp_reciever_allocateinstr(pssize size)
 {
 	WimpInstr instr = { NULL, 0 };
+	if (size > WIMP_MESSAGE_BUFFER_BYTES)
+	{
+		printf("An instruction was attempted to be allocated larger than the maximum size!\n");
+		return instr;
+	}
 
 	void* i = malloc(size);
 	if (i == NULL)
