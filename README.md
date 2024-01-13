@@ -11,7 +11,7 @@ Windows
 
 Ninja (Preferred):
 
-Prerequisite: Ensure you have gcc c compiler and ninja installed and set to path, cd to root directory of project
+Prerequisite: Ensure you have gcc c compiler and ninja installed and set to path, cd to root directory of project. Ensure if compiling in debug mode to pass -D _DEBUG to the compiler
 
 1. mkdir build && cd build
 2. cmake .. -DCMAKE_CXX_COMPILER=gcc -G "Ninja"
