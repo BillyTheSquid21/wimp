@@ -10,6 +10,7 @@
 #include <stdbool.h>
 #include <wimp_process_table.h>
 #include <wimp_instruction.h>
+#include <wimp_log.h>
 
 #define WIMP_SERVER_SUCCESS 0
 #define WIMP_SERVER_FAIL -1

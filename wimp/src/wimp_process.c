@@ -117,6 +117,6 @@ int32_t wimp_assign_unused_local_port()
 int32_t wimp_port_to_string(int32_t port, char* string_out)
 {
 	memset(string_out, 0, MAX_PORT_STRING_LEN);
-	swimp_log(string_out, "%d", port);
+	sprintf(string_out, "%d", port);
 	return WIMP_PROCESS_SUCCESS;
 }

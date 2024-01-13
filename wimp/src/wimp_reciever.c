@@ -494,12 +494,6 @@ int32_t wimp_start_reciever_thread(const char* recfrom_name, const char* process
 WimpInstr wimp_reciever_allocateinstr(pssize size)
 {
 	WimpInstr instr = { NULL, 0 };
-	if (size > WIMP_MESSAGE_BUFFER_BYTES)
-	{
-		wimp_log("An instruction was attempted to be allocated larger than the maximum size!\n");
-		return instr;
-	}
-
 	void* i = malloc(size);
 	if (i == NULL)
 	{
