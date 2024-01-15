@@ -34,6 +34,11 @@ WimpInstr wimp_reciever_allocateinstr(pssize size);
 */
 int32_t wimp_reciever_init(PSocket** recsock, PSocketAddress** rec_address, RecieverArgs args);
 
+/*
+* Sets the reciever state to idle
+*/
+void wimp_set_reciever_state_idle(int32_t* state, WimpInstr* instr, int32_t* instr_size_read, int32_t* recbuff_offset, uint8_t* recbuff);
+
 
 WimpInstrMeta wimp_get_instr_from_buffer(uint8_t* buffer, size_t buffsize)
 {
@@ -229,7 +234,7 @@ int32_t wimp_reciever_init(PSocket** recsock, PSocketAddress** rec_address, Reci
 	return WIMP_RECIEVER_SUCCESS;
 }
 
-inline void wimp_set_reciever_state_idle(int32_t* state, WimpInstr* instr, int32_t* instr_size_read, int32_t* recbuff_offset, uint8_t* recbuff)
+void wimp_set_reciever_state_idle(int32_t* state, WimpInstr* instr, int32_t* instr_size_read, int32_t* recbuff_offset, uint8_t* recbuff)
 {
 	*state = REC_IDLE;
 	*instr_size_read = 0;
@@ -257,7 +262,7 @@ void wimp_reciever_recieve(RecieverArgs args)
 
 	int32_t reciever_state = REC_IDLE;
 	int32_t instr_size_read = 0;
-	size_t recbuff_offset = 0;
+	int32_t recbuff_offset = 0;
 	WimpInstr instr;
 
 	pssize incoming_size = 0;

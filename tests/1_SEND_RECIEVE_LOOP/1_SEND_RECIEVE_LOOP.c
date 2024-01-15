@@ -121,14 +121,14 @@ int main(void)
 
 	//The ports are converted to strings for use as command line arguments
 	WimpPortStr port_string;
-	wimp_port_to_string(end_process_port, &port_string);
+	wimp_port_to_string(end_process_port, port_string);
 
 	WimpPortStr master_port_string;
-	wimp_port_to_string(master_port, &master_port_string);
+	wimp_port_to_string(master_port, master_port_string);
 
 	//Start the client process, creating the command line arguments and creating a new thread
 	WimpMainEntry entry = wimp_get_entry(4, "--master-port", master_port_string, "--process-port", port_string);
-	wimp_start_library_process("test_process", &client_main_lib_entry, entry);
+	wimp_start_library_process("test_process", (MAIN_FUNC_PTR)&client_main_lib_entry, entry);
 
 	//Start a local server for the master process
 	wimp_init_local_server("master", "127.0.0.1", master_port, WIMP_SERVERTYPE_MASTER);

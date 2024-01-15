@@ -79,7 +79,7 @@ void wimp_close_local_server(void);
 * @param instr The name of the instruction
 * @param instr_size The size of the allocated instruction
 */
-void wimp_add_local_server(const char* dest, const char* instr, void* args, size_t arg_size_bytes);
+void wimp_add_local_server(const char* dest, const char* instr, const void* args, size_t arg_size_bytes);
 
 /*
 * Creates a Wimp Server instance. This can alternatively be used to create a non
@@ -124,7 +124,7 @@ bool wimp_server_validate_process(WimpServer* server, const char* process_name);
 * @param instr The name of the instruction
 * @param instr_size The size of the allocated instruction
 */
-void wimp_server_add(WimpServer* server, const char* dest, const char* instr, void* args, size_t arg_size_bytes);
+void wimp_server_add(WimpServer* server, const char* dest, const char* instr, const void* args, size_t arg_size_bytes);
 
 /*
 * Routes server instructions if they don't belong to this server. If instruction

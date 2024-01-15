@@ -36,7 +36,7 @@ void wimp_close_local_server()
 	_local_server = NULL;
 }
 
-void wimp_add_local_server(const char* dest, const char* instr, void* args, size_t arg_size_bytes)
+void wimp_add_local_server(const char* dest, const char* instr, const void* args, size_t arg_size_bytes)
 {
 	if (_local_server == NULL)
 	{
@@ -230,7 +230,7 @@ bool wimp_server_validate_process(WimpServer* server, const char* process_name)
 	return false;
 }
 
-void wimp_server_add(WimpServer* server, const char* dest, const char* instr, void* args, size_t arg_size_bytes)
+void wimp_server_add(WimpServer* server, const char* dest, const char* instr, const void* args, size_t arg_size_bytes)
 {
 	//Work out formatted size
 	size_t header_bytes = sizeof(int32_t);
