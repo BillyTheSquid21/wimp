@@ -72,7 +72,9 @@ typedef struct _WimpInstrQueue
 {
 	WimpInstrNode nextnode;
 	WimpInstrNode backnode;
-	PMutex* _queuemutex;
+	PMutex* _datamutex;
+	PMutex* _nextmutex;
+	PMutex* _lowpriomutex; //Uses the triple mutex pattern
 } WimpInstrQueue;
 
 /*
@@ -81,6 +83,34 @@ typedef struct _WimpInstrQueue
 * @return Returns a new instruction queue
 */
 WimpInstrQueue wimp_create_instr_queue(void);
+
+/*
+* Performs low priority locking operations for the queue
+* 
+* @param queue The queue to lock
+*/
+void wimp_instr_queue_low_prio_lock(WimpInstrQueue* queue);
+
+/*
+* Performs low priority unlocking operations for the queue
+* 
+* @param queue The queue to unlock
+*/
+void wimp_instr_queue_low_prio_unlock(WimpInstrQueue* queue);
+
+/*
+* Performs high priority locking operations for the queue
+* 
+* @param queue The queue to lock
+*/
+void wimp_instr_queue_high_prio_lock(WimpInstrQueue* queue);
+
+/*
+* Performs high priority unlocking operations for the queue
+* 
+* @param queue The queue to unlock
+*/
+void wimp_instr_queue_high_prio_unlock(WimpInstrQueue* queue);
 
 /*
 * Adds an instruction to the queue
@@ -92,6 +122,16 @@ WimpInstrQueue wimp_create_instr_queue(void);
 * @return Returns either WIMP_INSTRUCTION_SUCCESS or WIMP_INSTRUCTIOn_FAIL
 */
 int32_t wimp_instr_queue_add(WimpInstrQueue* queue, void* instr, size_t bytes);
+
+/*
+* Adds an existing instruction node to the queue - passes ownership
+* 
+* @param queue The pointer to the queue to add to
+* @param node The node to give to the queue
+* 
+* @return Returns either WIMP_INSTRUCTION_SUCCESS or WIMP_INSTRUCTIOn_FAIL
+*/
+int32_t wimp_instr_queue_add_existing(WimpInstrQueue* queue, WimpInstrNode node);
 
 /*
 * Pops the top node off the queue, handing it to the user.

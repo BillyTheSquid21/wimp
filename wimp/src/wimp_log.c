@@ -74,11 +74,17 @@ int get_char_width_hex(int var)
 		;
 }
 
-size_t format_string(char* str, char* format, va_list arg)
+size_t format_string(char* str, char* format, size_t buffsize, va_list arg)
 {
 	size_t string_offset = 0;
 	while (*format != '\0')
 	{
+		if (string_offset >= buffsize - 1)
+		{
+			//Ensure don't overrun, 
+			return strlen(str);
+		}
+
 		if (*format == '%')
 		{
 			format++;
@@ -206,13 +212,24 @@ void wimp_log(const char* format, ...)
 	//If a child, create the log string and send that to the master
 	//Basically do the work of the printf modifiers here
 	//Have a thread local static char array to push to
-	//Should mean there aren't race conditions
 	thread_local static char str[MAXIMUM_LOG_BYTES];
 
+	//Add a process tag to the start of the message
+	str[0] = '[';
+
+	size_t namebytes = strlen(server->process_name) * sizeof(char);
+	memcpy(&str[1], server->process_name, namebytes);
+	str[namebytes+1] = ']';
+	str[namebytes+2] = ' ';
+	size_t tagbytes = namebytes + 3;
+
 	va_start(arg, format);
-	size_t size = (format_string(str, format, arg) + 1) * sizeof(char);
-	wimp_add_local_server("master", WIMP_INSTRUCTION_LOG, str, size);
+	size_t size = (format_string(str + tagbytes, format, MAXIMUM_LOG_BYTES - tagbytes, arg) + 1) * sizeof(char);
+	wimp_add_local_server("master", WIMP_INSTRUCTION_LOG, str, size + tagbytes);
 	va_end(arg);
+
+	//TODO - maybe don't make send automatically as the user might want more control over the sending of instructions
+	wimp_server_send_instructions(server);
 
 	//Zero buffer
 	memset(str, 0, MAXIMUM_LOG_BYTES);

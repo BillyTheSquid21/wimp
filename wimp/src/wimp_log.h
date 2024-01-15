@@ -2,6 +2,7 @@
 #define WIMP_LOG_H
 
 #include <utility/thread_local.h>
+#include <plibsys.h>
 
 #define MAXIMUM_LOG_BYTES 4096 //Completely arbitrary atm to make it easy to push into buffer
 

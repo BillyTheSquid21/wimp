@@ -26,7 +26,7 @@
 #define WIMP_MESSAGE_BUFFER_BYTES 1024
 #define WIMP_RECIEVER_PING 0x00000000 //Ping with 4 bytes of null, ignore if this comes in
 #define WIMP_ZERO_BUFFER(buffer) memset(buffer, 0, WIMP_MESSAGE_BUFFER_BYTES)
-#define WIMP_PRINT_INSTRS 0 //Print the incoming instructions
+#define WIMP_PRINT_INSTRS 1 //Print the incoming instructions
 
 /*
 * Reciever function type pointer
@@ -78,15 +78,15 @@ typedef struct _WimpInstrMeta
 	int32_t instr_bytes;
 } WimpInstrMeta;
 
-#if defined WIMP_DEBUG && WIMP_PRINT_INSTRS
+#if defined _DEBUG && WIMP_PRINT_INSTRS
 
 static void _debug_wimp_print_instruction_meta(WimpInstrMeta meta)
 {
-	wimp_log("\nREAL INSTRUCTION FROM: %s\n", meta.source_process);
-	wimp_log("TO: %s\n", meta.dest_process);
-	wimp_log("INSTR: %s\n", meta.instr);
-	wimp_log("ARG SIZE: %d\n", meta.arg_bytes);
-	wimp_log("TOTAL SIZE: %d\n\n", (int32_t)meta.total_bytes);
+	printf("\nREAL INSTRUCTION FROM: %s\n", meta.source_process);
+	printf("TO: %s\n", meta.dest_process);
+	printf("INSTR: %s\n", meta.instr);
+	printf("ARG SIZE: %d\n", meta.arg_bytes);
+	printf("TOTAL SIZE: %d\n\n", (int32_t)meta.total_bytes);
 }
 
 //Prints incoming instructions for debugging purposes

@@ -69,7 +69,7 @@ int client_main_entry(int argc, char** argv)
 	wimp_process_table_add(&server->ptable, "master", "127.0.0.1", master_port, NULL);
 
 	//Accept the connection to the test_process->master reciever, started by the master thread
-	wimp_server_process_accept(server, "master");
+	wimp_server_process_accept(server, 1, "master");
 
 	//This server won't loop, so send some instructions to the master thread
 	
@@ -142,7 +142,7 @@ int main(void)
 	wimp_process_table_add(&server->ptable, "test_process", "127.0.0.1", end_process_port, NULL);
 
 	//Accept the connection to the master->test_process reciever, started by the test_process
-	wimp_server_process_accept(server, "test_process");
+	wimp_server_process_accept(server, 1, "test_process");
 
 	//Validate that the process correctly started. Sends a ping packet to make sure is listening
 	if (wimp_server_validate_process(server, "test_process"))
@@ -155,6 +155,7 @@ int main(void)
 	bool disconnect = false;
 	while (!disconnect)
 	{
+		wimp_instr_queue_high_prio_lock(&server->incomingmsg);
 		WimpInstrNode currentnode = wimp_instr_queue_pop(&server->incomingmsg);
 		while (currentnode != NULL)
 		{
@@ -164,6 +165,7 @@ int main(void)
 
 			if (strcmp(meta.instr, "blank_instr") == 0)
 			{
+				wimp_log("\n");
 				PASS_MATRIX[STEP_INSTRUCTION_1].status = true;
 			}
 			else if (strcmp(meta.instr, "say_hello") == 0)
@@ -192,6 +194,7 @@ int main(void)
 			wimp_instr_node_free(currentnode);
 			currentnode = wimp_instr_queue_pop(&server->incomingmsg);
 		}
+		wimp_instr_queue_high_prio_unlock(&server->incomingmsg);
 	}
 
 	//Cleanup

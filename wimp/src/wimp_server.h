@@ -99,11 +99,12 @@ int32_t wimp_create_server(WimpServer* server, const char* process_name, const c
 * Accepts a process to the server. Is blocking. Can only do one at a time.
 * 
 * @param server The server to accept a connection to
-* @param process_name The name of the expected process for validation
+* @param pcount The number of processes to accept
+* @param ... The names of the processes to accept
 * 
 * @return Returns either WIMP_SERVER_SUCCESS or WIMP_SERVER_FAIL
 */
-int32_t wimp_server_process_accept(WimpServer* server, const char* process_name);
+int32_t wimp_server_process_accept(WimpServer* server, int pcount, ...);
 
 /*
 * Validates whether a given connection is still active by making a zero byte send call

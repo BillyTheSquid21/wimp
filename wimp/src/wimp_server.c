@@ -86,83 +86,121 @@ int32_t wimp_create_server(WimpServer* server, const char* process_name, const c
 	return WIMP_SERVER_SUCCESS;
 }
 
-int32_t wimp_server_process_accept(WimpServer* server, const char* process_name)
+int32_t wimp_server_process_accept(WimpServer* server, int pcount, ...)
 {
-	if (process_name == NULL)
+	//Get an array of the process names
+	char** pnames;
+	pnames = malloc(pcount * sizeof(char*));
+	if (pnames == NULL)
 	{
 		return WIMP_SERVER_FAIL;
 	}
 
+	//Copy the vargs to the array to check with
+	va_list argp;
+	va_start(argp, pcount);
+	for (int i = 0; i < pcount; ++i)
+	{
+		char* p = va_arg(argp, char*);
+		pnames[i] = p;
+	}
+	va_end(argp);
+
+	//Set the server to listen for incoming connections - should succeed
 	if (!p_socket_listen(server->server, NULL))
 	{
 		return WIMP_SERVER_FAIL;
 	}
-
-	wimp_log("Server waiting to accept connection: %s\n", process_name);
+	wimp_log("Server waiting to accept %d connections\n", pcount);
 
 	//Ensures won't block for too long
 	p_socket_set_timeout(server->server, WIMP_SERVER_ACCEPT_TIMEOUT);
-	PSocket* con = p_socket_accept(server->server, NULL);
-
-	if (con != NULL)
+	
+	//Wait for pcount many connections to be made, perform checks/handshake
+	int accepted_count = 0;
+	for (int i = 0; i < pcount; ++i)
 	{
-		//Only blocking call, recieve handshake from reciever
-		pssize handshake_size = p_socket_receive(con, server->recbuffer, WIMP_MESSAGE_BUFFER_BYTES, NULL);
+		PSocket* con = p_socket_accept(server->server, NULL);
+
+		if (con != NULL)
+		{
+			//Only blocking call, recieve handshake from reciever
+			pssize handshake_size = p_socket_receive(con, server->recbuffer, WIMP_MESSAGE_BUFFER_BYTES, NULL);
 			
-		if (handshake_size <= 0)
-		{
-			return WIMP_SERVER_FAIL;
+			if (handshake_size <= 0)
+			{
+				continue;
+			}
+
+			//Check start of handshake
+			WimpHandshakeHeader potential_handshake = *((WimpHandshakeHeader*)((void*)server->recbuffer));
+			size_t offset = sizeof(WimpHandshakeHeader);
+			if (potential_handshake.handshake_header != WIMP_RECIEVER_HANDSHAKE)
+			{
+				continue;
+			}
+
+			//Get process name
+			char* proc_name = &server->recbuffer[offset];
+
+			//Check if it is an expected process
+			bool isvalid = false;
+			for (int j = 0; j < pcount; ++j)
+			{
+				if (strcmp(proc_name, pnames[j]) == 0)
+				{
+					wimp_log("Valid process found: %s\n", proc_name);
+					isvalid = true;
+					break;
+				}
+			}
+
+			if (!isvalid)
+			{
+				wimp_log("An incoming connection wasn't a valid one!\n");
+				i--; //Try again, hoping the next connection won't be bad
+				continue;
+			}
+
+			//Add connection to the process table
+			WimpProcessData procdat = NULL;
+			wimp_log("Adding to %s process table: %s\n", server->process_name, proc_name);
+			if (wimp_process_table_get(&procdat, server->ptable, proc_name) == WIMP_PROCESS_TABLE_FAIL)
+			{
+				wimp_log("Process not found! %s\n", proc_name);
+				continue;
+			}
+			wimp_log("Process added!\n");
+
+			procdat->process_connection = con;
+			procdat->process_active = WIMP_PROCESS_ACTIVE;
+
+			//Clear rec buffer
+			WIMP_ZERO_BUFFER(server->recbuffer);
+
+			//Send handshake back with no process name this time
+			WimpHandshakeHeader* sendheader = ((WimpHandshakeHeader*)server->sendbuffer);
+			sendheader->handshake_header = WIMP_RECIEVER_HANDSHAKE;
+			sendheader->process_name_bytes = 0;
+
+			p_socket_send(con, server->sendbuffer, sizeof(WimpHandshakeHeader), NULL);
+			WIMP_ZERO_BUFFER(server->sendbuffer);
+
+			accepted_count++;
 		}
-
-		//Check start of handshake
-		WimpHandshakeHeader potential_handshake = *((WimpHandshakeHeader*)((void*)server->recbuffer));
-		size_t offset = sizeof(WimpHandshakeHeader);
-		if (potential_handshake.handshake_header != WIMP_RECIEVER_HANDSHAKE)
+		else
 		{
-			return WIMP_SERVER_FAIL;
+			wimp_log("Can't make con, tried and failed...\n");
 		}
-
-		//Get process name
-		char* proc_name = &server->recbuffer[offset];
-
-		//Check if it is the expected process
-		if (strcmp(proc_name, process_name) != 0)
-		{
-			wimp_log("Incoming process is not the expected process!\n");
-			return WIMP_SERVER_FAIL;
-		}
-
-		//Add connection to the process table
-		WimpProcessData procdat = NULL;
-		wimp_log("Adding to test_process process table: %s\n", proc_name);
-		if (wimp_process_table_get(&procdat, server->ptable, proc_name) == WIMP_PROCESS_TABLE_FAIL)
-		{
-			wimp_log("Process not found! %s\n", proc_name);
-			return WIMP_SERVER_FAIL;
-		}
-		wimp_log("Process added!\n");
-
-		procdat->process_connection = con;
-		procdat->process_active = WIMP_PROCESS_ACTIVE;
-
-		//Clear rec buffer
-		WIMP_ZERO_BUFFER(server->recbuffer);
-
-		//Send handshake back with no process name this time
-		WimpHandshakeHeader* sendheader = ((WimpHandshakeHeader*)server->sendbuffer);
-		sendheader->handshake_header = WIMP_RECIEVER_HANDSHAKE;
-		sendheader->process_name_bytes = 0;
-
-		p_socket_send(con, server->sendbuffer, sizeof(WimpHandshakeHeader), NULL);
-		WIMP_ZERO_BUFFER(server->sendbuffer);
-		return WIMP_SERVER_SUCCESS;
 	}
-	else
+	free(pnames);
+
+	if (accepted_count != pcount)
 	{
-		wimp_log("Can't make con, tried and failed...\n");
+		wimp_log("Couldn't find every process!\n");
 		return WIMP_SERVER_FAIL;
 	}
-	return WIMP_SERVER_FAIL;
+	return WIMP_SERVER_SUCCESS;
 }
 
 bool wimp_server_validate_process(WimpServer* server, const char* process_name)
@@ -170,11 +208,13 @@ bool wimp_server_validate_process(WimpServer* server, const char* process_name)
 	WimpProcessData procdat;
 	if (wimp_process_table_get(&procdat, server->ptable, process_name) == WIMP_PROCESS_TABLE_FAIL)
 	{
+		wimp_log("Process isn't in process table!: %s\n", process_name);
 		return false;
 	}
 
 	if (!procdat->process_active)
 	{
+		wimp_log("Process isn't active!: %s\n", process_name);
 		return false;
 	}
 
@@ -183,6 +223,7 @@ bool wimp_server_validate_process(WimpServer* server, const char* process_name)
 	{
 		return true;
 	}
+	wimp_log("Process couldn't be pinged!: %s\n", process_name);
 
 	procdat->process_active = false;
 	wimp_process_table_remove(&server->ptable, process_name);
@@ -233,6 +274,7 @@ void wimp_server_add(WimpServer* server, const char* dest, const char* instr, vo
 
 int32_t wimp_server_send_instructions(WimpServer* server)
 {
+	wimp_instr_queue_high_prio_lock(&server->outgoingmsg);
 	WimpInstrNode currentn = wimp_instr_queue_pop(&server->outgoingmsg);
 	while (currentn != NULL)
 	{
@@ -244,7 +286,7 @@ int32_t wimp_server_send_instructions(WimpServer* server)
 		//If is a master, get destination from instr at offset
 		if (server->server_type == WIMP_SERVERTYPE_MASTER)
 		{
-			 destination = &currentn->instr.instruction[WIMP_INSTRUCTION_DEST_OFFSET];
+			destination = &currentn->instr.instruction[WIMP_INSTRUCTION_DEST_OFFSET];
 		}
 
 		//If the destination is this server, add to incoming instead (loopback)
@@ -252,23 +294,18 @@ int32_t wimp_server_send_instructions(WimpServer* server)
 		{
 			wimp_instr_queue_add(&server->incomingmsg, currentn->instr.instruction, currentn->instr.instruction_bytes);
 		}
-		else if (wimp_process_table_get(&data, server->ptable, &currentn->instr.instruction[WIMP_INSTRUCTION_DEST_OFFSET]) == WIMP_PROCESS_TABLE_SUCCESS)
+		else if (wimp_process_table_get(&data, server->ptable, destination) == WIMP_PROCESS_TABLE_SUCCESS)
 		{
 			memcpy(server->sendbuffer, currentn->instr.instruction, currentn->instr.instruction_bytes);
-	
+			
 			WimpInstrMeta meta = wimp_get_instr_from_buffer(server->sendbuffer, WIMP_MESSAGE_BUFFER_BYTES);
-			DEBUG_WIMP_PRINT_INSTRUCTION_META(meta);
-
-			if (currentn->instr.instruction_bytes < WIMP_MESSAGE_BUFFER_BYTES)
-			{
-				pssize sendres = p_socket_send(data->process_connection, server->sendbuffer, currentn->instr.instruction_bytes, NULL);
-			}
+			pssize sendres = p_socket_send(data->process_connection, server->sendbuffer, currentn->instr.instruction_bytes, NULL);
 			WIMP_ZERO_BUFFER(server->sendbuffer);
 		}
 		wimp_instr_node_free(currentn);
 		currentn = wimp_instr_queue_pop(&server->outgoingmsg);
 	}
-
+	wimp_instr_queue_high_prio_unlock(&server->outgoingmsg);
 	return WIMP_SERVER_SUCCESS;
 }
 

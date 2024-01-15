@@ -16,8 +16,6 @@
 #ifndef _HASH_STRING_H
 #define _HASH_STRING_H
 
-#include <wimp_log.h>
-
 /** @struct HashStringEntry
  *  @brief Holds an Entry in a Hash of Strings, Linked List
  *

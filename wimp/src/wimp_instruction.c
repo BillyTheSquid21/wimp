@@ -5,8 +5,36 @@ WimpInstrQueue wimp_create_instr_queue()
 	WimpInstrQueue q;
 	q.backnode = NULL;
 	q.nextnode = NULL;
-	q._queuemutex = p_mutex_new();
+	q._datamutex = p_mutex_new();
+	q._nextmutex = p_mutex_new();
+	q._lowpriomutex = p_mutex_new();
 	return q;
+}
+
+void wimp_instr_queue_low_prio_lock(WimpInstrQueue* queue)
+{
+	p_mutex_lock(queue->_lowpriomutex);
+	p_mutex_lock(queue->_nextmutex);
+	p_mutex_lock(queue->_datamutex);
+	p_mutex_unlock(queue->_nextmutex);
+}
+
+void wimp_instr_queue_low_prio_unlock(WimpInstrQueue* queue)
+{
+	p_mutex_unlock(queue->_datamutex);
+	p_mutex_unlock(queue->_lowpriomutex);
+}
+
+void wimp_instr_queue_high_prio_lock(WimpInstrQueue* queue)
+{
+	p_mutex_lock(queue->_nextmutex);
+	p_mutex_lock(queue->_datamutex);
+	p_mutex_unlock(queue->_nextmutex);
+}
+
+void wimp_instr_queue_high_prio_unlock(WimpInstrQueue* queue)
+{
+	p_mutex_unlock(queue->_datamutex);
 }
 
 int32_t wimp_instr_queue_add(WimpInstrQueue* queue, void* instr, size_t bytes)
@@ -21,9 +49,6 @@ int32_t wimp_instr_queue_add(WimpInstrQueue* queue, void* instr, size_t bytes)
 	new_node->instr.instruction_bytes = bytes;
 	new_node->nextnode = NULL;
 
-	//Must lock and unlock thread here as adding to a shared space
-	p_mutex_lock(queue->_queuemutex);
-
 	if (queue->backnode == NULL)
 	{
 		//There are no nodes in the queue, set both to first node
@@ -36,19 +61,32 @@ int32_t wimp_instr_queue_add(WimpInstrQueue* queue, void* instr, size_t bytes)
 		queue->backnode->nextnode = new_node;
 		queue->backnode = new_node;
 	}
+	return WIMP_INSTRUCTION_SUCCESS;
+}
 
-	p_mutex_unlock(queue->_queuemutex);
+int32_t wimp_instr_queue_add_existing(WimpInstrQueue* queue, WimpInstrNode node)
+{
+	node->nextnode = NULL;
+	if (queue->backnode == NULL)
+	{
+		//There are no nodes in the queue, set both to first node
+		queue->nextnode = node;
+		queue->backnode = node;
+	}
+	else
+	{
+		//There is a node in the queue, add to its next node and set to back
+		queue->backnode->nextnode = node;
+		queue->backnode = node;
+	}
 	return WIMP_INSTRUCTION_SUCCESS;
 }
 
 WimpInstrNode wimp_instr_queue_pop(WimpInstrQueue* queue)
 {
-	p_mutex_lock(queue->_queuemutex);
-
 	//Return null if the queue is exhausted
 	if (queue->nextnode == NULL)
 	{
-		p_mutex_unlock(queue->_queuemutex);
 		return NULL;
 	}
 
@@ -61,8 +99,6 @@ WimpInstrNode wimp_instr_queue_pop(WimpInstrQueue* queue)
 		//Ensure won't add to deallocated memory
 		queue->backnode = NULL;
 	}
-
-	p_mutex_unlock(queue->_queuemutex);
 	return current;
 }
 
@@ -82,5 +118,7 @@ void wimp_instr_queue_free(WimpInstrQueue queue)
 		currentnode = wimp_instr_queue_pop(&queue);
 	}
 
-	p_mutex_free(queue._queuemutex);
+	p_mutex_free(queue._datamutex);
+	p_mutex_free(queue._nextmutex);
+	p_mutex_free(queue._lowpriomutex);
 }
