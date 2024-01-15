@@ -127,6 +127,19 @@ bool wimp_server_validate_process(WimpServer* server, const char* process_name);
 void wimp_server_add(WimpServer* server, const char* dest, const char* instr, void* args, size_t arg_size_bytes);
 
 /*
+* Routes server instructions if they don't belong to this server. If instruction
+* is successfully routed (returns true) do not try to free the instr node as
+* ownership is passed to the outgoing queue
+* 
+* @param server The server to route with
+* @param dest_process The destination process of the instruction
+* @param instrnode The node to route
+* 
+* @returns Returns true if the instruction was routed, otherwise false
+*/
+bool wimp_server_instr_routed(WimpServer* server, const char* dest_process, WimpInstrNode instrnode);
+
+/*
 * Sends the list of outgoing instructions to the desired processes.
 * 
 * @param server The server to send instructions from

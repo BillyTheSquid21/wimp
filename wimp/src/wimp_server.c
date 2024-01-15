@@ -272,6 +272,17 @@ void wimp_server_add(WimpServer* server, const char* dest, const char* instr, vo
 	wimp_instr_queue_add(&server->outgoingmsg, instrbuff, total_bytes);
 }
 
+bool wimp_server_instr_routed(WimpServer* server, const char* dest_process, WimpInstrNode instrnode)
+{
+	if (strcmp(dest_process, server->process_name) != 0)
+	{
+		//Add to the outgoing and continue to prevent freeing
+		wimp_instr_queue_add_existing(&server->outgoingmsg, instrnode);
+		return true;
+	}
+	return false;
+}
+
 int32_t wimp_server_send_instructions(WimpServer* server)
 {
 	wimp_instr_queue_high_prio_lock(&server->outgoingmsg);

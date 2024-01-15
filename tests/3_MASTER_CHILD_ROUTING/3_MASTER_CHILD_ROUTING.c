@@ -12,11 +12,15 @@
 PASSMAT PASS_MATRIX[] =
 {
 	{ "PROCESS VALIDATION", false, },
+	{ "CHILD 1 RECEIVES FROM CHILD 2", false, },
+	{ "CHILD 2 RECEIVES FROM CHILD 1", false, },
 };
 
 enum TEST_ENUMS
 {
 	STEP_PROCESS_VALIDATION,
+	C1_RECIEVESFROM_C2,
+	C2_RECIEVESFROM_C1,
 };
 
 /*
@@ -100,6 +104,17 @@ int client_main_entry(int argc, char** argv)
 			if (strcmp(meta.instr, "say_hello") == 0)
 			{
 				wimp_log("Hello! Recieved from: %s\n", meta.source_process);
+				if (strcmp(meta.source_process, other_client) == 0)
+				{
+					if (strcmp(meta.dest_process, "client1") == 0)
+					{
+						PASS_MATRIX[C1_RECIEVESFROM_C2].status = true;
+					}
+					else if (strcmp(meta.dest_process, "client2") == 0)
+					{
+						PASS_MATRIX[C2_RECIEVESFROM_C1].status = true;
+					} 
+				}
 			}
 			else if (strcmp(meta.instr, WIMP_INSTRUCTION_EXIT) == 0)
 			{
@@ -208,10 +223,9 @@ int main(void)
 		{
 			WimpInstrMeta meta = wimp_get_instr_from_buffer(currentnode->instr.instruction, currentnode->instr.instruction_bytes);
 			//DEBUG_WIMP_PRINT_INSTRUCTION_META(meta);
-			if (strcmp(meta.dest_process, server->process_name) != 0)
+			if (wimp_server_instr_routed(server, meta.dest_process, currentnode))
 			{
 				//Add to the outgoing and continue to prevent freeing
-				wimp_instr_queue_add_existing(&server->outgoingmsg, currentnode);
 				currentnode = wimp_instr_queue_pop(&server->incomingmsg);
 				continue;
 			}
@@ -242,6 +256,6 @@ int main(void)
 	//Cleanup
 	p_libsys_shutdown();
 
-	wimp_test_validate_passmat(PASS_MATRIX, 1);
+	wimp_test_validate_passmat(PASS_MATRIX, 3);
 	return 0;
 }

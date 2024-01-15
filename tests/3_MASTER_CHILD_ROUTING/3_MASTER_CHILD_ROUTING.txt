@@ -3,9 +3,13 @@ This test should do the following:
 - Sets up a master process and two child processes
 - Child1 sends a message to Child2 through master
 - Child2 sends a message to Child1 through master
+- Child1 closes Child2 through master
+- Child2 closes Child1 through master
+- Either child process closes the master
+- Program completes
 
 Checks:
 
 - Processes are set up correctly
 - Program runs to completion
-- All instructions arrived
+- All instructions arrived and interpreted correctly
