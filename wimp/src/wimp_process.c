@@ -1,6 +1,44 @@
 #include <wimp_process.h>
 #include <wimp_log.h>
 
+#ifdef WIN32
+
+#include <windows.h>
+#include <sys/types.h>
+#include <io.h>
+
+#define F_OK 0
+#define access _access
+
+#define WIMP_EXE_WINDOW_SHOW SW_HIDE
+#define MAX_EXE_PATH_LEN 1024
+
+#endif
+
+#ifdef WIN32
+
+typedef struct _EXE_ENTRY
+{
+	char* path;
+	char* args;
+}* EXE_ENTRY;
+
+int wimp_launch_exe(EXE_ENTRY entry);
+
+int wimp_launch_exe(EXE_ENTRY entry)
+{
+	wimp_log("Launching: %s With args: %s\n", entry->path, entry->args);
+	ShellExecute(NULL, "open", entry->path, entry->args, NULL, WIMP_EXE_WINDOW_SHOW);
+	
+	wimp_log("Closing: %s\n", entry->path);
+	free(entry->path);
+	free(entry->args);
+	free(entry);
+	return 0;
+}
+
+#endif
+
 int32_t wimp_start_library_process(const char* process_name, MAIN_FUNC_PTR main_func, WimpMainEntry entry)
 {
 	wimp_log("Starting %s!\n", process_name);
@@ -11,6 +49,107 @@ int32_t wimp_start_library_process(const char* process_name, MAIN_FUNC_PTR main_
 		return WIMP_PROCESS_FAIL;
 	}
 	return WIMP_PROCESS_SUCCESS;
+}
+
+int32_t wimp_start_executable_process(const char* process_name, const char* executable, WimpMainEntry entry)
+{
+	//Get the directory of the running process
+	char* path = malloc(MAX_EXE_PATH_LEN);
+	if (path == NULL)
+	{
+		return WIMP_PROCESS_FAIL;
+	}
+	memset(path, 0, MAX_EXE_PATH_LEN);
+
+	//Get the directory
+#ifdef WIN32
+	GetModuleFileName(NULL, path, MAX_EXE_PATH_LEN);
+#endif
+
+	//Erase the exe part from the string
+	size_t current_dir_bytes = strlen(path) * sizeof(char);
+	size_t last_slash_index = MAX_EXE_PATH_LEN;
+	for (size_t i = current_dir_bytes; i > 0; --i)
+	{
+		if (path[i] == '/' || path[i] == '\\')
+		{
+			last_slash_index = i;
+			break;
+		}
+	}
+
+	if (last_slash_index == MAX_EXE_PATH_LEN)
+	{
+		wimp_log("Issue reading the path of the program! %s\n", path);
+		return WIMP_PROCESS_FAIL;
+	}
+
+	//Blank everything after the index (except slash)
+	memset(&path[last_slash_index + 1], 0, MAX_EXE_PATH_LEN - last_slash_index - 1);
+
+	//Add the rest of the path specified - TODO allow ../../ format - currently can't!
+	size_t pathlen = strlen(path) * sizeof(char);
+	memcpy(&path[last_slash_index + 1], executable, pathlen);
+
+	//Check the file exists
+	if (access(path, F_OK) != 0)
+	{
+		wimp_log("%s was not found!\n", path);
+		return WIMP_PROCESS_FAIL;
+	}
+
+	//Make the entry args
+	EXE_ENTRY exe_entry = malloc(sizeof(struct _EXE_ENTRY));
+	if (exe_entry == NULL)
+	{
+		return WIMP_PROCESS_FAIL;
+	}
+	exe_entry->path = path; //Currently just refer to original
+
+	//Collate the other args
+	size_t arglen = 0;
+	for (int i = 0; i < entry->argc; ++i)
+	{
+		arglen += (strlen(entry->argv[i]) + 1) * sizeof(char); //+1 for spaces or null
+	}
+	
+	exe_entry->args = malloc(arglen);
+	if (exe_entry->args == NULL)
+	{
+		return WIMP_PROCESS_FAIL;
+	}
+
+	//Copy over the strings
+	size_t offset = 0;
+	for (int i = 0; i < entry->argc; ++i)
+	{
+		size_t strbytes = strlen(entry->argv[i]) * sizeof(char);
+		memcpy(&exe_entry->args[offset], entry->argv[i], strbytes);
+		offset += strbytes;
+		
+		//Add either a ' ' or '\0'
+		if (i == entry->argc - 1)
+		{
+			exe_entry->args[offset] = '\0';
+		}
+		else
+		{
+			exe_entry->args[offset] = ' ';
+		}
+		offset++;
+	}
+
+#ifdef WIN32
+	wimp_log("Running %s!\n", path);
+
+	PUThread* process_thread = p_uthread_create((PUThreadFunc)&wimp_launch_exe, exe_entry, false, process_name);
+	if (process_thread == NULL)
+	{
+		wimp_log("Failed to create thread: %s", process_name);
+		return WIMP_PROCESS_FAIL;
+	}
+	return WIMP_PROCESS_SUCCESS;
+#endif
 }
 
 WimpMainEntry wimp_get_entry(int32_t argc, ...)

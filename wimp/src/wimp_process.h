@@ -59,6 +59,19 @@ typedef enum
 int32_t wimp_start_library_process(const char* process_name, MAIN_FUNC_PTR main_func, WimpMainEntry entry);
 
 /*
+* Starts an executable process
+* 
+* Currently uses a very crude path locating think - TODO embed cwalk into the library
+* 
+* @param process_name The name of the process to create
+* @param executable The executable relative to the location the program binary is running from (e.g. bin directory)
+* @param entry The entry arguments
+* 
+* @return Returns either WIMP_PROCESS_SUCCESS or WIMP_PROCESS_FAIL
+*/
+int32_t wimp_start_executable_process(const char* process_name, const char* executable, WimpMainEntry entry);
+
+/*
 * Creates a persistent collection of arguments to supply, which can be freed after the library main thread is finished
 * 
 * @param argc The number of arguments supplied
