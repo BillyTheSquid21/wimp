@@ -25,7 +25,7 @@ Prerequisite: Ensure you have a visual studio sdk installed, cd to root director
 2. cmake .. -G "Visual Studio 16 2019"
 3. Use the produced solution file to compile, setting the startup project to the desired project
 
-Linux
+Linux (Under development)
 ---
 
 Ninja (Preferred):
