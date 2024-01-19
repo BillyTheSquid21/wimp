@@ -200,7 +200,7 @@ void wimp_log(const char* format, ...)
 	int done;
 
 	WimpServer* server = wimp_get_local_server();
-	if (server == NULL || server->server_type == WIMP_SERVERTYPE_MASTER)
+	if (server == NULL || server->parent == NULL)
 	{
 		//Default to printf behavior is is the master, or there is no server locally
 		va_start (arg, format);
@@ -225,7 +225,7 @@ void wimp_log(const char* format, ...)
 
 	va_start(arg, format);
 	size_t size = (format_string(str + tagbytes, format, MAXIMUM_LOG_BYTES - tagbytes, arg) + 1) * sizeof(char);
-	wimp_add_local_server("master", WIMP_INSTRUCTION_LOG, str, size + tagbytes);
+	wimp_add_local_server(server->parent, WIMP_INSTRUCTION_LOG, str, size + tagbytes);
 	va_end(arg);
 
 	//TODO - maybe don't make send automatically as the user might want more control over the sending of instructions

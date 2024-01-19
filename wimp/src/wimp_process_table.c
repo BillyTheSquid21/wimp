@@ -85,6 +85,11 @@ int32_t wimp_process_table_remove(WimpProcessTable* table, const char* process_n
 
 int32_t wimp_process_table_get(WimpProcessData* data, WimpProcessTable table, const char* process_name)
 {
+	if (process_name == NULL)
+	{
+		return WIMP_PROCESS_TABLE_FAIL;
+	}
+
 	HashStringEntry* val = HashString_find(table._hash_table, process_name);
 	if (val == NULL)
 	{

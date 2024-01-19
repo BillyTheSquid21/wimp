@@ -62,7 +62,7 @@ int client_main_entry(int argc, char** argv)
 	}
 
 	//Create a server local to this thread
-	wimp_init_local_server("test_process", "127.0.0.1", process_port, WIMP_SERVERTYPE_MASTER);
+	wimp_init_local_server("test_process", "127.0.0.1", process_port, NULL);
 	WimpServer* server = wimp_get_local_server();
 
 	//Start a reciever thread for the master process that called this thread
@@ -217,7 +217,7 @@ int main(void)
 	wimp_start_library_process("test_process", (MAIN_FUNC_PTR)&client_main_lib_entry, entry);
 
 	//Start a local server for the master process
-	wimp_init_local_server("master", "127.0.0.1", master_port, WIMP_SERVERTYPE_MASTER);
+	wimp_init_local_server("master", "127.0.0.1", master_port, NULL);
 	WimpServer* server = wimp_get_local_server();
 
 	//Start a reciever thread for the client process that the master started

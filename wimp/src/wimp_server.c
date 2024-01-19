@@ -13,7 +13,7 @@ WimpServer* wimp_get_local_server()
 	return _local_server;
 }
 
-int32_t wimp_init_local_server(const char* process_name, const char* domain, int32_t port, WimpServerType server_type)
+int32_t wimp_init_local_server(const char* process_name, const char* domain, int32_t port, const char* parent)
 {
 	if (_local_server != NULL)
 	{
@@ -22,7 +22,7 @@ int32_t wimp_init_local_server(const char* process_name, const char* domain, int
 	}
 
 	_local_server = malloc(sizeof(WimpServer));
-	return wimp_create_server(_local_server, process_name, domain, port, server_type);
+	return wimp_create_server(_local_server, process_name, domain, port, parent);
 }
 
 void wimp_close_local_server()
@@ -47,7 +47,7 @@ void wimp_add_local_server(const char* dest, const char* instr, const void* args
 	wimp_server_add(_local_server, dest, instr, args, arg_size_bytes);
 }
 
-int32_t wimp_create_server(WimpServer* server, const char* process_name, const char* domain, int32_t port, WimpServerType server_type)
+int32_t wimp_create_server(WimpServer* server, const char* process_name, const char* domain, int32_t port, const char* parent)
 {
 	WimpProcessTable ptable = wimp_create_process_table();
 
@@ -79,7 +79,7 @@ int32_t wimp_create_server(WimpServer* server, const char* process_name, const c
 	server->addr = addr;
 	server->ptable = ptable;
 	server->server = s;
-	server->server_type = server_type;
+	server->parent = parent;
 	server->incomingmsg = wimp_create_instr_queue();
 	server->outgoingmsg = wimp_create_instr_queue();
 
@@ -292,21 +292,26 @@ int32_t wimp_server_send_instructions(WimpServer* server)
 		//Get process con
 		//of buffer as lookup
 		WimpProcessData data = NULL;
-		char* destination = "master"; //default to the master connection for child
-		
-		//If is a master, get destination from instr at offset
-		if (server->server_type == WIMP_SERVERTYPE_MASTER)
-		{
-			destination = &currentn->instr.instruction[WIMP_INSTRUCTION_DEST_OFFSET];
-		}
+
+		//get destination from after instr size offset
+		char* destination = &currentn->instr.instruction[WIMP_INSTRUCTION_DEST_OFFSET];
 
 		//If the destination is this server, add to incoming instead (loopback)
 		if (strcmp(destination, server->process_name) == 0)
 		{
 			wimp_instr_queue_add(&server->incomingmsg, currentn->instr.instruction, currentn->instr.instruction_bytes);
 		}
-		else if (wimp_process_table_get(&data, server->ptable, destination) == WIMP_PROCESS_TABLE_SUCCESS)
+		else if 
+			(
+			//First look for a destination in the server ptable
+			//Otherwise send to the default destination (the parent) which may route it
+			//Short circuit is guaranteed by C standard
+			wimp_process_table_get(&data, server->ptable, destination) == WIMP_PROCESS_TABLE_SUCCESS
+			||
+			wimp_process_table_get(&data, server->ptable, server->parent) == WIMP_PROCESS_TABLE_SUCCESS
+			)
 		{
+			//If a valid place to send to is found send the instruction
 			memcpy(server->sendbuffer, currentn->instr.instruction, currentn->instr.instruction_bytes);
 			
 			WimpInstrMeta meta = wimp_get_instr_from_buffer(server->sendbuffer, WIMP_MESSAGE_BUFFER_BYTES);

@@ -16,18 +16,6 @@
 #define WIMP_SERVER_FAIL -1
 #define WIMP_SERVER_ACCEPT_TIMEOUT 5000 //Waits 5000 ms before timing out on the blocking calls
 
-/*
-* Defines what type of server the wimp server is:
-* 
-* WIMP_MASTER - can message children directly, and other master processes (default behavior)
-* WIMP_CHILD  - all traffic gets routed to the master, can only have one connection (to the master)
-*/
-enum _WimpServerType
-{
-	WIMP_SERVERTYPE_MASTER,
-	WIMP_SERVERTYPE_CHILD,
-};
-
 typedef int32_t WimpServerType;
 
 typedef struct _WimpServer
@@ -36,7 +24,7 @@ typedef struct _WimpServer
 	PSocketAddress* addr;
 	PSocket* server;
 	WimpProcessTable ptable;
-	WimpServerType server_type;
+	const char* parent;
 
 	//Ingoing and outgoing msg queues
 	WimpInstrQueue incomingmsg;
@@ -62,10 +50,11 @@ WimpServer* wimp_get_local_server(void);
 * @param process_name The name of the process running on the server
 * @param domain The domain for the server to run on
 * @param port The port for the server to run on
+* @param parent The parent process name (e.g. master process) - may be NULL if is not a child
 * 
 * @return Returns either WIMP_SERVER_SUCCESS or WIMP_SERVER_FAIL
 */
-int32_t wimp_init_local_server(const char* process_name, const char* domain, int32_t port, WimpServerType server_type);
+int32_t wimp_init_local_server(const char* process_name, const char* domain, int32_t port, const char* parent);
 
 /*
 * Closes the local thread server.
@@ -90,10 +79,11 @@ void wimp_add_local_server(const char* dest, const char* instr, const void* args
 * @param process_name The name of the process running on the server
 * @param domain The domain for the server to run on
 * @param port The port for the server to run on
+* @param parent The parent process name (e.g. master process) - may be NULL if is not a child
 * 
 * @return Returns either WIMP_SERVER_SUCCESS or WIMP_SERVER_FAIL
 */
-int32_t wimp_create_server(WimpServer* server, const char* process_name, const char* domain, int32_t port, WimpServerType server_type);
+int32_t wimp_create_server(WimpServer* server, const char* process_name, const char* domain, int32_t port, const char* parent);
 
 /*
 * Accepts a process to the server. Is blocking. Can only do one at a time.
