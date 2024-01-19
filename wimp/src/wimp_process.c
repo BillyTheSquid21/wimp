@@ -1,7 +1,9 @@
 #include <wimp_process.h>
 #include <wimp_log.h>
 
-#ifdef WIN32
+#define MAX_DIRECTORY_PATH_LEN 1024
+
+#ifdef _WIN32
 
 #include <windows.h>
 #include <sys/types.h>
@@ -11,25 +13,46 @@
 #define access _access
 
 #define WIMP_EXE_WINDOW_SHOW SW_HIDE
-#define MAX_EXE_PATH_LEN 1024
 
-#endif
-
-#ifdef WIN32
-
-typedef struct _EXE_ENTRY
+typedef struct _PROG_ENTRY
 {
 	char* path;
 	char* args;
-}* EXE_ENTRY;
+}* PROG_ENTRY;
 
-int wimp_launch_exe(EXE_ENTRY entry);
+int wimp_launch_exe(PROG_ENTRY entry);
 
-int wimp_launch_exe(EXE_ENTRY entry)
+int wimp_launch_exe(PROG_ENTRY entry)
 {
 	wimp_log("Launching: %s With args: %s\n", entry->path, entry->args);
 	ShellExecute(NULL, "open", entry->path, entry->args, NULL, WIMP_EXE_WINDOW_SHOW);
 	
+	wimp_log("Closing: %s\n", entry->path);
+	free(entry->path);
+	free(entry->args);
+	free(entry);
+	return 0;
+}
+
+#endif
+
+#ifdef __unix__
+
+#include <unistd.h>
+
+typedef struct _PROG_ENTRY
+{
+	char* path;
+	char** argv;
+}* PROG_ENTRY;
+
+int wimp_launch_lin(PROG_ENTRY entry);
+
+int wimp_launch_lin(PROG_ENTRY entry)
+{
+	wimp_log("Launching: %s\n", entry->path);
+	execv(path, entry->argv);
+
 	wimp_log("Closing: %s\n", entry->path);
 	free(entry->path);
 	free(entry->args);
@@ -54,21 +77,25 @@ int32_t wimp_start_library_process(const char* process_name, MAIN_FUNC_PTR main_
 int32_t wimp_start_executable_process(const char* process_name, const char* executable, WimpMainEntry entry)
 {
 	//Get the directory of the running process
-	char* path = malloc(MAX_EXE_PATH_LEN);
+	char* path = malloc(MAX_DIRECTORY_PATH_LEN);
 	if (path == NULL)
 	{
 		return WIMP_PROCESS_FAIL;
 	}
-	memset(path, 0, MAX_EXE_PATH_LEN);
+	memset(path, 0, MAX_DIRECTORY_PATH_LEN);
 
 	//Get the directory
-#ifdef WIN32
-	GetModuleFileName(NULL, path, MAX_EXE_PATH_LEN);
+#ifdef _WIN32
+	GetModuleFileName(NULL, path, MAX_DIRECTORY_PATH_LEN);
 #endif
 
-	//Erase the exe part from the string
+#ifdef __unix__
+	getcwd(path, MAX_DIRECTORY_PATH_LEN);
+#endif
+
+	//Erase the file part from the string
 	size_t current_dir_bytes = strlen(path) * sizeof(char);
-	size_t last_slash_index = MAX_EXE_PATH_LEN;
+	size_t last_slash_index = MAX_DIRECTORY_PATH_LEN;
 	for (size_t i = current_dir_bytes; i > 0; --i)
 	{
 		if (path[i] == '/' || path[i] == '\\')
@@ -78,14 +105,14 @@ int32_t wimp_start_executable_process(const char* process_name, const char* exec
 		}
 	}
 
-	if (last_slash_index == MAX_EXE_PATH_LEN)
+	if (last_slash_index == MAX_DIRECTORY_PATH_LEN)
 	{
 		wimp_log("Issue reading the path of the program! %s\n", path);
 		return WIMP_PROCESS_FAIL;
 	}
 
 	//Blank everything after the index (except slash)
-	memset(&path[last_slash_index + 1], 0, MAX_EXE_PATH_LEN - last_slash_index - 1);
+	memset(&path[last_slash_index + 1], 0, MAX_DIRECTORY_PATH_LEN - last_slash_index - 1);
 
 	//Add the rest of the path specified - TODO allow ../../ format - currently can't!
 	size_t pathlen = strlen(path) * sizeof(char);
@@ -99,22 +126,24 @@ int32_t wimp_start_executable_process(const char* process_name, const char* exec
 	}
 
 	//Make the entry args
-	EXE_ENTRY exe_entry = malloc(sizeof(struct _EXE_ENTRY));
-	if (exe_entry == NULL)
+	PROG_ENTRY prog_entry = malloc(sizeof(struct _PROG_ENTRY));
+	if (prog_entry == NULL)
 	{
 		return WIMP_PROCESS_FAIL;
 	}
-	exe_entry->path = path; //Currently just refer to original
+	prog_entry->path = path; //Currently just refer to original
 
-	//Collate the other args
+#ifdef _WIN32
+	//For windows collate the other args
 	size_t arglen = 0;
+
 	for (int i = 0; i < entry->argc; ++i)
 	{
 		arglen += (strlen(entry->argv[i]) + 1) * sizeof(char); //+1 for spaces or null
 	}
 	
-	exe_entry->args = malloc(arglen);
-	if (exe_entry->args == NULL)
+	prog_entry->args = malloc(arglen);
+	if (prog_entry->args == NULL)
 	{
 		return WIMP_PROCESS_FAIL;
 	}
@@ -124,32 +153,43 @@ int32_t wimp_start_executable_process(const char* process_name, const char* exec
 	for (int i = 0; i < entry->argc; ++i)
 	{
 		size_t strbytes = strlen(entry->argv[i]) * sizeof(char);
-		memcpy(&exe_entry->args[offset], entry->argv[i], strbytes);
+		memcpy(&prog_entry->args[offset], entry->argv[i], strbytes);
 		offset += strbytes;
 		
 		//Add either a ' ' or '\0'
 		if (i == entry->argc - 1)
 		{
-			exe_entry->args[offset] = '\0';
+			prog_entry->args[offset] = '\0';
 		}
 		else
 		{
-			exe_entry->args[offset] = ' ';
+			prog_entry->args[offset] = ' ';
 		}
 		offset++;
 	}
+#endif
 
-#ifdef WIN32
+#if __unix__
+	prog_entry->path = path;
+	prog_entry->argv = entry->argv;
+#endif
+
 	wimp_log("Running %s!\n", path);
 
-	PUThread* process_thread = p_uthread_create((PUThreadFunc)&wimp_launch_exe, exe_entry, false, process_name);
+#ifdef _WIN32
+	PUThread* process_thread = p_uthread_create((PUThreadFunc)&wimp_launch_exe, prog_entry, false, process_name);
+#endif
+
+#ifdef __unix__
+	PUThread* process_thread = p_uthread_create((PUThreadFunc)&wimp_launch_lin, prog_entry, false, process_name);
+#endif
+
 	if (process_thread == NULL)
 	{
 		wimp_log("Failed to create thread: %s", process_name);
 		return WIMP_PROCESS_FAIL;
 	}
 	return WIMP_PROCESS_SUCCESS;
-#endif
 }
 
 WimpMainEntry wimp_get_entry(int32_t argc, ...)
@@ -163,9 +203,10 @@ WimpMainEntry wimp_get_entry(int32_t argc, ...)
 		return NULL;
 	}
 
-	//Process the command line args supplied
+	//Process the command line args supplied (add null ptr at the end)
+	size_t argv_bytes = ((size_t)argc * sizeof(char*)) + sizeof(void*);
 	main_entry->argc = argc;
-	main_entry->argv = malloc((size_t)argc * sizeof(char*));
+	main_entry->argv = malloc(argv_bytes);
 	if (main_entry->argv == NULL)
 	{
 		free(main_entry);
@@ -182,6 +223,7 @@ WimpMainEntry wimp_get_entry(int32_t argc, ...)
 			{
 				free(main_entry->argv[j]); //Free all the previous malloc args
 			}
+			free(main_entry->argv);
 			free(main_entry);
 			va_end(argp);
 			return NULL;
@@ -195,6 +237,7 @@ WimpMainEntry wimp_get_entry(int32_t argc, ...)
 			{
 				free(main_entry->argv[j]); //Free all the previous malloc args
 			}
+			free(main_entry->argv);
 			free(main_entry);
 			va_end(argp);
 			return NULL;
@@ -203,6 +246,10 @@ WimpMainEntry wimp_get_entry(int32_t argc, ...)
 		memcpy(main_entry->argv[i], arg, arg_bytes);
 	}
 	va_end(argp);
+
+	//Zero last element of argv pointers to play nice with linux
+	main_entry->argv[argc] = NULL;
+
 	return main_entry;
 }
 
