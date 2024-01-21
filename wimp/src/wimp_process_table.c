@@ -1,4 +1,5 @@
 #include <wimp_process_table.h>
+#include <stdlib.h>
 
 void wimp_process_data_free(void* data)
 {

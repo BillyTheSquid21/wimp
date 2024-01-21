@@ -1,14 +1,14 @@
 #ifndef WIMP_DEBUG_H
 #define WIMP_DEBUG_H
 
-//Make the debug macro work regardless of env
-#if defined _DEBUG || defined DEBUG
+#ifndef _DEBUG
 
-#define WIMP_DEBUG
+#ifdef Debug
+#define _DEBUG
+#endif
 
-//Can add debug utility functions here - might make a debug print
-
-#else
+#define _DEBUG //For now always define
 
 #endif
+
 #endif

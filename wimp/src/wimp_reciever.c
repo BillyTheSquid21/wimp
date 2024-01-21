@@ -1,5 +1,6 @@
 #include <wimp_reciever.h>
 #include <wimp_log.h>
+#include <stdlib.h>
 
 /*
 * Represents the state the reciever is in
@@ -176,6 +177,7 @@ int32_t wimp_reciever_init(PSocket** recsock, PSocketAddress** rec_address, Reci
 	WimpMsgBuffer recbuffer;
 	WimpMsgBuffer sendbuffer;
 	WIMP_ZERO_BUFFER(recbuffer); WIMP_ZERO_BUFFER(sendbuffer);
+	PError* err;
 
 	//Create client socket, connect to recfrom server
 	//Then send handshake and process name
@@ -190,16 +192,20 @@ int32_t wimp_reciever_init(PSocket** recsock, PSocketAddress** rec_address, Reci
     }
 
     //Create the main listen/recieve socket - currently hard coded
-    *recsock = p_socket_new(P_SOCKET_FAMILY_INET, P_SOCKET_TYPE_STREAM, P_SOCKET_PROTOCOL_TCP, NULL);
+    *recsock = p_socket_new(P_SOCKET_FAMILY_INET, P_SOCKET_TYPE_STREAM, P_SOCKET_PROTOCOL_TCP, &err);
     if (*recsock == NULL)
     {
+		wimp_log("Failed to create reciever socket! (%d): %s\n", p_error_get_code(err), p_error_get_message(err));
+		p_error_free(err);
 		WIMP_ZERO_BUFFER(sendbuffer);
         return WIMP_RECIEVER_FAIL;
     }
 
     //Connect to end process, which should be waiting to accept
-    if (!p_socket_connect(*recsock, *rec_address, NULL))
+    if (!p_socket_connect(*recsock, *rec_address, &err))
     {
+		wimp_log("Reciever failed to connect to end process! (%d): %s\n", p_error_get_code(err), p_error_get_message(err));
+		p_error_free(err);
         p_socket_address_free(*rec_address);
         p_socket_free(*recsock);
 		WIMP_ZERO_BUFFER(sendbuffer);
@@ -215,6 +221,8 @@ int32_t wimp_reciever_init(PSocket** recsock, PSocketAddress** rec_address, Reci
 
 	if (handshake_size <= 0)
 	{
+		wimp_log("Reciever handshake failed! (%d): %s\n", p_error_get_code(err), p_error_get_message(err));
+		p_error_free(err);
         p_socket_address_free(*rec_address);
         p_socket_free(*recsock);
 		WIMP_ZERO_BUFFER(recbuffer);
@@ -225,6 +233,7 @@ int32_t wimp_reciever_init(PSocket** recsock, PSocketAddress** rec_address, Reci
 	WimpHandshakeHeader* recheader = (WimpHandshakeHeader*)recbuffer;
 	if (recheader->handshake_header != WIMP_RECIEVER_HANDSHAKE)
 	{
+		wimp_log("Reciever recieved invalid handshake!: %d\n", recheader->handshake_header);
         p_socket_address_free(*rec_address);
         p_socket_free(*recsock);
 		WIMP_ZERO_BUFFER(recbuffer);
@@ -428,7 +437,7 @@ char* wimp_name_rec_thread(const char* recname, const char* recfrom, const char*
 	//Name is: RECPROC-PROCDOM:PROCPORT-RECFROM:RECPORT
 	char recportstr[6];  //Max port is 5 chars long
 	char procportstr[6];
-	_itoa(recport, recportstr, 10); _itoa(procport, procportstr, 10);
+	sprintf(recportstr, "%d", recport); sprintf(procportstr, "%d", procport);
 
 	size_t procname_s_bytes = strlen(recname) * sizeof(char);
 	size_t recfrom_s_bytes = strlen(recfrom) * sizeof(char);

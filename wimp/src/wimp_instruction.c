@@ -1,4 +1,5 @@
 #include <wimp_instruction.h>
+#include <stdlib.h>
 
 WimpInstrQueue wimp_create_instr_queue()
 {

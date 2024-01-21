@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <wimp_server.h>
+#include <wimp_debug.h>
 
 int get_char_width_dec(int var)
 {
@@ -74,7 +75,7 @@ int get_char_width_hex(int var)
 		;
 }
 
-size_t format_string(char* str, char* format, size_t buffsize, va_list arg)
+size_t format_string(char* str, const char* format, size_t buffsize, va_list arg)
 {
 	size_t string_offset = 0;
 	while (*format != '\0')
@@ -96,25 +97,25 @@ size_t format_string(char* str, char* format, size_t buffsize, va_list arg)
 			else if ((*format == 'd') || (*format == 'i'))
 			{
 				int int_prt = va_arg(arg, int);
-				_itoa(int_prt, &str[string_offset], 10);
+				sprintf(&str[string_offset], "%d", int_prt);
 				string_offset += get_char_width_dec(int_prt);
 			}
 			else if (*format == 'o')
 			{
 				int int_prt = va_arg(arg, int);
-				_itoa(int_prt, &str[string_offset], 8);
-				string_offset += get_char_width_dec(int_prt);
+				sprintf(&str[string_offset], "%o", int_prt);
+				string_offset += get_char_width_oct(int_prt);
 			}
 			else if ((*format == 'x') || (*format == 'X'))
 			{
 				int int_prt = va_arg(arg, int);
-				_itoa(int_prt, &str[string_offset], 16);
+				sprintf(&str[string_offset], "%x", int_prt);
 				string_offset += get_char_width_hex(int_prt);
 			}
 			else if (*format == 'u')
 			{
 				int int_prt = va_arg(arg, int);
-				_itoa(int_prt, &str[string_offset], 10);
+				sprintf(&str[string_offset], "%u", int_prt);
 				string_offset += get_char_width_dec((unsigned int)int_prt);
 			}
 			else if (*format == 'c')

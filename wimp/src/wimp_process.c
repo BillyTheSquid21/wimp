@@ -1,5 +1,6 @@
 #include <wimp_process.h>
 #include <wimp_log.h>
+#include <stdlib.h>
 
 #define MAX_DIRECTORY_PATH_LEN 1024
 
@@ -51,11 +52,11 @@ int wimp_launch_lin(PROG_ENTRY entry);
 int wimp_launch_lin(PROG_ENTRY entry)
 {
 	wimp_log("Launching: %s\n", entry->path);
-	execv(path, entry->argv);
+	execv(entry->path, entry->argv);
 
 	wimp_log("Closing: %s\n", entry->path);
 	free(entry->path);
-	free(entry->args);
+	free(entry->argv);
 	free(entry);
 	return 0;
 }
@@ -274,18 +275,21 @@ int32_t wimp_assign_unused_local_port()
     reciever_address = p_socket_address_new("127.0.0.1", 0);
     if (reciever_address == NULL)
     {
+		wimp_log("Failed to bind to unused port!\n");
 		p_socket_address_free(reciever_address);
         return WIMP_PROCESS_FAIL;
     }
 
 	if ((reciever_socket = p_socket_new(P_SOCKET_FAMILY_INET, P_SOCKET_TYPE_STREAM, P_SOCKET_PROTOCOL_TCP, NULL)) == NULL)
 	{
+		wimp_log("Failed to bind to unused port!\n");
 		p_socket_address_free(reciever_address);
 		return WIMP_PROCESS_FAIL;
 	}
 
-	if (!p_socket_bind(reciever_socket, reciever_address, FALSE, NULL))
+	if (!p_socket_bind(reciever_socket, reciever_address, TRUE, NULL))
 	{
+		wimp_log("Failed to bind to unused port!\n");
 		p_socket_address_free(reciever_address);
 		p_socket_free(reciever_socket);
 		return WIMP_PROCESS_FAIL;

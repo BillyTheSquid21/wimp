@@ -1,6 +1,7 @@
 #include <wimp_server.h>
 #include <utility/thread_local.h>
 #include <wimp_log.h>
+#include <stdlib.h>
 
 /*
 * A thread can have a local server instance to make sending instructions
@@ -55,23 +56,27 @@ int32_t wimp_create_server(WimpServer* server, const char* process_name, const c
 
 	PSocketAddress* addr;
 	PSocket* s;
+	PError* err;
 
 	if ((addr = p_socket_address_new(domain, port)) == NULL)
 	{
 		return WIMP_SERVER_FAIL;
 	}
 
-	if ((s = p_socket_new(P_SOCKET_FAMILY_INET, P_SOCKET_TYPE_STREAM, P_SOCKET_PROTOCOL_TCP, NULL)) == NULL)
+	if ((s = p_socket_new(P_SOCKET_FAMILY_INET, P_SOCKET_TYPE_STREAM, P_SOCKET_PROTOCOL_TCP, &err)) == NULL)
 	{
+		wimp_log("Failed to create server socket! (%d): %s\n", p_error_get_code(err), p_error_get_message(err));
+		p_error_free(err);
 		p_socket_address_free(addr);
 		return WIMP_SERVER_FAIL;
 	}
 
-	if (!p_socket_bind(s, addr, FALSE, NULL))
+	if (!p_socket_bind(s, addr, TRUE, &err))
 	{
+		wimp_log("Failed to bind server socket! (%d): %s\n", p_error_get_code(err), p_error_get_message(err));
+		p_error_free(err);
 		p_socket_address_free(addr);
 		p_socket_free(s);
-
 		return WIMP_SERVER_FAIL;
 	}
 
@@ -120,12 +125,13 @@ int32_t wimp_server_process_accept(WimpServer* server, int pcount, ...)
 	int accepted_count = 0;
 	for (int i = 0; i < pcount; ++i)
 	{
-		PSocket* con = p_socket_accept(server->server, NULL);
+		PError* err = NULL;
+		PSocket* con = p_socket_accept(server->server, &err);
 
 		if (con != NULL)
 		{
 			//Only blocking call, recieve handshake from reciever
-			pssize handshake_size = p_socket_receive(con, server->recbuffer, WIMP_MESSAGE_BUFFER_BYTES, NULL);
+			pssize handshake_size = p_socket_receive(con, server->recbuffer, WIMP_MESSAGE_BUFFER_BYTES, &err);
 			
 			if (handshake_size <= 0)
 			{
@@ -190,7 +196,8 @@ int32_t wimp_server_process_accept(WimpServer* server, int pcount, ...)
 		}
 		else
 		{
-			wimp_log("Can't make con, tried and failed...\n");
+			wimp_log("Can't make connection (%d) %s\n", p_error_get_code(err), p_error_get_message(err));
+			p_error_free(err);
 		}
 	}
 	free(pnames);
@@ -218,12 +225,14 @@ bool wimp_server_validate_process(WimpServer* server, const char* process_name)
 		return false;
 	}
 
+	PError* err = NULL;
 	int32_t ping = WIMP_RECIEVER_PING;
-	if (p_socket_send(procdat->process_connection, (const pchar*)&ping, sizeof(int32_t), NULL) != -1)
+	if (p_socket_send(procdat->process_connection, (const pchar*)&ping, sizeof(int32_t), &err) != -1)
 	{
 		return true;
 	}
-	wimp_log("Process couldn't be pinged!: %s\n", process_name);
+	wimp_log("Process (%s) couldn't be pinged!: (%d) %s\n", process_name, p_error_get_code(err), p_error_get_message(err));
+	p_error_free(err);
 
 	procdat->process_active = false;
 	wimp_process_table_remove(&server->ptable, process_name);
