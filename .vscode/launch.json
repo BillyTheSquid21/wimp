@@ -1,0 +1,37 @@
+{
+    "version": "2.0.0",
+    "configurations": [
+        {
+            "name": "Debug-Test-01",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceRoot}/build/bin/Debug/WIMP-Test-01",
+            "cwd": "${workspaceRoot}",
+            "preLaunchTask": "build-tests-debug"
+        },
+        {
+            "name": "Debug-Test-02",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceRoot}/build/bin/Debug/WIMP-Test-02",
+            "cwd": "${workspaceRoot}",
+            "preLaunchTask": "build-tests-debug"
+        },
+        {
+            "name": "Debug-Test-03",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceRoot}/build/bin/Debug/WIMP-Test-03",
+            "cwd": "${workspaceRoot}",
+            "preLaunchTask": "build-tests-debug"
+        },
+        {
+            "name": "Debug-Test-04",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceRoot}/build/bin/Debug/WIMP-Test-04_a",
+            "cwd": "${workspaceRoot}",
+            "preLaunchTask": "build-tests-debug"
+        }
+    ]
+}

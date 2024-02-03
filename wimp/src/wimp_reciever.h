@@ -82,11 +82,7 @@ typedef struct _WimpInstrMeta
 
 static void _debug_wimp_print_instruction_meta(WimpInstrMeta meta)
 {
-	printf("\nREAL INSTRUCTION FROM: %s\n", meta.source_process);
-	printf("TO: %s\n", meta.dest_process);
-	printf("INSTR: %s\n", meta.instr);
-	printf("ARG SIZE: %d\n", meta.arg_bytes);
-	printf("TOTAL SIZE: %d\n\n", (int32_t)meta.total_bytes);
+	printf("\nREAL INSTRUCTION FROM: %s\nTO: %s\nINSTR: %s\nARG SIZE: %d\nTOTAL SIZE: %d\n\n",meta.source_process,meta.dest_process,meta.instr,meta.arg_bytes,(int32_t)meta.total_bytes);
 }
 
 //Prints incoming instructions for debugging purposes

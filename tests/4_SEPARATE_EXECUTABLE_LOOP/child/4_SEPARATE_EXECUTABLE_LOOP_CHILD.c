@@ -15,7 +15,7 @@
 int main(int argc, char** argv)
 {
 	//Initialize the socket library
-	p_libsys_init();
+	wimp_init();
 
 	wimp_log("Test process with arg count: %d\n", argc);
 
@@ -80,7 +80,7 @@ int main(int argc, char** argv)
 	wimp_close_local_server();
 
 	//Cleanup
-	p_libsys_shutdown();
+	wimp_shutdown();
 
 	return 0;
 }

@@ -48,6 +48,18 @@ typedef enum
 } WIMP_ProcessPrivilege;
 
 /*
+* Starts the wimp library
+*
+* @return Returns either WIMP_PROCESS_SUCCESS or WIMP_PROCESS_FAIL
+*/
+int32_t wimp_init();
+
+/*
+* Shuts down the wimp library
+*/
+void wimp_shutdown();
+
+/*
 * Starts a library process
 * 
 * @param process_name The name of the process to create

@@ -1,0 +1,20 @@
+{
+    "version":"2.0.0",
+    "tasks": [
+        {
+            "label": "build-tests-debug",
+            "type": "shell",
+            "command": "cd build && cmake .. -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER=gcc -DWIMP_BUILD_TESTS=1 -G \"Ninja\" && cmake --build . -j10"
+        },
+        {
+            "label": "build-debug",
+            "type": "shell",
+            "command": "cd build && cmake .. -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER=gcc -G \"Ninja\" && cmake --build . -j10"
+        },
+        {
+            "label": "build-release",
+            "type": "shell",
+            "command": "cd build && cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=gcc -G \"Ninja\" && cmake --build . -j10"
+        }
+    ]
+}

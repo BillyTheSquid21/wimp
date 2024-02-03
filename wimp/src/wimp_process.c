@@ -1,5 +1,6 @@
 #include <wimp_process.h>
 #include <wimp_log.h>
+#include <time.h>
 #include <stdlib.h>
 
 #define MAX_DIRECTORY_PATH_LEN 1024
@@ -40,6 +41,7 @@ int wimp_launch_exe(PROG_ENTRY entry)
 #ifdef __unix__
 
 #include <unistd.h>
+#include <sys/timeb.h>
 
 typedef struct _PROG_ENTRY
 {
@@ -193,6 +195,26 @@ int32_t wimp_start_executable_process(const char* process_name, const char* exec
 	return WIMP_PROCESS_SUCCESS;
 }
 
+
+
+int32_t wimp_init()
+{
+	p_libsys_init();
+
+#ifdef __unix__
+	//Seed random for port assignment on linux - TODO get a better port assignment system
+	struct timeb tb;
+	ftime(&tb);
+	srand(tb.time + (time_t)tb.millitm);
+#endif
+	return WIMP_PROCESS_SUCCESS;
+}
+
+void wimp_shutdown()
+{
+	p_libsys_shutdown();
+}
+
 WimpMainEntry wimp_get_entry(int32_t argc, ...)
 {
 	va_list argp;
@@ -267,6 +289,7 @@ void wimp_free_entry(WimpMainEntry entry)
 
 int32_t wimp_assign_unused_local_port()
 {
+#ifdef _WIN32
 	//bind dummy socket, get the port and return
 	PSocket* reciever_socket;
     PSocketAddress* reciever_address;
@@ -302,6 +325,11 @@ int32_t wimp_assign_unused_local_port()
 	p_socket_address_free(bound_address);
     p_socket_close(reciever_socket, NULL);
 	return port;
+#else
+	//Linux seems to not play nice with the above method, use rand for now as it seems to be more consistent
+	//TODO - please don't do this, or the above, but a third less sinister thing
+	return rand() % (65535 + 1 - 49152) + 49152;
+#endif
 }
 
 int32_t wimp_port_to_string(int32_t port, char* string_out)

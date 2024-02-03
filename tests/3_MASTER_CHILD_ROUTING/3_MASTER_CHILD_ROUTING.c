@@ -159,7 +159,7 @@ int main(void)
 {
 
 	//Initialize the socket library
-	p_libsys_init();
+	wimp_init();
 
 	//Get unused random ports for the master and end process to run on
 	int32_t master_port = wimp_assign_unused_local_port();
@@ -202,7 +202,7 @@ int main(void)
 	wimp_server_process_accept(server, 2, "client1", "client2");
 
 	//Validate that the process correctly started. Sends a ping packet to make sure is listening
-	if (wimp_server_validate_process(server, "client1") && wimp_server_validate_process(server, "client2"))
+	if (wimp_server_check_process_listening(server, "client1") && wimp_server_check_process_listening(server, "client2"))
 	{
 		wimp_log("Processes validated!\n");
 		PASS_MATRIX[STEP_PROCESS_VALIDATION].status = true;
@@ -254,7 +254,7 @@ int main(void)
 	wimp_close_local_server();
 
 	//Cleanup
-	p_libsys_shutdown();
+	wimp_shutdown();
 
 	wimp_test_validate_passmat(PASS_MATRIX, 3);
 	return 0;

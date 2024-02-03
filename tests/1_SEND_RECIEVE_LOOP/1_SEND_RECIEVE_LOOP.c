@@ -88,6 +88,7 @@ int client_main_entry(int argc, char** argv)
 
 	//This tells the server to send off the instructions
 	wimp_server_send_instructions(server);
+	p_uthread_sleep(1000);
 
 	//This should also shut down the reciever
 	wimp_log("Client thread closed\n");
@@ -113,7 +114,7 @@ int main(void)
 {
 
 	//Initialize the socket library
-	p_libsys_init();
+	wimp_init();
 
 	//Get unused random ports for the master and end process to run on
 	int32_t master_port = wimp_assign_unused_local_port();
@@ -145,7 +146,7 @@ int main(void)
 	wimp_server_process_accept(server, 1, "test_process");
 
 	//Validate that the process correctly started. Sends a ping packet to make sure is listening
-	if (wimp_server_validate_process(server, "test_process"))
+	if (wimp_server_check_process_listening(server, "test_process"))
 	{
 		wimp_log("Process validated!\n");
 		PASS_MATRIX[STEP_PROCESS_VALIDATION].status = true;
@@ -160,8 +161,8 @@ int main(void)
 		while (currentnode != NULL)
 		{
 			WimpInstrMeta meta = wimp_get_instr_from_buffer(currentnode->instr.instruction, currentnode->instr.instruction_bytes);
-			wimp_log("\nMaster recieved instruction:");
-			DEBUG_WIMP_PRINT_INSTRUCTION_META(meta);
+			//wimp_log("\nMaster recieved instruction:");
+			//DEBUG_WIMP_PRINT_INSTRUCTION_META(meta);
 
 			if (strcmp(meta.instr, "blank_instr") == 0)
 			{
@@ -202,7 +203,7 @@ int main(void)
 	wimp_close_local_server();
 
 	//Cleanup
-	p_libsys_shutdown();
+	wimp_shutdown();
 
 	wimp_test_validate_passmat(PASS_MATRIX, 5);
 	return 0;

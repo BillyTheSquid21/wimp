@@ -210,7 +210,7 @@ int32_t wimp_server_process_accept(WimpServer* server, int pcount, ...)
 	return WIMP_SERVER_SUCCESS;
 }
 
-bool wimp_server_validate_process(WimpServer* server, const char* process_name)
+bool wimp_server_check_process_listening(WimpServer* server, const char* process_name)
 {
 	WimpProcessData procdat;
 	if (wimp_process_table_get(&procdat, server->ptable, process_name) == WIMP_PROCESS_TABLE_FAIL)
@@ -227,12 +227,10 @@ bool wimp_server_validate_process(WimpServer* server, const char* process_name)
 
 	PError* err = NULL;
 	int32_t ping = WIMP_RECIEVER_PING;
-	if (p_socket_send(procdat->process_connection, (const pchar*)&ping, sizeof(int32_t), &err) != -1)
+	if (p_socket_send(procdat->process_connection, (const pchar*)&ping, sizeof(int32_t), NULL) != -1)
 	{
 		return true;
 	}
-	wimp_log("Process (%s) couldn't be pinged!: (%d) %s\n", process_name, p_error_get_code(err), p_error_get_message(err));
-	p_error_free(err);
 
 	procdat->process_active = false;
 	wimp_process_table_remove(&server->ptable, process_name);
@@ -320,12 +318,18 @@ int32_t wimp_server_send_instructions(WimpServer* server)
 			wimp_process_table_get(&data, server->ptable, server->parent) == WIMP_PROCESS_TABLE_SUCCESS
 			)
 		{
-			//If a valid place to send to is found send the instruction
-			memcpy(server->sendbuffer, currentn->instr.instruction, currentn->instr.instruction_bytes);
+			//Check the process is still active, otherwise scrap the instruction
+			if (data->process_active)
+			{
+				//If a valid place to send to is found send the instruction
+				memcpy(server->sendbuffer, currentn->instr.instruction, currentn->instr.instruction_bytes);
 			
-			WimpInstrMeta meta = wimp_get_instr_from_buffer(server->sendbuffer, WIMP_MESSAGE_BUFFER_BYTES);
-			pssize sendres = p_socket_send(data->process_connection, server->sendbuffer, currentn->instr.instruction_bytes, NULL);
-			WIMP_ZERO_BUFFER(server->sendbuffer);
+				WimpInstrMeta meta = wimp_get_instr_from_buffer(server->sendbuffer, WIMP_MESSAGE_BUFFER_BYTES);
+				pssize sendres = p_socket_send(data->process_connection, server->sendbuffer, currentn->instr.instruction_bytes, NULL);
+
+				DEBUG_WIMP_PRINT_INSTRUCTION_META(meta);
+				WIMP_ZERO_BUFFER(server->sendbuffer);
+			}
 		}
 		wimp_instr_node_free(currentn);
 		currentn = wimp_instr_queue_pop(&server->outgoingmsg);

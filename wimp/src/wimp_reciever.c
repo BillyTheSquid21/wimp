@@ -404,6 +404,8 @@ void wimp_reciever_recieve(RecieverArgs args)
 			wimp_instr_queue_add(args->incoming_queue, instr.instruction, instr.instruction_bytes);
 			wimp_instr_queue_low_prio_unlock(args->incoming_queue);
 
+			DEBUG_WIMP_PRINT_INSTRUCTION_META(meta);
+
 			//If at the end of the written to buffer (e.g. recieved 900 bytes and there's 1024 total)
 			//Set to idling state
 			if (recbuff_offset >= incoming_size)

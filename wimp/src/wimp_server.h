@@ -104,7 +104,7 @@ int32_t wimp_server_process_accept(WimpServer* server, int pcount, ...);
 * 
 * @return Returns true if the connection exists still, false otherwise
 */
-bool wimp_server_validate_process(WimpServer* server, const char* process_name);
+bool wimp_server_check_process_listening(WimpServer* server, const char* process_name);
 
 /*
 * Adds instructions to the server
