@@ -240,6 +240,12 @@ int32_t wimp_reciever_init(PSocket** recsock, PSocketAddress** rec_address, Reci
 		return WIMP_RECIEVER_FAIL;
 	}
 	WIMP_ZERO_BUFFER(recbuffer);
+
+	//There is still a possible edge case where instructions can come in following the hand shake
+	//TODO: fix this, make a more reliable way of telling the sending process its safe to send
+	//For now, will just sleep for a few ms before sending anything as being on localhost that
+	//should prevent it for now
+
 	return WIMP_RECIEVER_SUCCESS;
 }
 

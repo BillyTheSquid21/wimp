@@ -26,7 +26,7 @@
 #define WIMP_MESSAGE_BUFFER_BYTES 1024
 #define WIMP_RECIEVER_PING 0x00000000 //Ping with 4 bytes of null, ignore if this comes in
 #define WIMP_ZERO_BUFFER(buffer) memset(buffer, 0, WIMP_MESSAGE_BUFFER_BYTES)
-#define WIMP_PRINT_INSTRS 1 //Print the incoming instructions
+#define WIMP_PRINT_INSTRS 0 //Print the incoming instructions
 
 /*
 * Reciever function type pointer

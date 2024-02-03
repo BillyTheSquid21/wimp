@@ -70,6 +70,7 @@ int client_main_entry(int argc, char** argv)
 
 	//Accept the connection to the test_process->master reciever, started by the master thread
 	wimp_server_process_accept(server, 1, "master");
+	p_uthread_sleep(100);
 
 	//This server won't loop, so send some instructions to the master thread
 	
