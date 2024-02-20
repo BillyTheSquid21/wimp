@@ -93,10 +93,11 @@ int32_t wimp_start_executable_process(const char* process_name, const char* exec
 #endif
 
 #ifdef __unix__
-	getcwd(path, MAX_DIRECTORY_PATH_LEN);
+	ssize_t linklen = readlink("/proc/self/exe", path, MAX_DIRECTORY_PATH_LEN);
+	path[linklen] = '\0';
 #endif
 
-	printf("Loading executable at: %s\n", path);
+	printf("Current executable: %s\n", path);
 
 	//Erase the file part from the string
 	size_t current_dir_bytes = strlen(path) * sizeof(char);
@@ -122,6 +123,12 @@ int32_t wimp_start_executable_process(const char* process_name, const char* exec
 	//Add the rest of the path specified - TODO allow ../../ format - currently can't!
 	size_t pathlen = strlen(path) * sizeof(char);
 	memcpy(&path[last_slash_index + 1], executable, pathlen);
+
+	//If on windows, add ".exe"
+#ifdef _WIN32
+	const char exe_str = ".exe";
+	memcpy(&path[strlen(path) * sizeof(char)], &exe_str, 4);
+#endif
 
 	//Check the file exists
 	if (access(path, F_OK) != 0)

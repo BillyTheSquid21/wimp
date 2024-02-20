@@ -48,7 +48,7 @@ int main(void)
 
 	//Start the client process, creating the command line arguments and creating a new thread
 	WimpMainEntry entry = wimp_get_entry(4, "--master-port", master_port_string, "--process-port", port_string);
-	wimp_start_executable_process("test_process", "WIMP-Test-04_b.exe", entry);
+	wimp_start_executable_process("test_process", "WIMP-Test-04_b", entry);
 
 	//Start a local server for the master process
 	wimp_init_local_server("master", "127.0.0.1", master_port, NULL);
