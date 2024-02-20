@@ -202,6 +202,9 @@ int32_t wimp_server_process_accept(WimpServer* server, int pcount, ...)
 	}
 	free(pnames);
 
+	//Time out for 100ms for now to prevent user sending instructions until the handshake is cleared
+	p_uthread_sleep(100);
+
 	if (accepted_count != pcount)
 	{
 		wimp_log("Couldn't find every process!\n");
@@ -327,7 +330,7 @@ int32_t wimp_server_send_instructions(WimpServer* server)
 				WimpInstrMeta meta = wimp_get_instr_from_buffer(server->sendbuffer, WIMP_MESSAGE_BUFFER_BYTES);
 				pssize sendres = p_socket_send(data->process_connection, server->sendbuffer, currentn->instr.instruction_bytes, NULL);
 
-				DEBUG_WIMP_PRINT_INSTRUCTION_META(meta);
+				//DEBUG_WIMP_PRINT_INSTRUCTION_META(meta);
 				WIMP_ZERO_BUFFER(server->sendbuffer);
 			}
 		}

@@ -8,7 +8,8 @@
 enum RecieverState
 {
 	REC_IDLE,
-	REC_READING_INSTRUCTION,
+	REC_READING_HEADERS,
+	REC_READING_DATA,
 	//TODO - add other states
 };
 
@@ -34,11 +35,6 @@ WimpInstr wimp_reciever_allocateinstr(pssize size);
 * @return Returns either WIMP_RECIEVER_SUCCESS or WIMP_RECIEVER_FAIL
 */
 int32_t wimp_reciever_init(PSocket** recsock, PSocketAddress** rec_address, RecieverArgs args);
-
-/*
-* Sets the reciever state to idle
-*/
-void wimp_set_reciever_state_idle(int32_t* state, WimpInstr* instr, int32_t* instr_size_read, int32_t* recbuff_offset, uint8_t* recbuff);
 
 
 WimpInstrMeta wimp_get_instr_from_buffer(uint8_t* buffer, size_t buffsize)
@@ -114,7 +110,7 @@ WimpInstrMeta wimp_get_instr_from_buffer(uint8_t* buffer, size_t buffsize)
 
 int32_t wimp_get_instr_size(uint8_t* buffer)
 {
-	return *(uint32_t*)buffer;
+	return *(int32_t*)buffer;
 }
 
 WimpHandshakeHeader wimp_create_handshake(const char* process_name, uint8_t* message_buffer)
@@ -249,16 +245,37 @@ int32_t wimp_reciever_init(PSocket** recsock, PSocketAddress** rec_address, Reci
 	return WIMP_RECIEVER_SUCCESS;
 }
 
-void wimp_set_reciever_state_idle(int32_t* state, WimpInstr* instr, int32_t* instr_size_read, int32_t* recbuff_offset, uint8_t* recbuff)
+typedef struct _WimpRecieverState
 {
-	*state = REC_IDLE;
-	*instr_size_read = 0;
-	*recbuff_offset = 0;
-	instr->instruction = NULL;
-	instr->instruction_bytes = 0;
-	WIMP_ZERO_BUFFER(recbuff);
+	//Size of the last packet to be received
+	pssize incoming_size;
+
+	//Current offset within the recievebuffer
+	size_t rec_offset;
+
+	//Current state of the reciever
+	int32_t state;
+
+	//Current instruction of the reciever
+	WimpInstr instruction;
+
+	size_t instruction_bytes_read;
+} WimpRecieverState;
+
+/*
+* Gets the next packet and resets location in recbuffer
+*/
+void wimp_reciever_next_packet(WimpRecieverState* state, PSocket* recsock, uint8_t* recbuffer)
+{
+	WIMP_ZERO_BUFFER(recbuffer);
+	state->incoming_size = p_socket_receive(recsock, recbuffer, WIMP_MESSAGE_BUFFER_BYTES, NULL);
+	state->rec_offset = 0;
 }
 
+/*
+* Currently there is a design flaw, where if a packet less than 4 bytes is recieved it will
+* throw off the reading - add checksum in future and prevent < 4 bytes packets being send
+*/
 void wimp_reciever_recieve(RecieverArgs args)
 {	
 	WimpMsgBuffer recbuffer;
@@ -275,153 +292,123 @@ void wimp_reciever_recieve(RecieverArgs args)
 		return;
 	}
 
-	int32_t reciever_state = REC_IDLE;
-	int32_t instr_size_read = 0;
-	int32_t recbuff_offset = 0;
-	WimpInstr instr;
+	//State of the reciever
+	WimpRecieverState state = 
+	{ 
+		0, 
+		0, 
+		REC_IDLE,
+		{ NULL, 0 },
+		0
+	};
 
-	pssize incoming_size = 0;
 	bool disconnect = false;
 	while (!disconnect)
 	{
-		//IDLE STATE
-		//Idle will sit and poll recieve
-		if (reciever_state == REC_IDLE)
+		/*
+		* IDLE STATE: continuously poll for a new packet until one is recieved
+		* If a packet is recieved, enter reading headers mode
+		*/
+		if (state.state == REC_IDLE)
 		{
-			incoming_size = p_socket_receive(recsock, recbuffer, WIMP_MESSAGE_BUFFER_BYTES, NULL);
-			if (incoming_size == 0)
+			wimp_reciever_next_packet(&state, recsock, recbuffer);
+			if (state.incoming_size > 0)
 			{
-				continue;
+				state.state = REC_READING_HEADERS;
 			}
-
-			//If something recieved, is reading instr state from idle
-			reciever_state = REC_READING_INSTRUCTION;
 		}
 
-		//READING INSTR STATE
-		//Reading will pull in all availible instructions until an empty point is hit
-		if (reciever_state == REC_READING_INSTRUCTION)
+		/*
+		* READING HEADERS STATE: (TODO: typedef for the header as may include extra info)
+		* In units of int32_t (i.e. 4 bytes) check the header value - if is a valid sized
+		* instruction, enter reading data mode (up to size specified)
+		*
+		* If a header hasn't been fully read, call for another packet and complete
+		*/
+		if (state.state == REC_READING_HEADERS)
 		{
-			int32_t instr_size_bytes = -1;
-			if (WIMP_MESSAGE_BUFFER_BYTES - recbuff_offset >= 4) //If can read at least 4 bytes
-			{
-				instr_size_bytes = wimp_get_instr_size(&recbuffer[recbuff_offset]);
-				recbuff_offset += sizeof(int32_t);
+			int32_t header = -1;
+			uint8_t* header_ptr = (uint8_t*)&header;
 
-				//If offset is at size, request another packet
-				if (recbuff_offset == WIMP_MESSAGE_BUFFER_BYTES)
+			//Read in each byte and if havent finished, recieve again and finish
+			//Assume the endianness of the system sending the header is the same (as probably is localhost)
+			//TODO: Account for endianness in future
+			for (size_t h_bytes_read = 0; h_bytes_read < sizeof(int32_t); ++h_bytes_read)
+			{
+				if (state.rec_offset >= state.incoming_size)
 				{
-					WIMP_ZERO_BUFFER(recbuffer);
-					incoming_size = p_socket_receive(recsock, recbuffer, WIMP_MESSAGE_BUFFER_BYTES, NULL);
-					recbuff_offset = 0;
+					wimp_reciever_next_packet(&state, recsock, recbuffer);
+				}
+				header_ptr[h_bytes_read] = recbuffer[state.rec_offset];
+				state.rec_offset++;
+			}
+
+			//Check values of the header
+			assert(header != -1 && "Header value wasn't changed!");
+
+			//If header is zero, are at end of data
+			if (header == 0)
+			{
+				state.state = REC_IDLE;
+			}
+			else if (header != WIMP_RECIEVER_PING)
+			{
+				//If isn't a ping, create the instruction here and reading
+				state.instruction = wimp_reciever_allocateinstr(header);
+				state.state = REC_READING_DATA;
+
+				//Add header
+				memcpy(&state.instruction.instruction[0], &header, sizeof(header));
+				state.instruction_bytes_read = sizeof(header);
+			}
+		}
+
+		/*
+		* READING DATA STATE: Read until the bytes read = the instructions read
+		* Once the instruction is read, add to queue and return to header reading
+		*
+		* If didn't get all of instruction, get another packet
+		*/
+		if (state.state == REC_READING_DATA)
+		{
+			while (state.instruction_bytes_read != state.instruction.instruction_bytes)
+			{
+				//Copy up to end of recieved data
+				size_t bytes_to_copy = state.instruction.instruction_bytes - state.instruction_bytes_read;
+
+				if (state.rec_offset + bytes_to_copy > state.incoming_size)
+				{
+					bytes_to_copy =  state.incoming_size - state.rec_offset;
+				}
+
+				memcpy(&state.instruction.instruction[state.instruction_bytes_read], &recbuffer[state.rec_offset], bytes_to_copy);
+				state.rec_offset += bytes_to_copy;
+				state.instruction_bytes_read += bytes_to_copy;
+
+				if (state.instruction_bytes_read != state.instruction.instruction_bytes)
+				{
+					wimp_reciever_next_packet(&state, recsock, recbuffer);
 				}
 			}
-			else //Handle the edge case where the total bytes is split accross the buffer
-			{
-				uint8_t* bytes_addr = (uint8_t*)&instr_size_bytes;
 
-				//Get how many bytes can be read (first part)
-				int32_t bytes_to_read = WIMP_MESSAGE_BUFFER_BYTES - recbuff_offset;
-				memcpy(bytes_addr, &recbuffer[recbuff_offset], bytes_to_read);
-
-				//Request another packet and copy the rest
-				WIMP_ZERO_BUFFER(recbuffer);
-				incoming_size = p_socket_receive(recsock, recbuffer, WIMP_MESSAGE_BUFFER_BYTES, NULL);
-				recbuff_offset = 0;
-
-				int32_t bytes_left_to_read = sizeof(int32_t) - bytes_to_read;
-				memcpy(&bytes_addr[bytes_to_read], &recbuffer[0], bytes_left_to_read);
-				recbuff_offset += bytes_left_to_read;
-			}
-			
-			if (instr_size_bytes == 0)
-			{
-				wimp_set_reciever_state_idle(
-					&reciever_state,
-					&instr, 
-					&instr_size_read, 
-					&recbuff_offset, 
-					recbuffer
-				);
-				continue;
-			}
-
-			//Allocate instr and loop until read
-			instr = wimp_reciever_allocateinstr(instr_size_bytes);
-
-			//If fails, return to idling and YELL AT THE USER
-			if (instr.instruction == NULL)
-			{
-				wimp_set_reciever_state_idle(
-					&reciever_state, 
-					&instr, 
-					&instr_size_read, 
-					&recbuff_offset, 
-					recbuffer
-				);
-				continue;
-			}
-
-			//First off however, copy the instr_size_bytes from the variable not
-			//the buffer! - this is because the first 4 bytes can be split in the
-			//edge case - the recbuff offset has been advanced
-			memcpy(instr.instruction, &instr_size_bytes, sizeof(int32_t));
-			instr_size_read += sizeof(int32_t);
-
-			while (instr_size_read < instr_size_bytes)
-			{
-				int32_t size_left = instr_size_bytes - instr_size_read;
-				int32_t bytes_to_buff_end = WIMP_MESSAGE_BUFFER_BYTES - recbuff_offset;
-
-				if (size_left <= bytes_to_buff_end)
-				{
-					memcpy(&instr.instruction[instr_size_read], &recbuffer[recbuff_offset], size_left);
-					instr_size_read += size_left;
-					if (size_left == bytes_to_buff_end)
-					{
-						recbuff_offset = 0;
-					}
-					else
-					{
-						recbuff_offset += size_left;
-					}
-					break;
-				}
-				
-				//Otherwise read what can be read and rec
-				memcpy(&instr.instruction[instr_size_read], &recbuffer[recbuff_offset], bytes_to_buff_end);
-				instr_size_read += bytes_to_buff_end;
-
-				WIMP_ZERO_BUFFER(recbuffer);
-				incoming_size = p_socket_receive(recsock, recbuffer, WIMP_MESSAGE_BUFFER_BYTES, NULL);
-				recbuff_offset = 0;
-			}
-
-			//Add the complete instruction
-			//Ensure to check for the special signals here
-			WimpInstrMeta meta = wimp_get_instr_from_buffer(instr.instruction, instr.instruction_bytes);
+			//Check for the exit signal
+			//Will be the "exit" instruction and this process will be the destination
+			WimpInstrMeta meta = wimp_get_instr_from_buffer(state.instruction.instruction, state.instruction.instruction_bytes);
 			if (strcmp(meta.instr, "exit") == 0 && strcmp(meta.dest_process, args->process_name) == 0)
 			{
 				disconnect = true;
 			}
 
-			//Low prio lock to only add after main thread finishes reading first lot of instructions
+			//Lock queue and add instructions
 			wimp_instr_queue_low_prio_lock(args->incoming_queue);
-			wimp_instr_queue_add(args->incoming_queue, instr.instruction, instr.instruction_bytes);
+			wimp_instr_queue_add(args->incoming_queue, state.instruction.instruction, state.instruction.instruction_bytes);
 			wimp_instr_queue_low_prio_unlock(args->incoming_queue);
 
-			DEBUG_WIMP_PRINT_INSTRUCTION_META(meta);
-
-			//If at the end of the written to buffer (e.g. recieved 900 bytes and there's 1024 total)
-			//Set to idling state
-			if (recbuff_offset >= incoming_size)
-			{
-				wimp_set_reciever_state_idle(&reciever_state, &instr, &instr_size_read, &recbuff_offset, recbuffer);
-			}
-
-			instr.instruction = NULL;
-			instr.instruction_bytes = 0;
-			instr_size_read = 0;
+			//Go back to reading headers and reset instr
+			state.instruction.instruction = NULL;
+			state.instruction.instruction_bytes = 0;
+			state.instruction_bytes_read = 0;
+			state.state = REC_READING_HEADERS;
 		}
 	}
 
@@ -432,80 +419,16 @@ void wimp_reciever_recieve(RecieverArgs args)
 	return;
 }
 
-/*
-* Creates a unique name assuming any two processes can only have one connection
-* each way and that they do not operate on the same port.
-*/
-char* wimp_name_rec_thread(const char* recname, const char* recfrom, const char* procdom, int32_t recport, int32_t procport)
-{
-	//Naming convention:
-	//RECPROC is what process the reciever recieves instr from
-	//RECFROM is what domain the socket gets data from
-	//PROCDOM is what domain the thread writes instructions to
-	//Name is: RECPROC-PROCDOM:PROCPORT-RECFROM:RECPORT
-	char recportstr[6];  //Max port is 5 chars long
-	char procportstr[6];
-	sprintf(recportstr, "%d", recport); sprintf(procportstr, "%d", procport);
-
-	size_t procname_s_bytes = strlen(recname) * sizeof(char);
-	size_t recfrom_s_bytes = strlen(recfrom) * sizeof(char);
-	size_t procdom_s_bytes = strlen(procdom) * sizeof(char);
-	size_t recport_s_bytes = strlen(recportstr) * sizeof(char);
-	size_t procport_s_bytes = strlen(procportstr) * sizeof(char);
-	size_t total_bytes = procname_s_bytes + recfrom_s_bytes + procdom_s_bytes + recport_s_bytes + procport_s_bytes + 1 + 4; //+1 for null, +4 for hyphens and colons
-
-	uint8_t* name_str = malloc(total_bytes);
-	if (name_str == NULL)
-	{
-		return NULL;
-	}
-
-	size_t offset = 0;
-
-	memcpy(&name_str[offset], recname, procname_s_bytes);
-	offset += procname_s_bytes;
-
-	name_str[offset] = '-';
-	offset++;
-
-	memcpy(&name_str[offset], procdom, procdom_s_bytes);
-	offset += procdom_s_bytes;
-
-	name_str[offset] = ':';
-	offset++;
-
-	memcpy(&name_str[offset], procportstr, procport_s_bytes);
-	offset += procport_s_bytes;
-
-	name_str[offset] = '-';
-	offset++;
-
-	memcpy(&name_str[offset], recfrom, recfrom_s_bytes);
-	offset += recfrom_s_bytes;
-
-	name_str[offset] = ':';
-	offset++;
-
-	memcpy(&name_str[offset], recportstr, recport_s_bytes);
-	offset += recport_s_bytes;
-
-	name_str[offset] = '\0';
-	return name_str;
-}
-
 int32_t wimp_start_reciever_thread(const char* recfrom_name, const char* process_domain, int32_t process_port, RecieverArgs args)
 {
-	char* recname = wimp_name_rec_thread(recfrom_name, args->recfrom_domain, process_domain, args->recfrom_port, process_port);
-	wimp_log("Starting Reciever: %s!\n", recname);
+	wimp_log("Starting Reciever: %s!\n", args->process_name);
 
-	PUThread* process_thread = p_uthread_create((PUThreadFunc)&wimp_reciever_recieve, args, false, recname);
+	PUThread* process_thread = p_uthread_create((PUThreadFunc)&wimp_reciever_recieve, args, false, args->process_name);
 	if (process_thread == NULL)
 	{
-		wimp_log("Failed to create thread: %s", recname);
-		free(recname);
+		wimp_log("Failed to create thread: %s", args->process_name);
 		return WIMP_RECIEVER_FAIL;
 	}
-	free(recname);
 	return WIMP_RECIEVER_SUCCESS;
 }
 

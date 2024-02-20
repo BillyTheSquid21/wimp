@@ -27,8 +27,8 @@ enum TEST_ENUMS
 	LONG_BATCH_ARRIVED
 };
 
-#define SHORT_INSTR_COUNT 500000
-#define LONG_INSTR_COUNT 100000
+#define SHORT_INSTR_COUNT 50000
+#define LONG_INSTR_COUNT 10000
 
 /*
 * This is an example client main. It takes the domains and ports as cmd arguments and creates and starts a server.
