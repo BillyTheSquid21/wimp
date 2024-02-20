@@ -96,6 +96,8 @@ int32_t wimp_start_executable_process(const char* process_name, const char* exec
 	getcwd(path, MAX_DIRECTORY_PATH_LEN);
 #endif
 
+	printf("Loading executable at: %s\n", path);
+
 	//Erase the file part from the string
 	size_t current_dir_bytes = strlen(path) * sizeof(char);
 	size_t last_slash_index = MAX_DIRECTORY_PATH_LEN;
