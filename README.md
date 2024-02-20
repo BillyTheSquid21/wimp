@@ -34,6 +34,8 @@ Ninja (Preferred):
 2. cmake .. -DCMAKE_CXX_COMPILER=gcc -G "Ninja"
 3. cmake --build . -j10
 
+Alternatively, there is a .vscode folder with launch options added - ensure the build directory has been made before using.
+
 Additional Flags
 ---
 
