@@ -77,9 +77,13 @@ int32_t wimp_start_library_process(const char* process_name, MAIN_FUNC_PTR main_
 	return WIMP_PROCESS_SUCCESS;
 }
 
+//This function acts differently in windows vs in linux - bear in mind when debugging
+//it can be messy to follow at times, but all the assumptions are based on information
+//above in the file
 int32_t wimp_start_executable_process(const char* process_name, const char* executable, WimpMainEntry entry)
 {
 	//Get the directory of the running process
+	//Use malloc to preserve outside function stack frame (is freed above)
 	char* path = malloc(MAX_DIRECTORY_PATH_LEN);
 	if (path == NULL)
 	{
@@ -87,7 +91,7 @@ int32_t wimp_start_executable_process(const char* process_name, const char* exec
 	}
 	memset(path, 0, MAX_DIRECTORY_PATH_LEN);
 
-	//Get the directory
+	//Get the path of the currently running executable
 #ifdef _WIN32
 	GetModuleFileName(NULL, path, MAX_DIRECTORY_PATH_LEN);
 #endif
@@ -99,7 +103,7 @@ int32_t wimp_start_executable_process(const char* process_name, const char* exec
 
 	printf("Current executable: %s\n", path);
 
-	//Erase the file part from the string
+	//Erase the file part from the string end
 	size_t current_dir_bytes = strlen(path) * sizeof(char);
 	size_t last_slash_index = MAX_DIRECTORY_PATH_LEN;
 	for (size_t i = current_dir_bytes; i > 0; --i)
@@ -121,13 +125,13 @@ int32_t wimp_start_executable_process(const char* process_name, const char* exec
 	memset(&path[last_slash_index + 1], 0, MAX_DIRECTORY_PATH_LEN - last_slash_index - 1);
 
 	//Add the rest of the path specified - TODO allow ../../ format - currently can't!
-	size_t pathlen = strlen(path) * sizeof(char);
-	memcpy(&path[last_slash_index + 1], executable, pathlen);
+	size_t exelen = strlen(executable) * sizeof(char);
+	memcpy(&path[last_slash_index + 1], executable, exelen);
 
 	//If on windows, add ".exe"
 #ifdef _WIN32
-	const char exe_str = ".exe";
-	memcpy(&path[strlen(path) * sizeof(char)], &exe_str, 4);
+	const char* exe_str = ".exe";
+	memcpy(&path[strlen(path) * sizeof(char)], exe_str, 4);
 #endif
 
 	//Check the file exists
@@ -147,6 +151,7 @@ int32_t wimp_start_executable_process(const char* process_name, const char* exec
 
 #ifdef _WIN32
 	//For windows collate the other args
+	//The shell launch function wants it in this format
 	size_t arglen = 0;
 
 	for (int i = 0; i < entry->argc; ++i)
@@ -182,6 +187,7 @@ int32_t wimp_start_executable_process(const char* process_name, const char* exec
 #endif
 
 #if __unix__
+	//For linux take the arguments in the easier argv argc format (thank god)
 	prog_entry->path = path;
 	prog_entry->argv = entry->argv;
 #endif
@@ -189,10 +195,12 @@ int32_t wimp_start_executable_process(const char* process_name, const char* exec
 	wimp_log("Running %s!\n", path);
 
 #ifdef _WIN32
+	//Launch the windows version of the function
 	PUThread* process_thread = p_uthread_create((PUThreadFunc)&wimp_launch_exe, prog_entry, false, process_name);
 #endif
 
 #ifdef __unix__
+	//Launch the linux version of the function
 	PUThread* process_thread = p_uthread_create((PUThreadFunc)&wimp_launch_lin, prog_entry, false, process_name);
 #endif
 

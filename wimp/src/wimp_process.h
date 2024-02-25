@@ -73,7 +73,8 @@ int32_t wimp_start_library_process(const char* process_name, MAIN_FUNC_PTR main_
 /*
 * Starts an executable process
 * 
-* Currently uses a very crude path locating think - TODO embed cwalk into the library
+* Currently uses a very crude path locating (based on being in the current executable directory)
+* TODO: embed cwalk into the library
 * 
 * @param process_name The name of the process to create
 * @param executable The executable relative to the location the program binary is running from (e.g. bin directory)

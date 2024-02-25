@@ -198,10 +198,9 @@ int32_t wimp_reciever_init(PSocket** recsock, PSocketAddress** rec_address, Reci
     }
 
     //Connect to end process, which should be waiting to accept
-    if (!p_socket_connect(*recsock, *rec_address, &err))
+    if (!p_socket_connect(*recsock, *rec_address, NULL))
     {
-		wimp_log("Reciever failed to connect to end process! (%d): %s\n", p_error_get_code(err), p_error_get_message(err));
-		p_error_free(err);
+		wimp_log("Reciever failed to connect to end process! (%d): %s\n", p_error_get_code(NULL), p_error_get_message(NULL));
         p_socket_address_free(*rec_address);
         p_socket_free(*recsock);
 		WIMP_ZERO_BUFFER(sendbuffer);
