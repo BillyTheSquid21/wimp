@@ -1,0 +1,5 @@
+{
+    "files.associations": {
+        "wimp_server.h": "c"
+    }
+}

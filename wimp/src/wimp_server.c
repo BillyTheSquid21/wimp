@@ -51,7 +51,6 @@ void wimp_add_local_server(const char* dest, const char* instr, const void* args
 int32_t wimp_create_server(WimpServer* server, const char* process_name, const char* domain, int32_t port, const char* parent)
 {
 	WimpProcessTable ptable = wimp_create_process_table();
-
 	WIMP_ZERO_BUFFER(server->recbuffer); WIMP_ZERO_BUFFER(server->sendbuffer);
 
 	PSocketAddress* addr;
@@ -79,7 +78,7 @@ int32_t wimp_create_server(WimpServer* server, const char* process_name, const c
 		p_socket_free(s);
 		return WIMP_SERVER_FAIL;
 	}
-
+	
 	server->process_name = process_name;
 	server->addr = addr;
 	server->ptable = ptable;
@@ -87,7 +86,7 @@ int32_t wimp_create_server(WimpServer* server, const char* process_name, const c
 	server->parent = parent;
 	server->incomingmsg = wimp_create_instr_queue();
 	server->outgoingmsg = wimp_create_instr_queue();
-
+	wimp_log("Server created! %s %s:%d\n", process_name, domain, port);
 	return WIMP_SERVER_SUCCESS;
 }
 
@@ -116,7 +115,7 @@ int32_t wimp_server_process_accept(WimpServer* server, int pcount, ...)
 	{
 		return WIMP_SERVER_FAIL;
 	}
-	wimp_log("Server waiting to accept %d connections\n", pcount);
+	wimp_log("Server %s waiting to accept %d connections\n", server->process_name, pcount);
 
 	//Ensures won't block for too long
 	p_socket_set_timeout(server->server, WIMP_SERVER_ACCEPT_TIMEOUT);
@@ -207,9 +206,10 @@ int32_t wimp_server_process_accept(WimpServer* server, int pcount, ...)
 
 	if (accepted_count != pcount)
 	{
-		wimp_log("Couldn't find every process!\n");
+		wimp_log("%s couldn't find every process!\n", server->process_name);
 		return WIMP_SERVER_FAIL;
 	}
+	wimp_log("%s found every process!\n", server->process_name);
 	return WIMP_SERVER_SUCCESS;
 }
 

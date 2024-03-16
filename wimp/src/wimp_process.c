@@ -1,3 +1,7 @@
+#ifdef __unix__
+#define _GNU_SOURCE
+#endif
+
 #include <wimp_process.h>
 #include <wimp_log.h>
 #include <time.h>
@@ -42,24 +46,29 @@ int wimp_launch_exe(PROG_ENTRY entry)
 
 #include <unistd.h>
 #include <sys/timeb.h>
+#include <stdio.h>
+#define _GNU_SOURCE
 
 typedef struct _PROG_ENTRY
 {
-	char* path;
-	char** argv;
+	char* pathargs;
 }* PROG_ENTRY;
 
 int wimp_launch_lin(PROG_ENTRY entry);
 
 int wimp_launch_lin(PROG_ENTRY entry)
 {
-	wimp_log("Launching: %s\n", entry->path);
-	execv(entry->path, entry->argv);
-
-	wimp_log("Closing: %s\n", entry->path);
-	free(entry->path);
-	free(entry->argv);
-	free(entry);
+	wimp_log("Launching: %s\n", entry->pathargs);
+	FILE* f = popen(entry->pathargs, "r");
+	if (f == NULL)
+	{
+		wimp_log("Error starting executable! %p\n", f);
+		return -1;
+	}
+	 
+	//wimp_log("Closing: %s\n", entry->pathargs);
+	//free(entry->pathargs);
+	//free(entry);
 	return 0;
 }
 
@@ -147,9 +156,10 @@ int32_t wimp_start_executable_process(const char* process_name, const char* exec
 	{
 		return WIMP_PROCESS_FAIL;
 	}
-	prog_entry->path = path; //Currently just refer to original
 
 #ifdef _WIN32
+	prog_entry->path = path; //Currently just refer to original
+
 	//For windows collate the other args
 	//The shell launch function wants it in this format
 	size_t arglen = 0;
@@ -187,9 +197,34 @@ int32_t wimp_start_executable_process(const char* process_name, const char* exec
 #endif
 
 #if __unix__
-	//For linux take the arguments in the easier argv argc format (thank god)
-	prog_entry->path = path;
-	prog_entry->argv = entry->argv;
+	//For linux put all the arguments in one space separated string
+	size_t path_bytes = (strlen(path) + 1) * sizeof(char);
+	size_t shell_line_bytes = path_bytes;
+	for (int i = 0; i < entry->argc; ++i)
+	{
+		shell_line_bytes += (strlen(entry->argv[i]) + 1) * sizeof(char);
+	}
+
+	prog_entry->pathargs = malloc(shell_line_bytes);
+	if (prog_entry->pathargs == NULL)
+	{
+		return WIMP_PROCESS_FAIL;
+	}
+
+	//Do the copying - each time a new arg is added, remove null of prev space
+	memcpy(&prog_entry->pathargs[0], &path[0], path_bytes);
+	size_t copied_bytes = path_bytes;
+	for (int i = 0; i < entry->argc; ++i)
+	{
+		prog_entry->pathargs[copied_bytes-1] = ' ';
+		size_t bytes_to_copy = (strlen(entry->argv[i]) + 1) * sizeof(char);
+		memcpy(&prog_entry->pathargs[copied_bytes], entry->argv[i], bytes_to_copy);
+		copied_bytes += bytes_to_copy;
+	}
+
+	//Free path here as isn't used outside for linux
+	free(path);
+
 #endif
 
 	wimp_log("Running %s!\n", path);
@@ -197,18 +232,23 @@ int32_t wimp_start_executable_process(const char* process_name, const char* exec
 #ifdef _WIN32
 	//Launch the windows version of the function
 	PUThread* process_thread = p_uthread_create((PUThreadFunc)&wimp_launch_exe, prog_entry, false, process_name);
-#endif
-
-#ifdef __unix__
-	//Launch the linux version of the function
-	PUThread* process_thread = p_uthread_create((PUThreadFunc)&wimp_launch_lin, prog_entry, false, process_name);
-#endif
-
 	if (process_thread == NULL)
 	{
 		wimp_log("Failed to create thread: %s", process_name);
 		return WIMP_PROCESS_FAIL;
 	}
+#endif
+
+#ifdef __unix__
+	//Launch the linux version of the function
+	//Launch the windows version of the function
+	PUThread* process_thread = p_uthread_create((PUThreadFunc)&wimp_launch_lin, prog_entry, false, process_name);
+	if (process_thread == NULL)
+	{
+		wimp_log("Failed to create thread: %s", process_name);
+		return WIMP_PROCESS_FAIL;
+	}
+#endif
 	return WIMP_PROCESS_SUCCESS;
 }
 

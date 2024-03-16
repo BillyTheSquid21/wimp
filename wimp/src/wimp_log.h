@@ -5,6 +5,7 @@
 #include <plibsys.h>
 
 #define MAXIMUM_LOG_BYTES 4096 //Completely arbitrary atm to make it easy to push into buffer
+#define LOG_DIRECTION_BEHAVIOR FALSE //Turns on or off the directing logs (e.g. to master or a log file)
 
 /*
 * Logs based on state of thread - ensures all logs should be on a master terminal

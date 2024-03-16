@@ -200,6 +200,8 @@ void wimp_log(const char* format, ...)
 	va_list arg;
 	int done;
 
+#if LOG_DIRECTION_BEHAVIOR
+
 	WimpServer* server = wimp_get_local_server();
 	if (server == NULL || server->parent == NULL)
 	{
@@ -234,5 +236,13 @@ void wimp_log(const char* format, ...)
 
 	//Zero buffer
 	memset(str, 0, MAXIMUM_LOG_BYTES);
+	
+#else
+	va_start (arg, format);
+	done = vfprintf(stdout, format, arg);
+	va_end (arg);
+	return;
+#endif
+
 #endif
 }

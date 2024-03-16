@@ -200,12 +200,13 @@ int32_t wimp_reciever_init(PSocket** recsock, PSocketAddress** rec_address, Reci
     //Connect to end process, which should be waiting to accept
     if (!p_socket_connect(*recsock, *rec_address, NULL))
     {
-		wimp_log("Reciever failed to connect to end process! (%d): %s\n", p_error_get_code(NULL), p_error_get_message(NULL));
+		wimp_log("Reciever failed to connect to %s!\n", args->process_name);
         p_socket_address_free(*rec_address);
         p_socket_free(*recsock);
 		WIMP_ZERO_BUFFER(sendbuffer);
         return WIMP_RECIEVER_FAIL;
     }
+	wimp_log("Reciever connected to %s!\n", args->process_name);
 
 	//Send the handshake
 	p_socket_send(*recsock, sendbuffer, sizeof(WimpHandshakeHeader) + header.process_name_bytes, NULL);
@@ -420,12 +421,12 @@ void wimp_reciever_recieve(RecieverArgs args)
 
 int32_t wimp_start_reciever_thread(const char* recfrom_name, const char* process_domain, int32_t process_port, RecieverArgs args)
 {
-	wimp_log("Starting Reciever: %s!\n", args->process_name);
+	wimp_log("Starting Reciever for %s recieving from %s\n", args->process_name, recfrom_name);
 
 	PUThread* process_thread = p_uthread_create((PUThreadFunc)&wimp_reciever_recieve, args, false, args->process_name);
 	if (process_thread == NULL)
 	{
-		wimp_log("Failed to create thread: %s", args->process_name);
+		wimp_log("Failed to create thread for %s reciever!\n", args->process_name);
 		return WIMP_RECIEVER_FAIL;
 	}
 	return WIMP_RECIEVER_SUCCESS;

@@ -72,6 +72,8 @@ int main(int argc, char** argv)
 	//Instruction 4 - This simple tells the master to exit - TODO: This implementation may change in the future
 	wimp_add_local_server("master", "exit", NULL, 0);
 
+	wimp_log("Instructions sent to master!\n");
+
 	//This tells the server to send off the instructions
 	wimp_server_send_instructions(server);
 
