@@ -71,10 +71,10 @@ void wimp_shutdown();
 int32_t wimp_start_library_process(const char* process_name, MAIN_FUNC_PTR main_func, WimpMainEntry entry);
 
 /*
-* Starts an executable process
-* 
-* Currently uses a very crude path locating (based on being in the current executable directory)
-* TODO: embed cwalk into the library
+* Starts an executable process. Currently must be located downstream
+* of the location of the calling executable to avoid arbitrary
+* execution. If needed, may create a specific function for launching
+* arbitrary exe's, although this might be very unsafe.
 * 
 * @param process_name The name of the process to create
 * @param executable The executable relative to the location the program binary is running from (e.g. bin directory)
@@ -116,6 +116,6 @@ int32_t wimp_assign_unused_local_port(void);
 * 
 * @return Returns either WIMP_PROCESS_SUCCESS or WIMP_PROCESS_FAIL
 */
-int32_t wimp_port_to_string(int32_t port, char* string_out);
+int32_t wimp_port_to_string(int32_t port, WimpPortStr string_out);
 
 #endif

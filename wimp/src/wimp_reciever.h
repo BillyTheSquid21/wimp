@@ -11,6 +11,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <assert.h>
+#include <utility/sds.h>
 
 #include <plibsys.h>
 #include <pmacros.h>
@@ -58,8 +59,8 @@ typedef struct _WimpHandshakeHeader
 */
 typedef struct _RecieverArgs
 {
-	char* process_name;
-	char* recfrom_domain;
+	sds process_name;
+	sds recfrom_domain;
 	WimpInstrQueue* incoming_queue;
 	int32_t recfrom_port;
 } *RecieverArgs;

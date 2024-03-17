@@ -6,6 +6,7 @@
 #include <wimp_log.h>
 #include <time.h>
 #include <stdlib.h>
+#include <utility/sds.h>
 
 #define MAX_DIRECTORY_PATH_LEN 1024
 
@@ -22,8 +23,8 @@
 
 typedef struct _PROG_ENTRY
 {
-	char* path;
-	char* args;
+	sds path;
+	sds args;
 }* PROG_ENTRY;
 
 int wimp_launch_exe(PROG_ENTRY entry);
@@ -34,8 +35,8 @@ int wimp_launch_exe(PROG_ENTRY entry)
 	ShellExecute(NULL, "open", entry->path, entry->args, NULL, WIMP_EXE_WINDOW_SHOW);
 	
 	wimp_log("Closing: %s\n", entry->path);
-	free(entry->path);
-	free(entry->args);
+	sdsfree(entry->path);
+	sdsfree(entry->args);
 	free(entry);
 	return 0;
 }
@@ -49,26 +50,20 @@ int wimp_launch_exe(PROG_ENTRY entry)
 #include <stdio.h>
 #define _GNU_SOURCE
 
-typedef struct _PROG_ENTRY
-{
-	char* pathargs;
-}* PROG_ENTRY;
+int wimp_launch_lin(sds entry);
 
-int wimp_launch_lin(PROG_ENTRY entry);
-
-int wimp_launch_lin(PROG_ENTRY entry)
+int wimp_launch_lin(sds entry)
 {
-	wimp_log("Launching: %s\n", entry->pathargs);
-	FILE* f = popen(entry->pathargs, "r");
+	wimp_log("Launching: %s\n", entry);
+	FILE* f = popen(entry, "r");
 	if (f == NULL)
 	{
 		wimp_log("Error starting executable! %p\n", f);
 		return -1;
 	}
 	 
-	//wimp_log("Closing: %s\n", entry->pathargs);
-	//free(entry->pathargs);
-	//free(entry);
+	//wimp_log("Closing: %s\n", entry);
+	//sdsfree(entry);
 	return 0;
 }
 
@@ -93,31 +88,27 @@ int32_t wimp_start_executable_process(const char* process_name, const char* exec
 {
 	//Get the directory of the running process
 	//Use malloc to preserve outside function stack frame (is freed above)
-	char* path = malloc(MAX_DIRECTORY_PATH_LEN);
-	if (path == NULL)
-	{
-		return WIMP_PROCESS_FAIL;
-	}
-	memset(path, 0, MAX_DIRECTORY_PATH_LEN);
+	char path_buffer[MAX_DIRECTORY_PATH_LEN];
+	memset(&path_buffer[0], 0, MAX_DIRECTORY_PATH_LEN);
 
 	//Get the path of the currently running executable
 #ifdef _WIN32
-	GetModuleFileName(NULL, path, MAX_DIRECTORY_PATH_LEN);
+	GetModuleFileName(NULL, path_buffer, MAX_DIRECTORY_PATH_LEN);
 #endif
 
 #ifdef __unix__
-	ssize_t linklen = readlink("/proc/self/exe", path, MAX_DIRECTORY_PATH_LEN);
+	ssize_t linklen = readlink("/proc/self/exe", path_buffer, MAX_DIRECTORY_PATH_LEN);
 	path[linklen] = '\0';
 #endif
 
-	printf("Current executable: %s\n", path);
+	printf("Current executable: %s\n", path_buffer);
 
 	//Erase the file part from the string end
-	size_t current_dir_bytes = strlen(path) * sizeof(char);
+	size_t current_dir_bytes = strlen(path_buffer) * sizeof(char);
 	size_t last_slash_index = MAX_DIRECTORY_PATH_LEN;
 	for (size_t i = current_dir_bytes; i > 0; --i)
 	{
-		if (path[i] == '/' || path[i] == '\\')
+		if (path_buffer[i] == '/' || path_buffer[i] == '\\')
 		{
 			last_slash_index = i;
 			break;
@@ -126,21 +117,22 @@ int32_t wimp_start_executable_process(const char* process_name, const char* exec
 
 	if (last_slash_index == MAX_DIRECTORY_PATH_LEN)
 	{
-		wimp_log("Issue reading the path of the program! %s\n", path);
+		wimp_log("Issue reading the path of the program! %s\n", path_buffer);
 		return WIMP_PROCESS_FAIL;
 	}
 
 	//Blank everything after the index (except slash)
-	memset(&path[last_slash_index + 1], 0, MAX_DIRECTORY_PATH_LEN - last_slash_index - 1);
+	memset(&path_buffer[last_slash_index + 1], 0, MAX_DIRECTORY_PATH_LEN - last_slash_index - 1);
+
+	//Create the heap string for appending
+	sds path = sdsnew(&path_buffer[0]);
 
 	//Add the rest of the path specified - TODO allow ../../ format - currently can't!
-	size_t exelen = strlen(executable) * sizeof(char);
-	memcpy(&path[last_slash_index + 1], executable, exelen);
-
+	path = sdscat(path, executable);
+	wimp_log("PATH: %s\n", path);
 	//If on windows, add ".exe"
 #ifdef _WIN32
-	const char* exe_str = ".exe";
-	memcpy(&path[strlen(path) * sizeof(char)], exe_str, 4);
+	path = sdscat(path, ".exe");
 #endif
 
 	//Check the file exists
@@ -150,6 +142,7 @@ int32_t wimp_start_executable_process(const char* process_name, const char* exec
 		return WIMP_PROCESS_FAIL;
 	}
 
+#ifdef _WIN32
 	//Make the entry args
 	PROG_ENTRY prog_entry = malloc(sizeof(struct _PROG_ENTRY));
 	if (prog_entry == NULL)
@@ -157,79 +150,20 @@ int32_t wimp_start_executable_process(const char* process_name, const char* exec
 		return WIMP_PROCESS_FAIL;
 	}
 
-#ifdef _WIN32
-	prog_entry->path = path; //Currently just refer to original
+	prog_entry->path = path;
+	prog_entry->args = sdsempty();
 
 	//For windows collate the other args
 	//The shell launch function wants it in this format
-	size_t arglen = 0;
-
 	for (int i = 0; i < entry->argc; ++i)
 	{
-		arglen += (strlen(entry->argv[i]) + 1) * sizeof(char); //+1 for spaces or null
-	}
-	
-	prog_entry->args = malloc(arglen);
-	if (prog_entry->args == NULL)
-	{
-		return WIMP_PROCESS_FAIL;
-	}
-
-	//Copy over the strings
-	size_t offset = 0;
-	for (int i = 0; i < entry->argc; ++i)
-	{
-		size_t strbytes = strlen(entry->argv[i]) * sizeof(char);
-		memcpy(&prog_entry->args[offset], entry->argv[i], strbytes);
-		offset += strbytes;
-		
-		//Add either a ' ' or '\0'
-		if (i == entry->argc - 1)
+		prog_entry->args = sdscat(prog_entry->args, entry->argv[i]);
+		if (i < entry->argc - 1)
 		{
-			prog_entry->args[offset] = '\0';
+			prog_entry->args = sdscat(prog_entry->args, " ");
 		}
-		else
-		{
-			prog_entry->args[offset] = ' ';
-		}
-		offset++;
-	}
-#endif
-
-#if __unix__
-	//For linux put all the arguments in one space separated string
-	size_t path_bytes = (strlen(path) + 1) * sizeof(char);
-	size_t shell_line_bytes = path_bytes;
-	for (int i = 0; i < entry->argc; ++i)
-	{
-		shell_line_bytes += (strlen(entry->argv[i]) + 1) * sizeof(char);
 	}
 
-	prog_entry->pathargs = malloc(shell_line_bytes);
-	if (prog_entry->pathargs == NULL)
-	{
-		return WIMP_PROCESS_FAIL;
-	}
-
-	//Do the copying - each time a new arg is added, remove null of prev space
-	memcpy(&prog_entry->pathargs[0], &path[0], path_bytes);
-	size_t copied_bytes = path_bytes;
-	for (int i = 0; i < entry->argc; ++i)
-	{
-		prog_entry->pathargs[copied_bytes-1] = ' ';
-		size_t bytes_to_copy = (strlen(entry->argv[i]) + 1) * sizeof(char);
-		memcpy(&prog_entry->pathargs[copied_bytes], entry->argv[i], bytes_to_copy);
-		copied_bytes += bytes_to_copy;
-	}
-
-	//Free path here as isn't used outside for linux
-	free(path);
-
-#endif
-
-	wimp_log("Running %s!\n", path);
-
-#ifdef _WIN32
 	//Launch the windows version of the function
 	PUThread* process_thread = p_uthread_create((PUThreadFunc)&wimp_launch_exe, prog_entry, false, process_name);
 	if (process_thread == NULL)
@@ -237,12 +171,23 @@ int32_t wimp_start_executable_process(const char* process_name, const char* exec
 		wimp_log("Failed to create thread: %s", process_name);
 		return WIMP_PROCESS_FAIL;
 	}
+
 #endif
 
-#ifdef __unix__
+#if __unix__
+	//For linux put all the arguments in one space separated string
+	for (int i = 0; i < entry->argc; ++i)
+	{
+		path = sdscat(path, entry->argv[i]);
+		if (i < entry->argc - 1)
+		{
+			path = sdscat(path, " ");
+		}
+	}
+
 	//Launch the linux version of the function
 	//Launch the windows version of the function
-	PUThread* process_thread = p_uthread_create((PUThreadFunc)&wimp_launch_lin, prog_entry, false, process_name);
+	PUThread* process_thread = p_uthread_create((PUThreadFunc)&wimp_launch_lin, path, false, process_name);
 	if (process_thread == NULL)
 	{
 		wimp_log("Failed to create thread: %s", process_name);
@@ -389,7 +334,7 @@ int32_t wimp_assign_unused_local_port()
 #endif
 }
 
-int32_t wimp_port_to_string(int32_t port, char* string_out)
+int32_t wimp_port_to_string(int32_t port, WimpPortStr string_out)
 {
 	memset(string_out, 0, MAX_PORT_STRING_LEN);
 	sprintf(string_out, "%d", port);

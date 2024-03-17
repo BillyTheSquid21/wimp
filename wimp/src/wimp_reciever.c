@@ -141,30 +141,17 @@ RecieverArgs wimp_get_reciever_args(const char* process_name, const char* recfro
 		return NULL;
 	}
 
+	recargs->process_name = sdsnew(process_name);
+	recargs->recfrom_domain = sdsnew(recfrom_domain);
 	recargs->incoming_queue = incomingq;
-
-	//Assume all the strings provided are valid
-	size_t process_name_bytes = (strlen(process_name) + 1) * sizeof(char);
-	size_t recfrom_bytes = (strlen(recfrom_domain) + 1) * sizeof(char);
-	recargs->process_name = malloc(process_name_bytes);
-	recargs->recfrom_domain = malloc(recfrom_bytes);
-
-	if (recargs->process_name == NULL || recargs->recfrom_domain == NULL)
-	{
-		free(recargs);
-		return NULL;
-	}
-
-	memcpy(recargs->process_name, process_name, process_name_bytes);
-	memcpy(recargs->recfrom_domain, recfrom_domain, recfrom_bytes);
-
 	recargs->recfrom_port = recfrom_port;
 	return recargs;
 }
 
 void wimp_free_reciever_args(RecieverArgs args)
 {
-	free(args->recfrom_domain);
+	sdsfree(args->process_name);
+	sdsfree(args->recfrom_domain);
 	free(args);
 }
 

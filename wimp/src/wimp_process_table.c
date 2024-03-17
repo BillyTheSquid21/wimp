@@ -4,7 +4,7 @@
 void wimp_process_data_free(void* data)
 {
 	WimpProcessData proc_data = (WimpProcessData)data;
-	free(proc_data->process_domain);
+	sdsfree(proc_data->process_domain);
 	free(proc_data);
 	return;
 }
@@ -36,16 +36,8 @@ int32_t wimp_process_table_add(WimpProcessTable* table, const char* process_name
 	{
 		return WIMP_PROCESS_TABLE_FAIL;
 	}
-	process_data->process_domain = NULL;
 
-	size_t dom_bytes = (strlen(process_domain) + 1) * sizeof(char);
-	char* dom_str = malloc(dom_bytes);
-	if (dom_str == NULL)
-	{
-		return WIMP_PROCESS_TABLE_FAIL;
-	}
-	memcpy(dom_str, process_domain, dom_bytes);
-	process_data->process_domain = dom_str;
+	process_data->process_domain = sdsnew(process_domain);
 	process_data->process_port = process_port;
 	process_data->process_connection = connection;
 	process_data->process_active = WIMP_PROCESS_INACTIVE;

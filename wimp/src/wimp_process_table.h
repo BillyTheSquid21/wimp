@@ -10,6 +10,7 @@
 #include <stdint.h>
 #include <plibsys.h>
 #include <utility/HashString.h>
+#include <utility/sds.h>
 #include <wimp_process.h>
 
 #define WIMP_PROCESS_TABLE_SUCCESS 0
@@ -23,7 +24,7 @@
 */
 typedef struct _WimpProcessData
 {
-	char* process_domain;
+	sds process_domain;
 	PSocket* process_connection;
 	int32_t process_port;
 	int32_t process_active;
