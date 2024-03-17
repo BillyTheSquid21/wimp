@@ -5,6 +5,12 @@
 #include <string.h>
 #include <wimp_server.h>
 #include <wimp_debug.h>
+#include <utility/sds.h>
+
+/*
+* Internal logging used by the other logging functions
+*/
+void wimp_log_internal(const char* format, va_list arg);
 
 int get_char_width_dec(int var)
 {
@@ -194,20 +200,57 @@ size_t format_string(char* str, const char* format, size_t buffsize, va_list arg
 //Will definately make this less shit and awful later
 void wimp_log(const char* format, ...)
 {
-#ifdef _DEBUG
-	//_DEBUG set uses printf behavior, but ensures all is printed from the master 
-
 	va_list arg;
-	int done;
+	va_start(arg, format);
+	wimp_log_internal(format, arg);
+}
 
+void wimp_log_fail(const char* format, ...)
+{
+	va_list arg;
+	va_start(arg, format);
+
+	sds format_modified = sdsnew("\033[1;31m");
+	format_modified = sdscat(format_modified, format);
+	format_modified = sdscat(format_modified, "\033[0m");
+	wimp_log_internal(format_modified, arg);
+	sdsfree(format_modified);
+}
+
+void wimp_log_success(const char* format, ...)
+{
+	va_list arg;
+	va_start(arg, format);
+
+	sds format_modified = sdsnew("\033[1;32m");
+	format_modified = sdscat(format_modified, format);
+	format_modified = sdscat(format_modified, "\033[0m");
+	wimp_log_internal(format_modified, arg);
+	sdsfree(format_modified);
+}
+
+void wimp_log_important(const char* format, ...)
+{
+	va_list arg;
+	va_start(arg, format);
+
+	sds format_modified = sdsnew("\033[1; 34m");
+	format_modified = sdscat(format_modified, format);
+	format_modified = sdscat(format_modified, "\033[0m");
+	wimp_log_internal(format_modified, arg);
+	sdsfree(format_modified);
+}
+
+void wimp_log_internal(const char* format, va_list arg) 
+{
+#ifdef _DEBUG
 #if LOG_DIRECTION_BEHAVIOR
 
 	WimpServer* server = wimp_get_local_server();
 	if (server == NULL || server->parent == NULL)
 	{
 		//Default to printf behavior is is the master, or there is no server locally
-		va_start (arg, format);
-		done = vfprintf(stdout, format, arg);
+		vfprintf(stdout, format, arg);
 		va_end (arg);
 		return;
 	}
@@ -226,7 +269,6 @@ void wimp_log(const char* format, ...)
 	str[namebytes+2] = ' ';
 	size_t tagbytes = namebytes + 3;
 
-	va_start(arg, format);
 	size_t size = (format_string(str + tagbytes, format, MAXIMUM_LOG_BYTES - tagbytes, arg) + 1) * sizeof(char);
 	wimp_add_local_server(server->parent, WIMP_INSTRUCTION_LOG, str, size + tagbytes);
 	va_end(arg);
@@ -238,7 +280,6 @@ void wimp_log(const char* format, ...)
 	memset(str, 0, MAXIMUM_LOG_BYTES);
 	
 #else
-	va_start (arg, format);
 	done = vfprintf(stdout, format, arg);
 	va_end (arg);
 	return;

@@ -18,7 +18,7 @@ int32_t wimp_init_local_server(const char* process_name, const char* domain, int
 {
 	if (_local_server != NULL)
 	{
-		wimp_log("ERROR: Local server instance already exists!\n");
+		wimp_log_fail("Local server instance already exists!\n");
 		return WIMP_SERVER_FAIL;
 	}
 
@@ -30,7 +30,7 @@ void wimp_close_local_server()
 {
 	if (_local_server == NULL)
 	{
-		wimp_log("ERROR: Local server instance doesn't exist!\n");
+		wimp_log_fail("Local server instance doesn't exist!\n");
 		return;
 	}
 	wimp_server_free(*_local_server);
@@ -41,7 +41,7 @@ void wimp_add_local_server(const char* dest, const char* instr, const void* args
 {
 	if (_local_server == NULL)
 	{
-		wimp_log("ERROR: Local server instance doesn't exist!\n");
+		wimp_log_fail("Local server instance doesn't exist!\n");
 		return;
 	}
 
@@ -64,7 +64,7 @@ int32_t wimp_create_server(WimpServer* server, const char* process_name, const c
 
 	if ((s = p_socket_new(P_SOCKET_FAMILY_INET, P_SOCKET_TYPE_STREAM, P_SOCKET_PROTOCOL_TCP, &err)) == NULL)
 	{
-		wimp_log("Failed to create server socket! (%d): %s\n", p_error_get_code(err), p_error_get_message(err));
+		wimp_log_fail("Failed to create server socket! (%d): %s\n", p_error_get_code(err), p_error_get_message(err));
 		p_error_free(err);
 		p_socket_address_free(addr);
 		return WIMP_SERVER_FAIL;
@@ -72,7 +72,7 @@ int32_t wimp_create_server(WimpServer* server, const char* process_name, const c
 
 	if (!p_socket_bind(s, addr, TRUE, &err))
 	{
-		wimp_log("Failed to bind server socket! (%d): %s\n", p_error_get_code(err), p_error_get_message(err));
+		wimp_log_fail("Failed to bind server socket! (%d): %s\n", p_error_get_code(err), p_error_get_message(err));
 		p_error_free(err);
 		p_socket_address_free(addr);
 		p_socket_free(s);
@@ -86,7 +86,7 @@ int32_t wimp_create_server(WimpServer* server, const char* process_name, const c
 	server->parent = parent;
 	server->incomingmsg = wimp_create_instr_queue();
 	server->outgoingmsg = wimp_create_instr_queue();
-	wimp_log("Server created! %s %s:%d\n", process_name, domain, port);
+	wimp_log_success("Server created! %s %s:%d\n", process_name, domain, port);
 	return WIMP_SERVER_SUCCESS;
 }
 
@@ -162,7 +162,7 @@ int32_t wimp_server_process_accept(WimpServer* server, int pcount, ...)
 
 			if (!isvalid)
 			{
-				wimp_log("An incoming connection wasn't a valid one!\n");
+				wimp_log_important("An incoming connection wasn't a valid one! This may be malicious\n");
 				i--; //Try again, hoping the next connection won't be bad
 				continue;
 			}
@@ -172,7 +172,7 @@ int32_t wimp_server_process_accept(WimpServer* server, int pcount, ...)
 			wimp_log("Adding to %s process table: %s\n", server->process_name, proc_name);
 			if (wimp_process_table_get(&procdat, server->ptable, proc_name) == WIMP_PROCESS_TABLE_FAIL)
 			{
-				wimp_log("Process not found! %s\n", proc_name);
+				wimp_log_fail("Process not found! %s\n", proc_name);
 				continue;
 			}
 			wimp_log("Process added!\n");
@@ -195,7 +195,7 @@ int32_t wimp_server_process_accept(WimpServer* server, int pcount, ...)
 		}
 		else
 		{
-			wimp_log("Can't make connection (%d) %s\n", p_error_get_code(err), p_error_get_message(err));
+			wimp_log_fail("Can't make connection (%d) %s\n", p_error_get_code(err), p_error_get_message(err));
 			p_error_free(err);
 		}
 	}
@@ -206,10 +206,10 @@ int32_t wimp_server_process_accept(WimpServer* server, int pcount, ...)
 
 	if (accepted_count != pcount)
 	{
-		wimp_log("%s couldn't find every process!\n", server->process_name);
+		wimp_log_fail("%s couldn't find every process!\n", server->process_name);
 		return WIMP_SERVER_FAIL;
 	}
-	wimp_log("%s found every process!\n", server->process_name);
+	wimp_log_success("%s found every process!\n", server->process_name);
 	return WIMP_SERVER_SUCCESS;
 }
 
@@ -218,13 +218,13 @@ bool wimp_server_check_process_listening(WimpServer* server, const char* process
 	WimpProcessData procdat;
 	if (wimp_process_table_get(&procdat, server->ptable, process_name) == WIMP_PROCESS_TABLE_FAIL)
 	{
-		wimp_log("Process isn't in process table!: %s\n", process_name);
+		wimp_log_fail("Process isn't in process table!: %s\n", process_name);
 		return false;
 	}
 
 	if (!procdat->process_active)
 	{
-		wimp_log("Process isn't active!: %s\n", process_name);
+		wimp_log_fail("Process isn't active!: %s\n", process_name);
 		return false;
 	}
 

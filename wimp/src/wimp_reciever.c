@@ -51,7 +51,7 @@ WimpInstrMeta wimp_get_instr_from_buffer(uint8_t* buffer, size_t buffsize)
 	//if buffer is nullptr, was unable to allocate!
 	if (buffer == NULL)
 	{
-		wimp_log("Attempting to get instr from invalid buffer!\n");
+		wimp_log_fail("Attempting to get instr from invalid buffer!\n");
 		return instr;
 	}
 
@@ -178,7 +178,7 @@ int32_t wimp_reciever_init(PSocket** recsock, PSocketAddress** rec_address, Reci
     *recsock = p_socket_new(P_SOCKET_FAMILY_INET, P_SOCKET_TYPE_STREAM, P_SOCKET_PROTOCOL_TCP, &err);
     if (*recsock == NULL)
     {
-		wimp_log("Failed to create reciever socket! (%d): %s\n", p_error_get_code(err), p_error_get_message(err));
+		wimp_log_fail("Failed to create reciever socket! (%d): %s\n", p_error_get_code(err), p_error_get_message(err));
 		p_error_free(err);
 		WIMP_ZERO_BUFFER(sendbuffer);
         return WIMP_RECIEVER_FAIL;
@@ -187,13 +187,13 @@ int32_t wimp_reciever_init(PSocket** recsock, PSocketAddress** rec_address, Reci
     //Connect to end process, which should be waiting to accept
     if (!p_socket_connect(*recsock, *rec_address, NULL))
     {
-		wimp_log("Reciever failed to connect to %s!\n", args->process_name);
+		wimp_log_fail("Reciever failed to connect to %s!\n", args->process_name);
         p_socket_address_free(*rec_address);
         p_socket_free(*recsock);
 		WIMP_ZERO_BUFFER(sendbuffer);
         return WIMP_RECIEVER_FAIL;
     }
-	wimp_log("Reciever connected to %s!\n", args->process_name);
+	wimp_log_success("Reciever connected to %s!\n", args->process_name);
 
 	//Send the handshake
 	p_socket_send(*recsock, sendbuffer, sizeof(WimpHandshakeHeader) + header.process_name_bytes, NULL);
@@ -204,7 +204,7 @@ int32_t wimp_reciever_init(PSocket** recsock, PSocketAddress** rec_address, Reci
 
 	if (handshake_size <= 0)
 	{
-		wimp_log("Reciever handshake failed! (%d): %s\n", p_error_get_code(err), p_error_get_message(err));
+		wimp_log_fail("Reciever handshake failed! (%d): %s\n", p_error_get_code(err), p_error_get_message(err));
 		p_error_free(err);
         p_socket_address_free(*rec_address);
         p_socket_free(*recsock);
@@ -216,19 +216,13 @@ int32_t wimp_reciever_init(PSocket** recsock, PSocketAddress** rec_address, Reci
 	WimpHandshakeHeader* recheader = (WimpHandshakeHeader*)recbuffer;
 	if (recheader->handshake_header != WIMP_RECIEVER_HANDSHAKE)
 	{
-		wimp_log("Reciever recieved invalid handshake!: %d\n", recheader->handshake_header);
+		wimp_log_fail("Reciever recieved invalid handshake!: %d\n", recheader->handshake_header);
         p_socket_address_free(*rec_address);
         p_socket_free(*recsock);
 		WIMP_ZERO_BUFFER(recbuffer);
 		return WIMP_RECIEVER_FAIL;
 	}
 	WIMP_ZERO_BUFFER(recbuffer);
-
-	//There is still a possible edge case where instructions can come in following the hand shake
-	//TODO: fix this, make a more reliable way of telling the sending process its safe to send
-	//For now, will just sleep for a few ms before sending anything as being on localhost that
-	//should prevent it for now
-
 	return WIMP_RECIEVER_SUCCESS;
 }
 
@@ -413,7 +407,7 @@ int32_t wimp_start_reciever_thread(const char* recfrom_name, const char* process
 	PUThread* process_thread = p_uthread_create((PUThreadFunc)&wimp_reciever_recieve, args, false, args->process_name);
 	if (process_thread == NULL)
 	{
-		wimp_log("Failed to create thread for %s reciever!\n", args->process_name);
+		wimp_log_fail("Failed to create thread for %s reciever!\n", args->process_name);
 		return WIMP_RECIEVER_FAIL;
 	}
 	return WIMP_RECIEVER_SUCCESS;

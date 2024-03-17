@@ -58,7 +58,7 @@ int wimp_launch_lin(sds entry)
 	FILE* f = popen(entry, "r");
 	if (f == NULL)
 	{
-		wimp_log("Error starting executable! %p\n", f);
+		wimp_log_fail("Error starting executable! %p\n", f);
 		return -1;
 	}
 	 
@@ -71,11 +71,11 @@ int wimp_launch_lin(sds entry)
 
 int32_t wimp_start_library_process(const char* process_name, MAIN_FUNC_PTR main_func, WimpMainEntry entry)
 {
-	wimp_log("Starting %s!\n", process_name);
+	wimp_log_important("Starting %s!\n", process_name);
 	PUThread* process_thread = p_uthread_create((PUThreadFunc)main_func, entry, false, process_name);
 	if (process_thread == NULL)
 	{
-		wimp_log("Failed to create thread: %s", process_name);
+		wimp_log_fail("Failed to create thread: %s", process_name);
 		return WIMP_PROCESS_FAIL;
 	}
 	return WIMP_PROCESS_SUCCESS;
@@ -101,8 +101,6 @@ int32_t wimp_start_executable_process(const char* process_name, const char* exec
 	path[linklen] = '\0';
 #endif
 
-	printf("Current executable: %s\n", path_buffer);
-
 	//Erase the file part from the string end
 	size_t current_dir_bytes = strlen(path_buffer) * sizeof(char);
 	size_t last_slash_index = MAX_DIRECTORY_PATH_LEN;
@@ -117,7 +115,7 @@ int32_t wimp_start_executable_process(const char* process_name, const char* exec
 
 	if (last_slash_index == MAX_DIRECTORY_PATH_LEN)
 	{
-		wimp_log("Issue reading the path of the program! %s\n", path_buffer);
+		wimp_log_fail("Issue reading the path of the program! %s\n", path_buffer);
 		return WIMP_PROCESS_FAIL;
 	}
 
@@ -129,7 +127,7 @@ int32_t wimp_start_executable_process(const char* process_name, const char* exec
 
 	//Add the rest of the path specified - TODO allow ../../ format - currently can't!
 	path = sdscat(path, executable);
-	wimp_log("PATH: %s\n", path);
+
 	//If on windows, add ".exe"
 #ifdef _WIN32
 	path = sdscat(path, ".exe");
@@ -138,7 +136,7 @@ int32_t wimp_start_executable_process(const char* process_name, const char* exec
 	//Check the file exists
 	if (access(path, F_OK) != 0)
 	{
-		wimp_log("%s was not found!\n", path);
+		wimp_log_fail("%s was not found!\n", path);
 		return WIMP_PROCESS_FAIL;
 	}
 
@@ -168,7 +166,7 @@ int32_t wimp_start_executable_process(const char* process_name, const char* exec
 	PUThread* process_thread = p_uthread_create((PUThreadFunc)&wimp_launch_exe, prog_entry, false, process_name);
 	if (process_thread == NULL)
 	{
-		wimp_log("Failed to create thread: %s", process_name);
+		wimp_log_fail("Failed to create thread: %s", process_name);
 		return WIMP_PROCESS_FAIL;
 	}
 
@@ -190,7 +188,7 @@ int32_t wimp_start_executable_process(const char* process_name, const char* exec
 	PUThread* process_thread = p_uthread_create((PUThreadFunc)&wimp_launch_lin, path, false, process_name);
 	if (process_thread == NULL)
 	{
-		wimp_log("Failed to create thread: %s", process_name);
+		wimp_log_fail("Failed to create thread: %s", process_name);
 		return WIMP_PROCESS_FAIL;
 	}
 #endif
@@ -300,21 +298,21 @@ int32_t wimp_assign_unused_local_port()
     reciever_address = p_socket_address_new("127.0.0.1", 0);
     if (reciever_address == NULL)
     {
-		wimp_log("Failed to bind to unused port!\n");
+		wimp_log_fail("Failed to bind to unused port!\n");
 		p_socket_address_free(reciever_address);
         return WIMP_PROCESS_FAIL;
     }
 
 	if ((reciever_socket = p_socket_new(P_SOCKET_FAMILY_INET, P_SOCKET_TYPE_STREAM, P_SOCKET_PROTOCOL_TCP, NULL)) == NULL)
 	{
-		wimp_log("Failed to bind to unused port!\n");
+		wimp_log_fail("Failed to bind to unused port!\n");
 		p_socket_address_free(reciever_address);
 		return WIMP_PROCESS_FAIL;
 	}
 
 	if (!p_socket_bind(reciever_socket, reciever_address, TRUE, NULL))
 	{
-		wimp_log("Failed to bind to unused port!\n");
+		wimp_log_fail("Failed to bind to unused port!\n");
 		p_socket_address_free(reciever_address);
 		p_socket_free(reciever_socket);
 		return WIMP_PROCESS_FAIL;
