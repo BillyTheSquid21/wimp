@@ -7,6 +7,7 @@
 #include <wimp_server.h>
 #include <wimp_instruction.h>
 #include <wimp_test.h>
+#include <wimp_data.h>
 
 PASSMAT PASS_MATRIX[] =
 {
@@ -113,9 +114,25 @@ int client_main_lib_entry(WimpMainEntry entry)
 */
 int main(void) 
 {
-
 	//Initialize the socket library
 	wimp_init();
+
+	wimp_data_init("master-wimp");
+	wimp_data_link_to_process("master-wimp");
+	wimp_data_reserve("hello", 64);
+	WimpDataArena a = wimp_data_access("hello");
+	WArenaPtr ptr = WIMP_ARENA_ALLOC(a, 5);
+	uint8_t* ptr_p = WIMP_ARENA_GET_PTR(a, ptr);
+	WIMP_ARENA_INDEX(a, 0) = 1;
+	WIMP_ARENA_INDEX(a, 1) = 2;
+	ptr_p[2] = 3;
+	wimp_log_success("%d %d\n", WIMP_ARENA_CAPACITY(a), WIMP_ARENA_SIZE(a));
+	wimp_log_success("%d %d %d\n", WIMP_ARENA_INDEX(a, 0), WIMP_ARENA_INDEX(a, 1), WIMP_ARENA_INDEX(a, 2));
+	wimp_data_stop_access("hello", &a);
+
+	WimpDataArena b = wimp_data_access("hello");
+	wimp_log_success("%d %d %d\n", WIMP_ARENA_INDEX(b, 0), WIMP_ARENA_INDEX(b, 1), WIMP_ARENA_INDEX(b, 2));
+	wimp_data_stop_access("hello", &b);
 
 	//Get unused random ports for the master and end process to run on
 	int32_t master_port = wimp_assign_unused_local_port();

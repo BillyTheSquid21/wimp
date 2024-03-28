@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <cassert>
 
 /*
 * A simple arena allocator
@@ -25,24 +26,47 @@
 */
 typedef struct _SArena
 {
-	size_t arena_size;
-	size_t arena_capacity;
+	size_t _arena_size;
+	size_t _arena_capacity;
 	size_t _arena_pointer;
 	uint8_t* _data;
 } SArena;
 
 /*
-* Defines the arena pointer which adds to the data pointer to allow passing
-* "pointers" around regardless of where the data is - is not the default 
-* returned - allows resizing without invalidating arena_ptrs. Is not always
-* a concern, but may be desired behavior.
+* Arena pointer which points to the offset in the arena.
+* 
+* Can be converted to a standard pointer if the data pointer is valid.
+* This may not always be the case (e.g. using shared memory), hence why
+* more control is given.
 */
-typedef size_t arena_ptr;
+typedef size_t SArenaPtr;
 
-#define APTR_TO_PTR(arena, aptr) (void*)((size_t)arena._data + aptr)
-#define PTR_TO_APTR(arena, ptr) (arena_ptr)(ptr - arena._data)
-#define DEREF_APTR(arena, aptr) *(arena._data + aptr)
-#define INDEX_APTR(arena, aptr, i) *(arena._data + aptr + i)
+/*
+* Convert the arena pointer into a normal pointer. Invalid outside the
+* program space the arena was intialized in.
+*/
+#define SARENA_GET_PTR(arena, aptr) (uint8_t*)((arena)._data + aptr)
+
+/*
+* Dereferences the arena pointer. Invalid outside the program space the
+* arena was intialized in.
+*/
+#define SARENA_DEREF_APTR(arena, aptr) *((arena)._data + aptr)
+
+/*
+* Indexes into the arena like an array. Is the same as DEREF_APTR
+*/
+#define SARENA_INDEX(arena, index) SARENA_DEREF_APTR(arena, index)
+
+/*
+* Gets the size of the arena as a const size_t
+*/
+#define SARENA_SIZE(arena) ((const size_t)(arena._arena_size))
+
+/*
+* Gets the capacity of the arena as a const size_t
+*/
+#define SARENA_CAPACITY(arena) ((const size_t)(arena._arena_capacity))
 
 /*
 * Initialized the area and allocates the memory for the capacity
@@ -52,10 +76,25 @@ typedef size_t arena_ptr;
 * 
 * @return Returns whether the initialization was successful or not
 */
-bool sarena_init(SArena* arena, size_t capacity);
+bool sarena_init_new(SArena* arena, size_t capacity);
 
 /*
-* Frees the arena and all the memory inside it
+* Initialized the area from an existing memory segment (of size capacity)
+*
+* @param arena A pointer to the arena to initialize
+* @param ptr A pointer to the allocated space for the arena
+* @param capacity How much capacity the arena should have
+*
+* @return Returns whether the initialization was successful or not
+*/
+bool sarena_init(SArena* arena, uint8_t* ptr, size_t capacity);
+
+/*
+* Frees the arena and all the memory inside it. Calls free() on the data
+* so can only be called on an arena where the memory was allocated with
+* malloc() - otherwise will fail!
+* 
+* @param arena A pointer to the arena to free
 */
 void sarena_free(SArena* arena);
 
@@ -65,9 +104,8 @@ void sarena_free(SArena* arena);
 * @param arena A pointer to the arena to alloc to
 * @param How much space to allocate
 * 
-* @return Returns the pointer to the allocated section
-* Returns NULL in case of failure
+* @return Returns an arena pointer to a location in the arena.
 */
-void* sarena_alloc(SArena* arena, size_t size);
+SArenaPtr sarena_alloc(SArena* arena, size_t size);
 
 #endif
