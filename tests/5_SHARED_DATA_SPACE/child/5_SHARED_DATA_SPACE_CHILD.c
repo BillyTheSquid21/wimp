@@ -149,7 +149,6 @@ int main(int argc, char** argv)
 			else if (strcmp(meta.instr, "write") == 0)
 			{
 				child_write();
-				disconnect = true;
 			}
 
 			wimp_instr_node_free(currentnode);

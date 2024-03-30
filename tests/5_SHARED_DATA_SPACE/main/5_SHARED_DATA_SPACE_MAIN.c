@@ -179,7 +179,6 @@ int client_main_entry(int argc, char** argv)
 			else if (strcmp(meta.instr, "write") == 0)
 			{
 				child_write();
-				disconnect = true;
 			}
 
 			wimp_instr_node_free(currentnode);
@@ -366,8 +365,8 @@ int main(void)
 			wimp_log_important("Both done, next step...\n");
 			wimp_add_local_server("test_process1", "write", NULL, 0);
 			wimp_add_local_server("test_process2", "write", NULL, 0);
-			//wimp_add_local_server("test_process1", "exit", NULL, 0);
-			//wimp_add_local_server("test_process2", "exit", NULL, 0);
+			wimp_add_local_server("test_process1", "exit", NULL, 0);
+			wimp_add_local_server("test_process2", "exit", NULL, 0);
 			wimp_server_send_instructions(server);
 			tp_sent_instr = true;
 		}
