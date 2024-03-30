@@ -90,6 +90,13 @@ bool sarena_init_new(SArena* arena, size_t capacity);
 bool sarena_init(SArena* arena, uint8_t* ptr, size_t capacity);
 
 /*
+* Creates an empty sarena
+* 
+* @return Returns an empty arena
+*/
+SArena sarena();
+
+/*
 * Frees the arena and all the memory inside it. Calls free() on the data
 * so can only be called on an arena where the memory was allocated with
 * malloc() - otherwise will fail!

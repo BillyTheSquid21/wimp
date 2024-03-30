@@ -30,9 +30,9 @@
 
 typedef struct _WimpDataSlot
 {
-	SArena data_arena;
-	bool active;
+	int32_t share_counter;
 	size_t size;
+	SArena data_arena;
 	char name[WIMP_SHARED_SLOT_MAX_NAME_BYTES];
 } WimpDataSlot;
 
@@ -42,9 +42,9 @@ typedef struct _WimpDataSlot
 */
 typedef struct _WimpDataArena
 {
-	SArena* _arena;
+	SArena _arena;
 	PShm* _shm;
-} *WimpDataArena;
+} WimpDataArena;
 
 typedef SArenaPtr WArenaPtr;
 
@@ -52,28 +52,28 @@ typedef SArenaPtr WArenaPtr;
 * Convert the arena pointer into a normal pointer. Invalid outside the
 * program space the arena was intialized in.
 */
-#define WIMP_ARENA_GET_PTR(arena, aptr) SARENA_GET_PTR(*arena->_arena, aptr)
+#define WIMP_ARENA_GET_PTR(arena, aptr) SARENA_GET_PTR(arena._arena, aptr)
 
 /*
 * Dereferences the arena pointer. Invalid outside the program space the
 * arena was intialized in.
 */
-#define WIMP_ARENA_DEREF_APTR(arena, aptr) SARENA_DEREF_APTR(*arena->_arena, aptr)
+#define WIMP_ARENA_DEREF_APTR(arena, aptr) SARENA_DEREF_APTR(arena._arena, aptr)
 
 /*
 * Indexes into the arena like an array. Is the same as DEREF_APTR
 */
-#define WIMP_ARENA_INDEX(arena, index) SARENA_DEREF_APTR(*arena->_arena, index)
+#define WIMP_ARENA_INDEX(arena, index) SARENA_DEREF_APTR(arena._arena, index)
 
 /*
 * Gets the size of the arena as a const size_t
 */
-#define WIMP_ARENA_SIZE(arena) ((const size_t)(arena->_arena->_arena_size))
+#define WIMP_ARENA_SIZE(arena) ((const size_t)(arena._arena._arena_size))
 
 /*
 * Gets the capacity of the arena as a const size_t
 */
-#define WIMP_ARENA_CAPACITY(arena) ((const size_t)(arena->_arena->_arena_capacity))
+#define WIMP_ARENA_CAPACITY(arena) ((const size_t)(arena._arena._arena_capacity))
 
 /*
 * Allocates to the area and increases the alloc pointer
@@ -83,13 +83,13 @@ typedef SArenaPtr WArenaPtr;
 *
 * @return Returns an arena pointer to a location in the arena.
 */
-#define WIMP_ARENA_ALLOC(arena, size) (WArenaPtr)sarena_alloc(arena->_arena, size);
+#define WIMP_ARENA_ALLOC(arena, size) (WArenaPtr)sarena_alloc(&arena._arena, size);
 
 /*
 * Initializes the data table, which creates a shared memory space for
 * multiple processes. Can be used by any program regardless of if is
 * connected based on name so bear in mind. Called once by the master
-* process.
+* process. Pair with wimp_data_free at the end of the program.
 * 
 * @param memory_name The name of the program (and of the shared memory)
 * 
@@ -98,7 +98,8 @@ typedef SArenaPtr WArenaPtr;
 int32_t wimp_data_init(const char* memory_name);
 
 /*
-* Links the current process to the data.
+* Links the current process to the data table. Should not call from
+* the master process that calls wimp_data_init
 * 
 * @param memory_name The name of the program (and of the shared memory)
 * 
@@ -107,32 +108,55 @@ int32_t wimp_data_init(const char* memory_name);
 int32_t wimp_data_link_to_process(const char* memory_name);
 
 /*
-* Unlinks from the process
+* Unlinks from the process. Should not call from the master process 
+* that calls wimp_data_init
 */
 void wimp_data_unlink_from_process();
 
 /*
 * Frees the data table and takes ownership of the memory back.
-* 
-* @param memory_name The name of the program (and of the shared memory)
 */
-void wimp_data_free(const char* memory_name);
+void wimp_data_free();
 
 /*
 * Reserves a space in memory to copy or write to
+* 
+* @param reserved_name The name for the memory segement to create
+* @param size The size to reserve.
+* 
+* @return Returns WIMP_DATA_SUCCESS or WIMP_DATA_FAIL
 */
 int32_t wimp_data_reserve(const char* reserved_name, size_t size);
 
 /*
+* Links to the shared data and increases the share counter.
+* 
+* @param name The name of the data to link to
+* 
+* @return Returns WIMP_DATA_SUCCESS or WIMP_DATA_FAIL
+*/
+int32_t wimp_data_link_to_data(const char* name);
+
+/*
+* Unlinks to the shared data and increases the share counter.
+* If no processes are still linked to the data, it will be returned
+* to the OS.
+*
+* @param name The name of the data to unlink from
+*/
+void wimp_data_unlink_from_data(const char* name);
+
+/*
 * Get the arena of a location of data for accessing. Accessing locks the
 * data (hence why it can change the arena data pointer) and must be
-* accompanied by a stop accessing call.
+* accompanied by a stop accessing call. Should wrap the access inside
+* an if statement checking for success, otherwise will have locking fail.
 * 
 * @param name The name of the shared data to access
 * 
 * @return Returns a pointer to the arena controlling the data TODO TYPEDEF
 */
-SArena* wimp_data_access(const char* name);
+int32_t wimp_data_access(WimpDataArena* arena, const char* name);
 
 /*
 * Ends the accessing of the data. Dereferences the arena ptr to ensure can't

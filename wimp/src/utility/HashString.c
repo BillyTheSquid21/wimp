@@ -304,7 +304,7 @@ int HashString_add( HashString* hash, const char* key, void* value )
   unsigned int hashValue;    /**<  The Value of the HashString_hash() for this key, hash, newEntry Position in hash */
   
   /** Return Error if a NULL Pointer is Given */
-  if ( ( hash == NULL ) || ( key == NULL ) || ( value == NULL ) )
+  if ( ( hash == NULL ) || ( key == NULL ) )
     return 3;
 
   oldEntry = HashString_find( hash, key );

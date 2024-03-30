@@ -234,7 +234,7 @@ void wimp_log_important(const char* format, ...)
 	va_list arg;
 	va_start(arg, format);
 
-	sds format_modified = sdsnew("\033[1; 34m");
+	sds format_modified = sdsnew("\033[1;34m");
 	format_modified = sdscat(format_modified, format);
 	format_modified = sdscat(format_modified, "\033[0m");
 	wimp_log_internal(format_modified, arg);

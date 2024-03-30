@@ -62,7 +62,7 @@ HashStringEntry* HashString_find( HashString* hash, const char* key );
 /* Add Entry with (copy of) Given Key, Value in Given Table - Edited */
 int HashString_add( HashString* hash, const char* key, void* value );
 
-/* Removes Entry with Given Key From Given Table ( if any ) and free it's Memory */
+/* Removes Entry with Given Key From Given Table ( if any ) */
 int HashString_remove( HashString* hash, const char* key );
 
 /* Finds First Entry in Given HashString and Sets Given Pointers

@@ -1,0 +1,13 @@
+This test should do the following:
+
+- Start a master, lib child and an executable child
+- The master writes a sequence to a shared memory spot
+- Once completed, tell both children to read and check
+- Once they finish, they should both write another sequence and tell the master to check
+
+Checks:
+
+- Check that the data table inits
+- Check that the data is properly initialized
+- Check that both the children correctly read the data
+- Check that the sequence the master reads is in the right order, and no race condition was encountered

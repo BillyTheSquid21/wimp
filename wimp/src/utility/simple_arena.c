@@ -30,11 +30,20 @@ bool sarena_init(SArena* arena, uint8_t* ptr, size_t capacity)
 	return true;
 }
 
+SArena sarena()
+{
+	SArena a = { 0, 0, 0, NULL };
+	return a;
+}
+
 void sarena_free(SArena* arena)
 {
 	arena->_arena_capacity = 0;
 	arena->_arena_size = 0;
-	free(arena->_data);
+	if (arena->_data)
+	{
+		free(arena->_data);
+	}
 	arena->_data = NULL;
 	return;
 }
@@ -42,6 +51,7 @@ void sarena_free(SArena* arena)
 SArenaPtr sarena_alloc(SArena* arena, size_t size)
 {
 	size_t new_arena_ptr = arena->_arena_pointer + size;
+	assert(new_arena_ptr <= arena->_arena_capacity && "Alloc out of bounds!");
 	if (new_arena_ptr >= arena->_arena_capacity)
 	{
 		return NULL;
