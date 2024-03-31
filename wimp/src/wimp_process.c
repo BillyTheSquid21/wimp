@@ -69,10 +69,10 @@ int wimp_launch_lin(sds entry)
 
 #endif
 
-int32_t wimp_start_library_process(const char* process_name, MAIN_FUNC_PTR main_func, WimpMainEntry entry)
+int32_t wimp_start_library_process(const char* process_name, MAIN_FUNC_PTR main_func, enum PUThreadPriority_ priority, WimpMainEntry entry)
 {
 	wimp_log_important("Starting %s!\n", process_name);
-	PUThread* process_thread = p_uthread_create((PUThreadFunc)main_func, entry, false, process_name);
+	PUThread* process_thread = p_uthread_create_full((PUThreadFunc)main_func, entry, false, priority, 0, process_name);
 	if (process_thread == NULL)
 	{
 		wimp_log_fail("Failed to create thread: %s", process_name);
@@ -185,7 +185,7 @@ int32_t wimp_start_executable_process(const char* process_name, const char* exec
 
 	//Launch the linux version of the function
 	//Launch the windows version of the function
-	PUThread* process_thread = p_uthread_create((PUThreadFunc)&wimp_launch_lin, path, false, process_name);
+	PUThread* process_thread = p_uthread_create_full((PUThreadFunc)&wimp_launch_lin, path, false, priority, 0, process_name);
 	if (process_thread == NULL)
 	{
 		wimp_log_fail("Failed to create thread: %s", process_name);

@@ -14,7 +14,7 @@ WimpServer* wimp_get_local_server()
 	return _local_server;
 }
 
-int32_t wimp_init_local_server(const char* process_name, const char* domain, int32_t port, const char* parent)
+int32_t wimp_init_local_server(const char* process_name, const char* domain, int32_t port)
 {
 	if (_local_server != NULL)
 	{
@@ -23,7 +23,7 @@ int32_t wimp_init_local_server(const char* process_name, const char* domain, int
 	}
 
 	_local_server = malloc(sizeof(WimpServer));
-	return wimp_create_server(_local_server, process_name, domain, port, parent);
+	return wimp_create_server(_local_server, process_name, domain, port);
 }
 
 void wimp_close_local_server()
@@ -48,7 +48,7 @@ void wimp_add_local_server(const char* dest, const char* instr, const void* args
 	wimp_server_add(_local_server, dest, instr, args, arg_size_bytes);
 }
 
-int32_t wimp_create_server(WimpServer* server, const char* process_name, const char* domain, int32_t port, const char* parent)
+int32_t wimp_create_server(WimpServer* server, const char* process_name, const char* domain, int32_t port)
 {
 	WimpProcessTable ptable = wimp_create_process_table();
 	WIMP_ZERO_BUFFER(server->recbuffer); WIMP_ZERO_BUFFER(server->sendbuffer);
@@ -83,7 +83,7 @@ int32_t wimp_create_server(WimpServer* server, const char* process_name, const c
 	server->addr = addr;
 	server->ptable = ptable;
 	server->server = s;
-	server->parent = parent;
+	server->parent = NULL;
 	server->incomingmsg = wimp_create_instr_queue();
 	server->outgoingmsg = wimp_create_instr_queue();
 	wimp_log_success("Server created! %s %s:%d\n", process_name, domain, port);
@@ -179,6 +179,18 @@ int32_t wimp_server_process_accept(WimpServer* server, int pcount, ...)
 
 			procdat->process_connection = con;
 			procdat->process_active = WIMP_PROCESS_ACTIVE;
+
+			if (procdat->process_relation == WIMP_Process_Parent)
+			{
+				if (server->parent == NULL)
+				{
+					server->parent = sdsnew(proc_name);
+				}
+				else
+				{
+					wimp_log_fail("Server already has a parent %s!\n", server->parent);
+				}
+			}
 
 			//Clear rec buffer
 			WIMP_ZERO_BUFFER(server->recbuffer);
@@ -341,12 +353,38 @@ int32_t wimp_server_send_instructions(WimpServer* server)
 	return WIMP_SERVER_SUCCESS;
 }
 
+bool wimp_server_is_parent_alive(WimpServer* server)
+{
+	if (server->parent == NULL)
+	{
+		return true;
+	}
+	return wimp_server_check_process_listening(server, server->parent);
+}
+
 void wimp_server_free(WimpServer server)
 {
+	//Before freeing, send exit signal to any child process
+	HashStringEntry* entry;
+	int i;
+	HASH_STRING_ITER(server.ptable._hash_table, entry, i)
+	{
+		WimpProcessData data = (WimpProcessData)entry->value;
+		if (data->process_relation == WIMP_Process_Child)
+		{
+			wimp_server_add(&server, entry->key, WIMP_INSTRUCTION_EXIT, NULL, 0);
+		}
+	}
+	wimp_server_send_instructions(&server);
+
 	p_socket_address_free(server.addr);
 	p_socket_close(server.server, NULL);
 	wimp_process_table_free(server.ptable);
 	wimp_instr_queue_free(server.incomingmsg);
 	wimp_instr_queue_free(server.outgoingmsg);
+	if (server.parent)
+	{
+		sdsfree(server.parent);
+	}
 	WIMP_ZERO_BUFFER(server.recbuffer); WIMP_ZERO_BUFFER(server.sendbuffer);
 }

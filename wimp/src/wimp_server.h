@@ -20,7 +20,7 @@ typedef int32_t WimpServerType;
 
 typedef struct _WimpServer
 {
-	const char* process_name;
+	sds process_name;
 	PSocketAddress* addr;
 	PSocket* server;
 	WimpProcessTable ptable;
@@ -54,7 +54,7 @@ WimpServer* wimp_get_local_server(void);
 * 
 * @return Returns either WIMP_SERVER_SUCCESS or WIMP_SERVER_FAIL
 */
-int32_t wimp_init_local_server(const char* process_name, const char* domain, int32_t port, const char* parent);
+int32_t wimp_init_local_server(const char* process_name, const char* domain, int32_t port);
 
 /*
 * Closes the local thread server.
@@ -79,11 +79,10 @@ void wimp_add_local_server(const char* dest, const char* instr, const void* args
 * @param process_name The name of the process running on the server
 * @param domain The domain for the server to run on
 * @param port The port for the server to run on
-* @param parent The parent process name (e.g. master process) - may be NULL if is not a child
 * 
 * @return Returns either WIMP_SERVER_SUCCESS or WIMP_SERVER_FAIL
 */
-int32_t wimp_create_server(WimpServer* server, const char* process_name, const char* domain, int32_t port, const char* parent);
+int32_t wimp_create_server(WimpServer* server, const char* process_name, const char* domain, int32_t port);
 
 /*
 * Accepts a process to the server. Is blocking. Can only do one at a time.
@@ -135,6 +134,19 @@ bool wimp_server_instr_routed(WimpServer* server, const char* dest_process, Wimp
 * @param server The server to send instructions from
 */
 int32_t wimp_server_send_instructions(WimpServer* server);
+
+/*
+* Checks if the parent is alive (if the server has one). Can be used
+* as a failsafe to make sure program exits if the parent is killed
+* early and cannot clean up and send the exit signal. Should call in
+* the main loop of a program that might be a separate executable.
+* 
+* @param server The server to check
+* 
+* @return Returns true if the parent is alive, or the process doesn't
+* have a parent. Otherwise returns false.
+*/
+bool wimp_server_is_parent_alive(WimpServer* server);
 
 /*
 * Frees the Wimp Server

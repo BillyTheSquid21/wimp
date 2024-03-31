@@ -64,17 +64,21 @@ void wimp_shutdown();
 * 
 * @param process_name The name of the process to create
 * @param main_func The pointer to the main function, which should be set up for being a library process not an executable one
+* @param priority The puthread thread priority
 * @param entry The entry arguments
 * 
 * @return Returns either WIMP_PROCESS_SUCCESS or WIMP_PROCESS_FAIL
 */
-int32_t wimp_start_library_process(const char* process_name, MAIN_FUNC_PTR main_func, WimpMainEntry entry);
+int32_t wimp_start_library_process(const char* process_name, MAIN_FUNC_PTR main_func, enum PUThreadPriority_ priority, WimpMainEntry entry);
 
 /*
 * Starts an executable process. Currently must be located downstream
 * of the location of the calling executable to avoid arbitrary
 * execution. If needed, may create a specific function for launching
 * arbitrary exe's, although this might be very unsafe.
+* 
+* For now cannot automatically set exe priority. The user could supply
+* this from command line args and set normally.
 * 
 * @param process_name The name of the process to create
 * @param executable The executable relative to the location the program binary is running from (e.g. bin directory)

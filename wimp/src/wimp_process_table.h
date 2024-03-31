@@ -20,6 +20,20 @@
 #define WIMP_PROCESS_INACTIVE 0
 
 /*
+* The relation a process has in the table
+* 
+* This allows tracking process relationship for shutdown and other
+* such things
+*/
+typedef enum WimpRelation
+{
+	WIMP_Process_Unknown		= 0x00,
+	WIMP_Process_Child			= 0x01,
+	WIMP_Process_Parent			= 0x02,
+	WIMP_Process_Independent	= 0x03,
+};
+
+/*
 * The data stored for a process
 */
 typedef struct _WimpProcessData
@@ -27,11 +41,12 @@ typedef struct _WimpProcessData
 	sds process_domain;
 	PSocket* process_connection;
 	int32_t process_port;
-	int32_t process_active;
+	int16_t process_active;
+	int16_t process_relation;
 } *WimpProcessData;
 
 /*
-* The process table struct. Should not access the members directly.
+* The process table struct
 */
 typedef struct _WimpProcessTable
 {
@@ -51,11 +66,12 @@ WimpProcessTable wimp_create_process_table(void);
 * @param process_name The name of the process to add
 * @param process_domain The domain that the process runs on
 * @param process_port The port that the process runs on
+* @param relation The relationship of the process to this process
 * @param connection The connection to the server for sending instructions to
 * 
 * @return Returns either WIMP_PROCESS_TABLE_SUCCESS or WIMP_PROCESS_TABLE_FAIL
 */
-int32_t wimp_process_table_add(WimpProcessTable* table, const char* process_name, const char* process_domain, int32_t process_port, PSocket* connection);
+int32_t wimp_process_table_add(WimpProcessTable* table, const char* process_name, const char* process_domain, int32_t process_port, int16_t relation, PSocket* connection);
 
 /*
 * Removes a process from the table

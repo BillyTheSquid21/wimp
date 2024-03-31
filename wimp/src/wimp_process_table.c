@@ -17,7 +17,7 @@ WimpProcessTable wimp_create_process_table()
 	return t;
 }
 
-int32_t wimp_process_table_add(WimpProcessTable* table, const char* process_name, const char* process_domain, int32_t process_port, PSocket* connection)
+int32_t wimp_process_table_add(WimpProcessTable* table, const char* process_name, const char* process_domain, int32_t process_port, int16_t relation, PSocket* connection)
 {
 	if (table == NULL)
 	{
@@ -41,6 +41,7 @@ int32_t wimp_process_table_add(WimpProcessTable* table, const char* process_name
 	process_data->process_port = process_port;
 	process_data->process_connection = connection;
 	process_data->process_active = WIMP_PROCESS_INACTIVE;
+	process_data->process_relation = relation;
 
 	if (HashString_add(table->_hash_table, process_name, process_data) != 0)
 	{
