@@ -25,13 +25,13 @@
 * This allows tracking process relationship for shutdown and other
 * such things
 */
-typedef enum WimpRelation
+typedef enum _WimpRelation
 {
 	WIMP_Process_Unknown		= 0x00,
 	WIMP_Process_Child			= 0x01,
 	WIMP_Process_Parent			= 0x02,
 	WIMP_Process_Independent	= 0x03,
-};
+} WimpRelation;
 
 /*
 * The data stored for a process
@@ -71,7 +71,7 @@ WimpProcessTable wimp_create_process_table(void);
 * 
 * @return Returns either WIMP_PROCESS_TABLE_SUCCESS or WIMP_PROCESS_TABLE_FAIL
 */
-int32_t wimp_process_table_add(WimpProcessTable* table, const char* process_name, const char* process_domain, int32_t process_port, int16_t relation, PSocket* connection);
+int32_t wimp_process_table_add(WimpProcessTable* table, const char* process_name, const char* process_domain, int32_t process_port, enum _WimpRelation relation, PSocket* connection);
 
 /*
 * Removes a process from the table

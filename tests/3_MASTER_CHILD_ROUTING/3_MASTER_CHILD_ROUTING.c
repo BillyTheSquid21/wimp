@@ -69,7 +69,7 @@ int client_main_entry(int argc, char** argv)
 	wimp_start_reciever_thread("master", process_domain, process_port, args);
 
 	//Add the master process to the table for tracking
-	wimp_process_table_add(&server->ptable, "master", "127.0.0.1", master_port, NULL);
+	wimp_process_table_add(&server->ptable, "master", "127.0.0.1", master_port, WIMP_Process_Parent, NULL);
 
 	//Accept the connection to the test_process->master reciever, started by the master thread
 	wimp_server_process_accept(server, 1, "master");
@@ -178,10 +178,10 @@ int main(void)
 
 	//Start the client processes, creating the command line arguments and creating a new thread
 	WimpMainEntry entry = wimp_get_entry(6, "--master-port", master_port_string, "--process-port", client1_port_string, "--process-name", "client1");
-	wimp_start_library_process("client1", (MAIN_FUNC_PTR)&client_main_lib_entry, entry);
+	wimp_start_library_process("client1", (MAIN_FUNC_PTR)&client_main_lib_entry, P_UTHREAD_PRIORITY_LOW, entry);
 
 	entry = wimp_get_entry(6, "--master-port", master_port_string, "--process-port", client2_port_string, "--process-name", "client2");
-	wimp_start_library_process("client2", (MAIN_FUNC_PTR)&client_main_lib_entry, entry);
+	wimp_start_library_process("client2", (MAIN_FUNC_PTR)&client_main_lib_entry, P_UTHREAD_PRIORITY_LOW, entry);
 
 	//Start a local server for the master process
 	wimp_init_local_server("master", "127.0.0.1", master_port, NULL);
@@ -195,8 +195,8 @@ int main(void)
 	wimp_start_reciever_thread("client2", "127.0.0.1", master_port, args);
 
 	//Add the test process to the table for tracking
-	wimp_process_table_add(&server->ptable, "client1", "127.0.0.1", client1_port, NULL);
-	wimp_process_table_add(&server->ptable, "client2", "127.0.0.1", client2_port, NULL);
+	wimp_process_table_add(&server->ptable, "client1", "127.0.0.1", client1_port, WIMP_Process_Child, NULL);
+	wimp_process_table_add(&server->ptable, "client2", "127.0.0.1", client2_port, WIMP_Process_Child, NULL);
 
 	//Accept the connection to the master->test_process reciever, started by the test_process
 	wimp_server_process_accept(server, 2, "client1", "client2");
