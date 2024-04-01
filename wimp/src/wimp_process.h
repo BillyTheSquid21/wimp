@@ -53,12 +53,12 @@ typedef enum
 *
 * @return Returns either WIMP_PROCESS_SUCCESS or WIMP_PROCESS_FAIL
 */
-WIMP_API int32_t wimp_init();
+WIMP_API int32_t wimp_init(void);
 
 /*
 * Shuts down the wimp library
 */
-WIMP_API void wimp_shutdown();
+WIMP_API void wimp_shutdown(void);
 
 /*
 * Starts a library process

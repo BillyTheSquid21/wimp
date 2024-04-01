@@ -13,11 +13,12 @@
 * and one is outgoing. Formatted as FIFO. The reciever(s) for the process
 * add to the incoming queue (as multiple threads could write need to use
 * mutexes) which the process reads and executes. In the process of executing,
-* outgoing instructions may be added from the same thread. Each thread can only
-* have one server, which is a thread local pointer. This means as long as a
+* outgoing instructions may be added from the same thread. Each thread normally
+* has one server, which is a thread local pointer. This means as long as a
 * server exists on the thread, including the server header calling the function to
 * add instructions is all that needs to be done. Once the instruction data is
-* not used anymore, must free the instruction node.
+* not used anymore, must free the instruction node. Can create a specific instance
+* of a local server but this will need to be passed to any functions adding instrs.
 * 
 * Some design considerations to change depending on performance for different
 * applications:
@@ -30,15 +31,6 @@
 *
 * - Nodes could share some memory space for faster reading of instructions,
 *   potentially working like buckets of instructions up to a limit size.
-* 
-* - A thread_local server pointer limits instructions to being added from the
-*   server thread. This is a limit that could be changed.
-* 
-* - Currently all threads have equal priority when adding/popping - need to
-*   ensure that the server/popping thread has priority, otherwise if too
-*   many instructions are added the master thread may not be able to move on
-* 
-* These will be implemented once the simplistic approach works.
 */
 
 #ifndef WIMP_INSTRUCTION_H
@@ -65,11 +57,7 @@ typedef struct _WimpInstr
 	size_t instruction_bytes;
 } WimpInstr;
 
-typedef struct _WimpInstrNode
-{
-	WimpInstr instr;
-	struct _WimpInstrNode* nextnode;
-} *WimpInstrNode;
+typedef struct _WimpInstrNode *WimpInstrNode;
 
 typedef struct _WimpInstrQueue
 {
@@ -81,7 +69,7 @@ typedef struct _WimpInstrQueue
 } WimpInstrQueue;
 
 /*
-* Instruction metadata that can be pulled from the buffer
+* Instruction metadata that can be pulled from a buffer
 */
 typedef struct _WimpInstrMeta
 {
@@ -93,6 +81,11 @@ typedef struct _WimpInstrMeta
 	int32_t arg_bytes;
 	int32_t instr_bytes;
 } WimpInstrMeta;
+
+/*
+* Get the start of the raw instruction data 
+*/
+#define WIMP_INSTR_START(meta) (uint8_t*)(meta.dest_process - WIMP_INSTRUCTION_DEST_OFFSET)
 
 /*
 * Creates a new instruction queue
@@ -180,6 +173,7 @@ WIMP_API void wimp_instr_queue_free(WimpInstrQueue queue);
 * Extracts the wimp instruction metadata from a buffer. Assumes buffer starts at start of an instruction
 *
 * @param buffer The buffer to extract from
+* @param buffsize The buffer size to extract in bytes
 *
 * @return Returns the metadata of the instruction
 */

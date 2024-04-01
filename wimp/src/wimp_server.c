@@ -314,21 +314,19 @@ int32_t wimp_server_send_instructions(WimpServer* server)
 		//Get process con
 		//of buffer as lookup
 		WimpProcessData data = NULL;
-
-		//get destination from after instr size offset
-		char* destination = &currentn->instr.instruction[WIMP_INSTRUCTION_DEST_OFFSET];
+		WimpInstrMeta currentn_meta = wimp_instr_get_from_node(currentn);
 
 		//If the destination is this server, add to incoming instead (loopback)
-		if (strcmp(destination, server->process_name) == 0)
+		if (strcmp(currentn_meta.dest_process, server->process_name) == 0)
 		{
-			wimp_instr_queue_add(&server->incomingmsg, currentn->instr.instruction, currentn->instr.instruction_bytes);
+			wimp_instr_queue_add(&server->incomingmsg, WIMP_INSTR_START(currentn_meta), currentn_meta.total_bytes);
 		}
 		else if 
 			(
 			//First look for a destination in the server ptable
 			//Otherwise send to the default destination (the parent) which may route it
 			//Short circuit is guaranteed by C standard
-			wimp_process_table_get(&data, server->ptable, destination) == WIMP_PROCESS_TABLE_SUCCESS
+			wimp_process_table_get(&data, server->ptable, currentn_meta.dest_process) == WIMP_PROCESS_TABLE_SUCCESS
 			||
 			wimp_process_table_get(&data, server->ptable, server->parent) == WIMP_PROCESS_TABLE_SUCCESS
 			)
@@ -337,10 +335,10 @@ int32_t wimp_server_send_instructions(WimpServer* server)
 			if (data->process_active)
 			{
 				//If a valid place to send to is found send the instruction
-				memcpy(server->sendbuffer, currentn->instr.instruction, currentn->instr.instruction_bytes);
+				memcpy(server->sendbuffer, WIMP_INSTR_START(currentn_meta), currentn_meta.total_bytes);
 			
 				WimpInstrMeta meta = wimp_instr_get_from_buffer(server->sendbuffer, WIMP_MESSAGE_BUFFER_BYTES);
-				pssize sendres = p_socket_send(data->process_connection, server->sendbuffer, currentn->instr.instruction_bytes, NULL);
+				pssize sendres = p_socket_send(data->process_connection, server->sendbuffer, currentn_meta.total_bytes, NULL);
 
 				//DEBUG_WIMP_PRINT_INSTRUCTION_META(meta);
 				WIMP_ZERO_BUFFER(server->sendbuffer);

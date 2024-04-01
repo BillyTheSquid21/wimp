@@ -86,7 +86,7 @@ int32_t wimp_data_link_to_process(const char* memory_name)
 	return WIMP_DATA_SUCCESS;
 }
 
-void wimp_data_unlink_from_process()
+void wimp_data_unlink_from_process(void)
 {
 	if (s_IsTableLinked)
 	{
@@ -110,7 +110,7 @@ void wimp_data_unlink_from_process()
 	return;
 }
 
-void wimp_data_free()
+void wimp_data_free(void)
 {
 	if (s_IsTableLinked)
 	{
@@ -331,7 +331,7 @@ int32_t wimp_data_access(WimpDataArena* arena, const char* name)
 	return WIMP_DATA_SUCCESS;
 }
 
-void wimp_data_stop_access(const char* name, WimpDataArena* arena)
+void wimp_data_stop_access(WimpDataArena* arena, const char* name)
 {
 	HashStringEntry* entry = HashString_find(s_DataTableCacheMap, name);
 	if (entry == NULL)

@@ -52,27 +52,40 @@ typedef SArenaPtr WArenaPtr;
 /*
 * Convert the arena pointer into a normal pointer. Invalid outside the
 * program space the arena was intialized in.
+* 
+* @param arena The arena to get the absolute pointer from
+* @param aptr The relative arena pointer to convert
 */
 #define WIMP_ARENA_GET_PTR(arena, aptr) SARENA_GET_PTR(arena._arena, aptr)
 
 /*
 * Dereferences the arena pointer. Invalid outside the program space the
 * arena was intialized in.
+* 
+* @param arena The arena to get the absolute pointer from
+* @param aptr The relative arena pointer to dereference
 */
 #define WIMP_ARENA_DEREF_APTR(arena, aptr) SARENA_DEREF_APTR(arena._arena, aptr)
 
 /*
 * Indexes into the arena like an array. Is the same as DEREF_APTR
+* 
+* @param arena The arena to get the absolute pointer from
+* @param aptr The relative arena pointer to dereference
 */
 #define WIMP_ARENA_INDEX(arena, index) SARENA_DEREF_APTR(arena._arena, index)
 
 /*
 * Gets the size of the arena as a const size_t
+* 
+* @param arena The arena to get the size of
 */
 #define WIMP_ARENA_SIZE(arena) ((const size_t)(arena._arena._arena_size))
 
 /*
 * Gets the capacity of the arena as a const size_t
+* 
+* @param arena The arena to get the capacity of
 */
 #define WIMP_ARENA_CAPACITY(arena) ((const size_t)(arena._arena._arena_capacity))
 
@@ -112,12 +125,12 @@ WIMP_API int32_t wimp_data_link_to_process(const char* memory_name);
 * Unlinks from the process. Should not call from the master process 
 * that calls wimp_data_init
 */
-WIMP_API void wimp_data_unlink_from_process();
+WIMP_API void wimp_data_unlink_from_process(void);
 
 /*
 * Frees the data table and takes ownership of the memory back.
 */
-WIMP_API void wimp_data_free();
+WIMP_API void wimp_data_free(void);
 
 /*
 * Reserves a space in memory to copy or write to
@@ -153,6 +166,7 @@ WIMP_API void wimp_data_unlink_from_data(const char* name);
 * accompanied by a stop accessing call. Should wrap the access inside
 * an if statement checking for success, otherwise will have locking fail.
 * 
+* @param arena A pointer to the arena pointer returned by the access call.
 * @param name The name of the shared data to access
 * 
 * @return Returns a pointer to the arena controlling the data TODO TYPEDEF
@@ -162,10 +176,10 @@ WIMP_API int32_t wimp_data_access(WimpDataArena* arena, const char* name);
 /*
 * Ends the accessing of the data. Dereferences the arena ptr to ensure can't
 * be used after.
-* 
-* @param name The name of the shared data to stop accessing
+*
 * @param arena A pointer to the arena pointer returned by the access call.
+* @param name The name of the shared data to stop accessing
 */
-WIMP_API void wimp_data_stop_access(const char* name, WimpDataArena* arena);
+WIMP_API void wimp_data_stop_access(WimpDataArena* arena, const char* name);
 
 #endif

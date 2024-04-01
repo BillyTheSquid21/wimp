@@ -1,6 +1,12 @@
 #include <wimp_instruction.h>
 #include <stdlib.h>
 
+typedef struct _WimpInstrNode
+{
+	WimpInstr instr;
+	struct _WimpInstrNode* nextnode;
+} *WimpInstrNode;
+
 WimpInstrQueue wimp_create_instr_queue()
 {
 	WimpInstrQueue q;
@@ -171,6 +177,9 @@ WimpInstrMeta wimp_instr_get_from_buffer(uint8_t* buffer, size_t buffsize)
 		offset++;
 	}
 
+	//Record start to get start of instr length
+	size_t instr_start = offset;
+
 	instr.instr = &buffer[offset];
 	offset++;
 	current_char = ' ';
@@ -181,6 +190,9 @@ WimpInstrMeta wimp_instr_get_from_buffer(uint8_t* buffer, size_t buffsize)
 		current_char = (char)buffer[offset];
 		offset++;
 	}
+
+	//Use diff to get length of instr
+	instr.instr_bytes = offset - instr_start;
 
 	instr.arg_bytes = *(int32_t*)&buffer[offset];
 	offset += sizeof(int32_t);

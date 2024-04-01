@@ -197,7 +197,7 @@ int32_t wimp_start_executable_process(const char* process_name, const char* exec
 
 
 
-int32_t wimp_init()
+int32_t wimp_init(void)
 {
 	p_libsys_init();
 
@@ -210,7 +210,7 @@ int32_t wimp_init()
 	return WIMP_PROCESS_SUCCESS;
 }
 
-void wimp_shutdown()
+void wimp_shutdown(void)
 {
 	p_libsys_shutdown();
 }
@@ -287,7 +287,7 @@ void wimp_free_entry(WimpMainEntry entry)
 	return;
 }
 
-int32_t wimp_assign_unused_local_port()
+int32_t wimp_assign_unused_local_port(void)
 {
 #ifdef _WIN32
 	//bind dummy socket, get the port and return
