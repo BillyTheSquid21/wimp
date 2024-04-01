@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdbool.h>
-#include <cassert>
+#include <assert.h>
 #include <wimp_core.h>
 
 /*
