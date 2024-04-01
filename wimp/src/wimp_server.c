@@ -339,7 +339,7 @@ int32_t wimp_server_send_instructions(WimpServer* server)
 				//If a valid place to send to is found send the instruction
 				memcpy(server->sendbuffer, currentn->instr.instruction, currentn->instr.instruction_bytes);
 			
-				WimpInstrMeta meta = wimp_get_instr_from_buffer(server->sendbuffer, WIMP_MESSAGE_BUFFER_BYTES);
+				WimpInstrMeta meta = wimp_instr_get_from_buffer(server->sendbuffer, WIMP_MESSAGE_BUFFER_BYTES);
 				pssize sendres = p_socket_send(data->process_connection, server->sendbuffer, currentn->instr.instruction_bytes, NULL);
 
 				//DEBUG_WIMP_PRINT_INSTRUCTION_META(meta);

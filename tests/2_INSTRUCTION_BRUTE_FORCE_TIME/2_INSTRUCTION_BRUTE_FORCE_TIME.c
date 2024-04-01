@@ -250,7 +250,7 @@ int main(void)
 		WimpInstrNode currentnode = wimp_instr_queue_pop(&server->incomingmsg);
 		while (currentnode != NULL)
 		{
-			WimpInstrMeta meta = wimp_get_instr_from_buffer(currentnode->instr.instruction, currentnode->instr.instruction_bytes);
+			WimpInstrMeta meta = wimp_instr_get_from_buffer(currentnode->instr.instruction, currentnode->instr.instruction_bytes);
 			if (strcmp(meta.instr, "incr_sht") == 0)
 			{
 				if (inc_sht_counter % (SHORT_INSTR_COUNT / 10) == 0)

@@ -48,6 +48,7 @@
 #include <string.h>
 #include <plibsys.h>
 #include <assert.h>
+#include <wimp_core.h>
 #include <wimp_debug.h>
 
 #define WIMP_INSTRUCTION_SUCCESS 0
@@ -80,39 +81,53 @@ typedef struct _WimpInstrQueue
 } WimpInstrQueue;
 
 /*
+* Instruction metadata that can be pulled from the buffer
+*/
+typedef struct _WimpInstrMeta
+{
+	const char* source_process;
+	const char* dest_process;
+	const char* instr;
+	void* args;
+	size_t total_bytes;
+	int32_t arg_bytes;
+	int32_t instr_bytes;
+} WimpInstrMeta;
+
+/*
 * Creates a new instruction queue
 * 
 * @return Returns a new instruction queue
 */
-WimpInstrQueue wimp_create_instr_queue(void);
+WIMP_API WimpInstrQueue wimp_create_instr_queue(void);
 
 /*
 * Performs low priority locking operations for the queue
 * 
 * @param queue The queue to lock
 */
-void wimp_instr_queue_low_prio_lock(WimpInstrQueue* queue);
+WIMP_API void wimp_instr_queue_low_prio_lock(WimpInstrQueue* queue);
 
 /*
 * Performs low priority unlocking operations for the queue
 * 
 * @param queue The queue to unlock
 */
-void wimp_instr_queue_low_prio_unlock(WimpInstrQueue* queue);
+WIMP_API void wimp_instr_queue_low_prio_unlock(WimpInstrQueue* queue);
 
 /*
 * Performs high priority locking operations for the queue
 * 
 * @param queue The queue to lock
 */
-void wimp_instr_queue_high_prio_lock(WimpInstrQueue* queue);
+WIMP_API void wimp_instr_queue_high_prio_lock(WimpInstrQueue* queue);
 
 /*
 * Performs high priority unlocking operations for the queue
 * 
 * @param queue The queue to unlock
 */
-void wimp_instr_queue_high_prio_unlock(WimpInstrQueue* queue);
+WIMP_API void wimp_instr_queue_high_prio_unlock(WimpInstrQueue* queue);
 
 /*
 * Adds an instruction to the queue
@@ -123,7 +138,7 @@ void wimp_instr_queue_high_prio_unlock(WimpInstrQueue* queue);
 * 
 * @return Returns either WIMP_INSTRUCTION_SUCCESS or WIMP_INSTRUCTIOn_FAIL
 */
-int32_t wimp_instr_queue_add(WimpInstrQueue* queue, void* instr, size_t bytes);
+WIMP_API int32_t wimp_instr_queue_add(WimpInstrQueue* queue, void* instr, size_t bytes);
 
 /*
 * Adds an existing instruction node to the queue - passes ownership
@@ -133,7 +148,7 @@ int32_t wimp_instr_queue_add(WimpInstrQueue* queue, void* instr, size_t bytes);
 * 
 * @return Returns either WIMP_INSTRUCTION_SUCCESS or WIMP_INSTRUCTIOn_FAIL
 */
-int32_t wimp_instr_queue_add_existing(WimpInstrQueue* queue, WimpInstrNode node);
+WIMP_API int32_t wimp_instr_queue_add_existing(WimpInstrQueue* queue, WimpInstrNode node);
 
 /*
 * Pops the top node off the queue, handing it to the user.
@@ -145,20 +160,38 @@ int32_t wimp_instr_queue_add_existing(WimpInstrQueue* queue, WimpInstrNode node)
 * 
 * @return Returns a pointer to the top node, NULL if queue is empty
 */
-WimpInstrNode wimp_instr_queue_pop(WimpInstrQueue* queue);
+WIMP_API WimpInstrNode wimp_instr_queue_pop(WimpInstrQueue* queue);
 
 /*
 * Frees the memory used for the queue node
 * 
 * @param node The node pointer to free
 */
-void wimp_instr_node_free(WimpInstrNode node);
+WIMP_API void wimp_instr_node_free(WimpInstrNode node);
 
 /*
 * Frees the memory used for the instruction queue
 * 
 * @param queue The queue to free
 */
-void wimp_instr_queue_free(WimpInstrQueue queue);
+WIMP_API void wimp_instr_queue_free(WimpInstrQueue queue);
+
+/*
+* Extracts the wimp instruction metadata from a buffer. Assumes buffer starts at start of an instruction
+*
+* @param buffer The buffer to extract from
+*
+* @return Returns the metadata of the instruction
+*/
+WIMP_API WimpInstrMeta wimp_instr_get_from_buffer(uint8_t* buffer, size_t buffsize);
+
+/*
+* Extracts the wimp instruction metadata from a node.
+*
+* @param node The node to extract from
+*
+* @return Returns the metadata of the instruction
+*/
+WIMP_API WimpInstrMeta wimp_instr_get_from_node(WimpInstrNode node);
 
 #endif

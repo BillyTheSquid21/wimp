@@ -18,6 +18,7 @@
 #include <ptypes.h>
 #include <perrortypes.h>
 
+#include <wimp_core.h>
 #include <wimp_instruction.h>
 #include <wimp_log.h>
 
@@ -65,20 +66,6 @@ typedef struct _RecieverArgs
 	int32_t recfrom_port;
 } *RecieverArgs;
 
-/*
-* Instruction metadata that can be pulled from the buffer
-*/
-typedef struct _WimpInstrMeta
-{
-	const char* source_process;
-	const char* dest_process;
-	const char* instr;
-	void* args;
-	size_t total_bytes;
-	int32_t arg_bytes;
-	int32_t instr_bytes;
-} WimpInstrMeta;
-
 #if defined _DEBUG && WIMP_PRINT_INSTRS
 
 static void _debug_wimp_print_instruction_meta(WimpInstrMeta meta)
@@ -96,22 +83,13 @@ static void _debug_wimp_print_instruction_meta(WimpInstrMeta meta)
 #endif
 
 /*
-* Extracts the wimp instruction metadata from a buffer. Assumes buffer starts at start of an instruction
-* 
-* @param buffer The buffer to extract from
-* 
-* @return Returns the metadata of the instruction
-*/
-WimpInstrMeta wimp_get_instr_from_buffer(uint8_t* buffer, size_t buffsize);
-
-/*
 * Gets the instruction size header
 * 
 * @param buffer The buffer to extract from
 * 
 * @return Returns the size of the instruction
 */
-int32_t wimp_get_instr_size(uint8_t* buffer);
+WIMP_API int32_t wimp_get_instr_size(uint8_t* buffer);
 
 /*
 * Creates the handshake in the supplied message buffer and returns the header
@@ -121,7 +99,7 @@ int32_t wimp_get_instr_size(uint8_t* buffer);
 * 
 * @return Returns a copy of the header. This will be intialized to { 0, 0 } if function fails for any reason.
 */
-WimpHandshakeHeader wimp_create_handshake(const char* process_name, uint8_t* message_buffer);
+WIMP_API WimpHandshakeHeader wimp_create_handshake(const char* process_name, uint8_t* message_buffer);
 
 /*
 * Creates a persistent collection of arguments to supply to the reciever thread.
@@ -135,7 +113,7 @@ WimpHandshakeHeader wimp_create_handshake(const char* process_name, uint8_t* mes
 * 
 * @return Returns the arguments generated
 */
-RecieverArgs wimp_get_reciever_args(const char* process_name, const char* recfrom_domain, int32_t recfrom_port, WimpInstrQueue* incomingq);
+WIMP_API RecieverArgs wimp_get_reciever_args(const char* process_name, const char* recfrom_domain, int32_t recfrom_port, WimpInstrQueue* incomingq);
 
 /*
 * Starts a reciever thread
@@ -147,6 +125,6 @@ RecieverArgs wimp_get_reciever_args(const char* process_name, const char* recfro
 * 
 * @return Returns either WIMP_RECIEVER_SUCCESS or WIMP_RECIEVER_FAIL
 */
-int32_t wimp_start_reciever_thread(const char* recfrom_name, const char* process_domain, int32_t process_port, RecieverArgs args);
+WIMP_API int32_t wimp_start_reciever_thread(const char* recfrom_name, const char* process_domain, int32_t process_port, RecieverArgs args);
 
 #endif

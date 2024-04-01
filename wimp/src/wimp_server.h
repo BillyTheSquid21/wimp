@@ -8,6 +8,7 @@
 #define WIMP_SERVER_H
 
 #include <stdbool.h>
+#include <wimp_core.h>
 #include <wimp_process_table.h>
 #include <wimp_instruction.h>
 #include <wimp_log.h>
@@ -41,7 +42,7 @@ typedef struct _WimpServer
 * 
 * @return Returns the handle to the threads local server. Is null if uninitialized.
 */
-WimpServer* wimp_get_local_server(void);
+WIMP_API WimpServer* wimp_get_local_server(void);
 
 /*
 * Initializes the local thread server. Must be closed afterwards. The local thread
@@ -54,12 +55,12 @@ WimpServer* wimp_get_local_server(void);
 * 
 * @return Returns either WIMP_SERVER_SUCCESS or WIMP_SERVER_FAIL
 */
-int32_t wimp_init_local_server(const char* process_name, const char* domain, int32_t port);
+WIMP_API int32_t wimp_init_local_server(const char* process_name, const char* domain, int32_t port);
 
 /*
 * Closes the local thread server.
 */
-void wimp_close_local_server(void);
+WIMP_API void wimp_close_local_server(void);
 
 /*
 * Adds instructions to the local server
@@ -68,7 +69,7 @@ void wimp_close_local_server(void);
 * @param instr The name of the instruction
 * @param instr_size The size of the allocated instruction
 */
-void wimp_add_local_server(const char* dest, const char* instr, const void* args, size_t arg_size_bytes);
+WIMP_API void wimp_add_local_server(const char* dest, const char* instr, const void* args, size_t arg_size_bytes);
 
 /*
 * Creates a Wimp Server instance. This can alternatively be used to create a non
@@ -82,7 +83,7 @@ void wimp_add_local_server(const char* dest, const char* instr, const void* args
 * 
 * @return Returns either WIMP_SERVER_SUCCESS or WIMP_SERVER_FAIL
 */
-int32_t wimp_create_server(WimpServer* server, const char* process_name, const char* domain, int32_t port);
+WIMP_API int32_t wimp_create_server(WimpServer* server, const char* process_name, const char* domain, int32_t port);
 
 /*
 * Accepts a process to the server. Is blocking. Can only do one at a time.
@@ -93,7 +94,7 @@ int32_t wimp_create_server(WimpServer* server, const char* process_name, const c
 * 
 * @return Returns either WIMP_SERVER_SUCCESS or WIMP_SERVER_FAIL
 */
-int32_t wimp_server_process_accept(WimpServer* server, int pcount, ...);
+WIMP_API int32_t wimp_server_process_accept(WimpServer* server, int pcount, ...);
 
 /*
 * Validates whether a given connection is still active by making a zero byte send call
@@ -103,7 +104,7 @@ int32_t wimp_server_process_accept(WimpServer* server, int pcount, ...);
 * 
 * @return Returns true if the connection exists still, false otherwise
 */
-bool wimp_server_check_process_listening(WimpServer* server, const char* process_name);
+WIMP_API bool wimp_server_check_process_listening(WimpServer* server, const char* process_name);
 
 /*
 * Adds instructions to the server
@@ -113,7 +114,7 @@ bool wimp_server_check_process_listening(WimpServer* server, const char* process
 * @param instr The name of the instruction
 * @param instr_size The size of the allocated instruction
 */
-void wimp_server_add(WimpServer* server, const char* dest, const char* instr, const void* args, size_t arg_size_bytes);
+WIMP_API void wimp_server_add(WimpServer* server, const char* dest, const char* instr, const void* args, size_t arg_size_bytes);
 
 /*
 * Routes server instructions if they don't belong to this server. If instruction
@@ -126,14 +127,14 @@ void wimp_server_add(WimpServer* server, const char* dest, const char* instr, co
 * 
 * @returns Returns true if the instruction was routed, otherwise false
 */
-bool wimp_server_instr_routed(WimpServer* server, const char* dest_process, WimpInstrNode instrnode);
+WIMP_API bool wimp_server_instr_routed(WimpServer* server, const char* dest_process, WimpInstrNode instrnode);
 
 /*
 * Sends the list of outgoing instructions to the desired processes.
 * 
 * @param server The server to send instructions from
 */
-int32_t wimp_server_send_instructions(WimpServer* server);
+WIMP_API int32_t wimp_server_send_instructions(WimpServer* server);
 
 /*
 * Checks if the parent is alive (if the server has one). Can be used
@@ -146,13 +147,13 @@ int32_t wimp_server_send_instructions(WimpServer* server);
 * @return Returns true if the parent is alive, or the process doesn't
 * have a parent. Otherwise returns false.
 */
-bool wimp_server_is_parent_alive(WimpServer* server);
+WIMP_API bool wimp_server_is_parent_alive(WimpServer* server);
 
 /*
 * Frees the Wimp Server
 * 
 * @param server The server to free
 */
-void wimp_server_free(WimpServer server);
+WIMP_API void wimp_server_free(WimpServer server);
 
 #endif

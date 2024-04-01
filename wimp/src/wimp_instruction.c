@@ -123,3 +123,79 @@ void wimp_instr_queue_free(WimpInstrQueue queue)
 	p_mutex_free(queue._nextmutex);
 	p_mutex_free(queue._lowpriomutex);
 }
+
+WimpInstrMeta wimp_instr_get_from_buffer(uint8_t* buffer, size_t buffsize)
+{
+	WimpInstrMeta instr;
+	instr.arg_bytes = 0;
+	instr.dest_process = NULL;
+	instr.source_process = NULL;
+	instr.instr = NULL;
+	instr.args = NULL;
+	instr.instr_bytes = 0;
+	instr.total_bytes = 0;
+
+	//if buffer is nullptr, was unable to allocate!
+	if (buffer == NULL)
+	{
+		wimp_log_fail("Attempting to get instr from invalid buffer!\n");
+		return instr;
+	}
+
+	//Size of the full instruction is the start of the buffer - if is \0 is a
+	//ping packet so return as is
+	if (buffer[0] == '\0')
+	{
+		return instr;
+	}
+
+	instr.dest_process = &buffer[WIMP_INSTRUCTION_DEST_OFFSET];
+
+	//Find start of source process
+	char current_char = ' ';
+	size_t offset = WIMP_INSTRUCTION_DEST_OFFSET + 1;
+	while (current_char != '\0' && offset < buffsize)
+	{
+		current_char = (char)buffer[offset];
+		offset++;
+	}
+
+	instr.source_process = &buffer[offset];
+	offset++;
+	current_char = ' ';
+
+	//Find start of instruction
+	while (current_char != '\0' && offset < buffsize)
+	{
+		current_char = (char)buffer[offset];
+		offset++;
+	}
+
+	instr.instr = &buffer[offset];
+	offset++;
+	current_char = ' ';
+
+	//Find start of arg bytes
+	while (current_char != '\0' && offset < buffsize)
+	{
+		current_char = (char)buffer[offset];
+		offset++;
+	}
+
+	instr.arg_bytes = *(int32_t*)&buffer[offset];
+	offset += sizeof(int32_t);
+
+	if (instr.arg_bytes != 0)
+	{
+		instr.args = &buffer[offset];
+	}
+
+	instr.total_bytes = *(int32_t*)&buffer[0];
+
+	return instr;
+}
+
+WimpInstrMeta wimp_instr_get_from_node(WimpInstrNode node)
+{
+	return wimp_instr_get_from_buffer(node->instr.instruction, node->instr.instruction_bytes);
+}

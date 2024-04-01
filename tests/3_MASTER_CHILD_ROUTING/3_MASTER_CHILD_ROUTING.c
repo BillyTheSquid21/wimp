@@ -100,7 +100,7 @@ int client_main_entry(int argc, char** argv)
 		WimpInstrNode currentnode = wimp_instr_queue_pop(&server->incomingmsg);
 		while (currentnode != NULL)
 		{
-			WimpInstrMeta meta = wimp_get_instr_from_buffer(currentnode->instr.instruction, currentnode->instr.instruction_bytes);
+			WimpInstrMeta meta = wimp_instr_get_from_buffer(currentnode->instr.instruction, currentnode->instr.instruction_bytes);
 			if (strcmp(meta.instr, "say_hello") == 0)
 			{
 				wimp_log("Hello! Recieved from: %s\n", meta.source_process);
@@ -221,7 +221,7 @@ int main(void)
 		WimpInstrNode currentnode = wimp_instr_queue_pop(&server->incomingmsg);
 		while (currentnode != NULL)
 		{
-			WimpInstrMeta meta = wimp_get_instr_from_buffer(currentnode->instr.instruction, currentnode->instr.instruction_bytes);
+			WimpInstrMeta meta = wimp_instr_get_from_buffer(currentnode->instr.instruction, currentnode->instr.instruction_bytes);
 			//DEBUG_WIMP_PRINT_INSTRUCTION_META(meta);
 			if (wimp_server_instr_routed(server, meta.dest_process, currentnode))
 			{

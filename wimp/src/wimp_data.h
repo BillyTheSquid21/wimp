@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include <plibsys.h>
+#include <wimp_core.h>
 #include <wimp_log.h>
 #include <utility/HashString.h>
 #include <utility/sds.h>
@@ -95,7 +96,7 @@ typedef SArenaPtr WArenaPtr;
 * 
 * @return Returns WIMP_DATA_SUCCESS or WIMP_DATA_FAIL
 */
-int32_t wimp_data_init(const char* memory_name);
+WIMP_API int32_t wimp_data_init(const char* memory_name);
 
 /*
 * Links the current process to the data table. Should not call from
@@ -105,18 +106,18 @@ int32_t wimp_data_init(const char* memory_name);
 * 
 * @return Returns WIMP_DATA_SUCCESS or WIMP_DATA_FAIL
 */
-int32_t wimp_data_link_to_process(const char* memory_name);
+WIMP_API int32_t wimp_data_link_to_process(const char* memory_name);
 
 /*
 * Unlinks from the process. Should not call from the master process 
 * that calls wimp_data_init
 */
-void wimp_data_unlink_from_process();
+WIMP_API void wimp_data_unlink_from_process();
 
 /*
 * Frees the data table and takes ownership of the memory back.
 */
-void wimp_data_free();
+WIMP_API void wimp_data_free();
 
 /*
 * Reserves a space in memory to copy or write to
@@ -126,7 +127,7 @@ void wimp_data_free();
 * 
 * @return Returns WIMP_DATA_SUCCESS or WIMP_DATA_FAIL
 */
-int32_t wimp_data_reserve(const char* reserved_name, size_t size);
+WIMP_API int32_t wimp_data_reserve(const char* reserved_name, size_t size);
 
 /*
 * Links to the shared data and increases the share counter.
@@ -135,7 +136,7 @@ int32_t wimp_data_reserve(const char* reserved_name, size_t size);
 * 
 * @return Returns WIMP_DATA_SUCCESS or WIMP_DATA_FAIL
 */
-int32_t wimp_data_link_to_data(const char* name);
+WIMP_API int32_t wimp_data_link_to_data(const char* name);
 
 /*
 * Unlinks to the shared data and increases the share counter.
@@ -144,7 +145,7 @@ int32_t wimp_data_link_to_data(const char* name);
 *
 * @param name The name of the data to unlink from
 */
-void wimp_data_unlink_from_data(const char* name);
+WIMP_API void wimp_data_unlink_from_data(const char* name);
 
 /*
 * Get the arena of a location of data for accessing. Accessing locks the
@@ -156,7 +157,7 @@ void wimp_data_unlink_from_data(const char* name);
 * 
 * @return Returns a pointer to the arena controlling the data TODO TYPEDEF
 */
-int32_t wimp_data_access(WimpDataArena* arena, const char* name);
+WIMP_API int32_t wimp_data_access(WimpDataArena* arena, const char* name);
 
 /*
 * Ends the accessing of the data. Dereferences the arena ptr to ensure can't
@@ -165,6 +166,6 @@ int32_t wimp_data_access(WimpDataArena* arena, const char* name);
 * @param name The name of the shared data to stop accessing
 * @param arena A pointer to the arena pointer returned by the access call.
 */
-void wimp_data_stop_access(const char* name, WimpDataArena* arena);
+WIMP_API void wimp_data_stop_access(const char* name, WimpDataArena* arena);
 
 #endif

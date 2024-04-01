@@ -11,6 +11,7 @@
 #include <plibsys.h>
 #include <utility/HashString.h>
 #include <utility/sds.h>
+#include <wimp_core.h>
 #include <wimp_process.h>
 
 #define WIMP_PROCESS_TABLE_SUCCESS 0
@@ -57,7 +58,7 @@ typedef struct _WimpProcessTable
 /*
 * Creates a new process table.
 */
-WimpProcessTable wimp_create_process_table(void);
+WIMP_API WimpProcessTable wimp_create_process_table(void);
 
 /*
 * Adds a new process to the table.
@@ -71,7 +72,7 @@ WimpProcessTable wimp_create_process_table(void);
 * 
 * @return Returns either WIMP_PROCESS_TABLE_SUCCESS or WIMP_PROCESS_TABLE_FAIL
 */
-int32_t wimp_process_table_add(WimpProcessTable* table, const char* process_name, const char* process_domain, int32_t process_port, enum _WimpRelation relation, PSocket* connection);
+WIMP_API int32_t wimp_process_table_add(WimpProcessTable* table, const char* process_name, const char* process_domain, int32_t process_port, enum _WimpRelation relation, PSocket* connection);
 
 /*
 * Removes a process from the table
@@ -81,7 +82,7 @@ int32_t wimp_process_table_add(WimpProcessTable* table, const char* process_name
 * 
 * @return Returns either WIMP_PROCESS_TABLE_SUCCESS or WIMP_PROCESS_TABLE_FAIL
 */
-int32_t wimp_process_table_remove(WimpProcessTable* table, const char* process_name);
+WIMP_API int32_t wimp_process_table_remove(WimpProcessTable* table, const char* process_name);
 
 /*
 * Gets the data for a process in the table
@@ -92,7 +93,7 @@ int32_t wimp_process_table_remove(WimpProcessTable* table, const char* process_n
 * 
 * @return Returns either WIMP_PROCESS_TABLE_SUCCESS or WIMP_PROCESS_TABLE_FAIL
 */
-int32_t wimp_process_table_get(WimpProcessData* data, WimpProcessTable table, const char* process_name);
+WIMP_API int32_t wimp_process_table_get(WimpProcessData* data, WimpProcessTable table, const char* process_name);
 
 /*
 * Removes the data for a process from the table
@@ -102,7 +103,7 @@ int32_t wimp_process_table_get(WimpProcessData* data, WimpProcessTable table, co
 * 
 * 
 */
-int32_t wimp_process_table_remove(WimpProcessTable* table, const char* process_name);
+WIMP_API int32_t wimp_process_table_remove(WimpProcessTable* table, const char* process_name);
 
 /*
 * Gets the length of the table
@@ -111,13 +112,13 @@ int32_t wimp_process_table_remove(WimpProcessTable* table, const char* process_n
 * 
 * @return Returns the length of the table
 */
-size_t wimp_process_table_length(WimpProcessTable table);
+WIMP_API size_t wimp_process_table_length(WimpProcessTable table);
 
 /*
 * Frees the memory allocated by the table
 * 
 * @param table The table to free
 */
-void wimp_process_table_free(WimpProcessTable table);
+WIMP_API void wimp_process_table_free(WimpProcessTable table);
 
 #endif

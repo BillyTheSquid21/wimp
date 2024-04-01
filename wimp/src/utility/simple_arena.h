@@ -5,9 +5,10 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <cassert>
+#include <wimp_core.h>
 
 /*
-* A simple arena allocator
+* A simple arena allocator. Packaged with wimp
 * 
 * Current features:
 * - Contiguous Memory
@@ -18,11 +19,11 @@
 *   - Could be set to act like a tree/network
 *   - Would have functions used for those data structures, that when in debug
 *     would check the type of arena
-* - Dynamic growth allowed with mmap
 */
 
 /*
 * A simple arena struct that contains info about the size, capacity and data
+* Exposed to the user for freedom but not recommended to mess with the data.
 */
 typedef struct _SArena
 {
@@ -76,7 +77,7 @@ typedef size_t SArenaPtr;
 * 
 * @return Returns whether the initialization was successful or not
 */
-bool sarena_init_new(SArena* arena, size_t capacity);
+WIMP_API bool sarena_init_new(SArena* arena, size_t capacity);
 
 /*
 * Initialized the area from an existing memory segment (of size capacity)
@@ -87,14 +88,14 @@ bool sarena_init_new(SArena* arena, size_t capacity);
 *
 * @return Returns whether the initialization was successful or not
 */
-bool sarena_init(SArena* arena, uint8_t* ptr, size_t capacity);
+WIMP_API bool sarena_init(SArena* arena, uint8_t* ptr, size_t capacity);
 
 /*
 * Creates an empty sarena
 * 
 * @return Returns an empty arena
 */
-SArena sarena();
+WIMP_API SArena sarena();
 
 /*
 * Frees the arena and all the memory inside it. Calls free() on the data
@@ -103,7 +104,7 @@ SArena sarena();
 * 
 * @param arena A pointer to the arena to free
 */
-void sarena_free(SArena* arena);
+WIMP_API void sarena_free(SArena* arena);
 
 /*
 * Allocates to the area and increases the alloc pointer
@@ -113,6 +114,6 @@ void sarena_free(SArena* arena);
 * 
 * @return Returns an arena pointer to a location in the arena.
 */
-SArenaPtr sarena_alloc(SArena* arena, size_t size);
+WIMP_API SArenaPtr sarena_alloc(SArena* arena, size_t size);
 
 #endif

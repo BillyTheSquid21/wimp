@@ -6,3 +6,8 @@ target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_SOURCE_DIR}/wimp/src 
 
 add_dependencies(${PROJECT_NAME} wimp WIMP-Test)
 target_link_libraries(${PROJECT_NAME} wimp WIMP-Test)
+
+# Set the linking options
+if (WIN32)
+    target_link_options(${PROJECT_NAME} PRIVATE "-shared")
+endif()

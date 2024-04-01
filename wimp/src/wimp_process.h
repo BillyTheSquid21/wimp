@@ -7,6 +7,7 @@
 #ifndef WIMP_PROCESS_H
 #define WIMP_PROCESS_H
 
+#include <wimp_core.h>
 #include <wimp_reciever.h>
 
 #define WIMP_PROCESS_SUCCESS 0
@@ -52,12 +53,12 @@ typedef enum
 *
 * @return Returns either WIMP_PROCESS_SUCCESS or WIMP_PROCESS_FAIL
 */
-int32_t wimp_init();
+WIMP_API int32_t wimp_init();
 
 /*
 * Shuts down the wimp library
 */
-void wimp_shutdown();
+WIMP_API void wimp_shutdown();
 
 /*
 * Starts a library process
@@ -69,7 +70,7 @@ void wimp_shutdown();
 * 
 * @return Returns either WIMP_PROCESS_SUCCESS or WIMP_PROCESS_FAIL
 */
-int32_t wimp_start_library_process(const char* process_name, MAIN_FUNC_PTR main_func, enum PUThreadPriority_ priority, WimpMainEntry entry);
+WIMP_API int32_t wimp_start_library_process(const char* process_name, MAIN_FUNC_PTR main_func, enum PUThreadPriority_ priority, WimpMainEntry entry);
 
 /*
 * Starts an executable process. Currently must be located downstream
@@ -86,7 +87,7 @@ int32_t wimp_start_library_process(const char* process_name, MAIN_FUNC_PTR main_
 * 
 * @return Returns either WIMP_PROCESS_SUCCESS or WIMP_PROCESS_FAIL
 */
-int32_t wimp_start_executable_process(const char* process_name, const char* executable, WimpMainEntry entry);
+WIMP_API int32_t wimp_start_executable_process(const char* process_name, const char* executable, WimpMainEntry entry);
 
 /*
 * Creates a persistent collection of arguments to supply, which can be freed after the library main thread is finished
@@ -96,21 +97,21 @@ int32_t wimp_start_executable_process(const char* process_name, const char* exec
 * 
 * @return Returns the entry arguments
 */
-WimpMainEntry wimp_get_entry(int32_t argc, ...);
+WIMP_API WimpMainEntry wimp_get_entry(int32_t argc, ...);
 
 /*
 * Frees the entry - must be done in the child thread
 * 
 * @param entry The entry arguments
 */
-void wimp_free_entry(WimpMainEntry entry);
+WIMP_API void wimp_free_entry(WimpMainEntry entry);
 
 /*
 * Gets an unused local port from the OS by binding a dummy socket
 * 
 * @return Returns the port number if successful, otherwise returns WIMP_PROCESS_FAIL
 */
-int32_t wimp_assign_unused_local_port(void);
+WIMP_API int32_t wimp_assign_unused_local_port(void);
 
 /*
 * Converts the numerical port to a stack string representation
@@ -120,6 +121,6 @@ int32_t wimp_assign_unused_local_port(void);
 * 
 * @return Returns either WIMP_PROCESS_SUCCESS or WIMP_PROCESS_FAIL
 */
-int32_t wimp_port_to_string(int32_t port, WimpPortStr string_out);
+WIMP_API int32_t wimp_port_to_string(int32_t port, WimpPortStr string_out);
 
 #endif
