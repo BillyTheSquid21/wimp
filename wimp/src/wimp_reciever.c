@@ -120,15 +120,36 @@ int32_t wimp_reciever_init(PSocket** recsock, PSocketAddress** rec_address, Reci
     }
 
     //Connect to end process, which should be waiting to accept
-    if (!p_socket_connect(*recsock, *rec_address, NULL))
+
+	//Try up to WIMP_REC_TRY_COUNT times, with set interval
+	//This is because there is no timeout on the connect call
+	int32_t num_tries = 0;
+	bool con_success = false;
+	while (num_tries < WIMP_REC_TRY_COUNT)
+	{
+		con_success = p_socket_connect(*recsock, *rec_address, &err);
+		if (con_success)
+		{
+			break;
+		}
+
+		//If failed, try again
+		wimp_log_important("%s reciever failed to connect - trying again...\n", args->process_name);
+		num_tries++;
+		p_uthread_sleep(WIMP_REC_TRY_INTERVAL);
+	}
+
+	if (!con_success)
     {
-		wimp_log_fail("Reciever failed to connect to %s!\n", args->process_name);
+		pint code = p_error_get_code(err);
+		wimp_log_fail("%s reciever failed to connect (%d)- expected connection at %s:%d\n", args->process_name, code, args->recfrom_domain, args->recfrom_port);
         p_socket_address_free(*rec_address);
         p_socket_free(*recsock);
 		WIMP_ZERO_BUFFER(sendbuffer);
         return WIMP_RECIEVER_FAIL;
     }
-	wimp_log_success("Reciever connected to %s!\n", args->process_name);
+
+	wimp_log_success("%s reciever connection at %s:%d\n", args->process_name, args->recfrom_domain, args->recfrom_port);
 
 	//Send the handshake
 	p_socket_send(*recsock, sendbuffer, sizeof(WimpHandshakeHeader) + header.process_name_bytes, NULL);

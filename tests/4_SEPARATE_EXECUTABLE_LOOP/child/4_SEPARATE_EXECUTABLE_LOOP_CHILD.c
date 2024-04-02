@@ -42,7 +42,7 @@ int main(int argc, char** argv)
 	}
 
 	//Create a server local to this thread
-	wimp_init_local_server("test_process", "127.0.0.1", process_port, "master");
+	wimp_init_local_server("test_process", "127.0.0.1", process_port);
 	WimpServer* server = wimp_get_local_server();
 
 	//Start a reciever thread for the master process that called this thread

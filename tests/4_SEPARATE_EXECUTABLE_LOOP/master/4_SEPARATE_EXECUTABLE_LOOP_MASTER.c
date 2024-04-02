@@ -51,7 +51,7 @@ int main(void)
 	wimp_start_executable_process("test_process", "WIMP-Test-04_b", entry);
 
 	//Start a local server for the master process
-	wimp_init_local_server("master", "127.0.0.1", master_port, NULL);
+	wimp_init_local_server("master", "127.0.0.1", master_port);
 	WimpServer* server = wimp_get_local_server();
 
 	//Start a reciever thread for the client process that the master started

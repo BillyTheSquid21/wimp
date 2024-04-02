@@ -32,6 +32,14 @@
             "program": "${workspaceRoot}/build/bin/Debug/WIMP-Test-04_a",
             "cwd": "${workspaceRoot}",
             "preLaunchTask": "build-tests-debug"
+        },
+        {
+            "name": "Debug-Test-05",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceRoot}/build/bin/Debug/WIMP-Test-05_a",
+            "cwd": "${workspaceRoot}",
+            "preLaunchTask": "build-tests-debug"
         }
     ]
 }

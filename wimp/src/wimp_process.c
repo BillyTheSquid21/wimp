@@ -98,7 +98,7 @@ int32_t wimp_start_executable_process(const char* process_name, const char* exec
 
 #ifdef __unix__
 	ssize_t linklen = readlink("/proc/self/exe", path_buffer, MAX_DIRECTORY_PATH_LEN);
-	path[linklen] = '\0';
+	path_buffer[linklen] = '\0';
 #endif
 
 	//Erase the file part from the string end
@@ -174,6 +174,9 @@ int32_t wimp_start_executable_process(const char* process_name, const char* exec
 
 #if __unix__
 	//For linux put all the arguments in one space separated string
+	//First add space after executable
+	path = sdscat(path, " ");
+
 	for (int i = 0; i < entry->argc; ++i)
 	{
 		path = sdscat(path, entry->argv[i]);
@@ -185,7 +188,7 @@ int32_t wimp_start_executable_process(const char* process_name, const char* exec
 
 	//Launch the linux version of the function
 	//Launch the windows version of the function
-	PUThread* process_thread = p_uthread_create_full((PUThreadFunc)&wimp_launch_lin, path, false, priority, 0, process_name);
+	PUThread* process_thread = p_uthread_create((PUThreadFunc)&wimp_launch_lin, path, false, process_name);
 	if (process_thread == NULL)
 	{
 		wimp_log_fail("Failed to create thread: %s", process_name);
@@ -289,7 +292,6 @@ void wimp_free_entry(WimpMainEntry entry)
 
 int32_t wimp_assign_unused_local_port(void)
 {
-#ifdef _WIN32
 	//bind dummy socket, get the port and return
 	PSocket* reciever_socket;
     PSocketAddress* reciever_address;
@@ -325,11 +327,6 @@ int32_t wimp_assign_unused_local_port(void)
 	p_socket_address_free(bound_address);
     p_socket_close(reciever_socket, NULL);
 	return port;
-#else
-	//Linux seems to not play nice with the above method, use rand for now as it seems to be more consistent
-	//TODO - please don't do this, or the above, but a third less sinister thing
-	return rand() % (65535 + 1 - 49152) + 49152;
-#endif
 }
 
 int32_t wimp_port_to_string(int32_t port, WimpPortStr string_out)

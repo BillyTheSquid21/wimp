@@ -29,6 +29,8 @@
 #define WIMP_RECIEVER_PING 0x676e6970 //Ping with 4 bytes of ping, ignore if this comes in
 #define WIMP_ZERO_BUFFER(buffer) memset(buffer, 0, WIMP_MESSAGE_BUFFER_BYTES)
 #define WIMP_PRINT_INSTRS 1 //Print the incoming instructions
+#define WIMP_REC_TRY_INTERVAL 500 //The retry intervals in ms for the reciever if connect fails - might want higher if over network
+#define WIMP_REC_TRY_COUNT 5 //The amount of times to retry the reciever connection
 
 /*
 * Reciever function type pointer
