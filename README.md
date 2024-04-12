@@ -1,10 +1,15 @@
 # Overview
 ---
 
-This project is designed for my use, to make it easier to build modular programs where code is decoupled and reuseable between projects. Can be included as a CMake subproject dependency and builds as a shared library.
+Will's Interesting Message Protocol (WIMP) is designed to make it easier to make modular programs with many decoupled processes. It relies on plibsys for platform independent sockets, threads and shared memory. It works by each process having at least one associated "server" which recieves instructions from other servers by way of a "reciever" process, one for each process that the server is directly connected to. A simple system with a master process and two other processes might look like this:
+
+![Simple drawio(4)](https://github.com/BillyTheSquid21/Wills-Interesting-Message-Protocol/assets/97798337/fa7d79f9-8d31-4416-a8a0-3352fd36ff20)
+
+(Reciever names are written as "source-destination-reciever")
+
+This structure, allows the processes themselves to avoid blocking as much as possible, with the reciever threads waiting for instructions to be recieved from a server and then queuing them for its destination process to execute when it is available. This also allows the processes to act in a "fire and forget" fashion, and send instructions without waiting on results.
 
 # Building
----
 
 Windows
 ---
