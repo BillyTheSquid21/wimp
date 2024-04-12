@@ -8,8 +8,6 @@
 #include <stdlib.h>
 #include <utility/sds.h>
 
-#define MAX_DIRECTORY_PATH_LEN 1024
-
 #ifdef _WIN32
 
 #include <windows.h>
@@ -27,9 +25,7 @@ typedef struct _PROG_ENTRY
 	sds args;
 }* PROG_ENTRY;
 
-int wimp_launch_exe(PROG_ENTRY entry);
-
-int wimp_launch_exe(PROG_ENTRY entry)
+void wimp_launch_binary(PROG_ENTRY entry)
 {
 	wimp_log("Launching: %s With args: %s\n", entry->path, entry->args);
 	ShellExecute(NULL, "open", entry->path, entry->args, NULL, WIMP_EXE_WINDOW_SHOW);
@@ -38,52 +34,8 @@ int wimp_launch_exe(PROG_ENTRY entry)
 	sdsfree(entry->path);
 	sdsfree(entry->args);
 	free(entry);
-	return 0;
 }
 
-#endif
-
-#ifdef __unix__
-
-#include <unistd.h>
-#include <sys/timeb.h>
-#include <stdio.h>
-#define _GNU_SOURCE
-
-int wimp_launch_lin(sds entry);
-
-int wimp_launch_lin(sds entry)
-{
-	wimp_log("Launching: %s\n", entry);
-	FILE* f = popen(entry, "r");
-	if (f == NULL)
-	{
-		wimp_log_fail("Error starting executable! %p\n", f);
-		return -1;
-	}
-	 
-	//wimp_log("Closing: %s\n", entry);
-	//sdsfree(entry);
-	return 0;
-}
-
-#endif
-
-int32_t wimp_start_library_process(const char* process_name, MAIN_FUNC_PTR main_func, enum PUThreadPriority_ priority, WimpMainEntry entry)
-{
-	wimp_log_important("Starting %s!\n", process_name);
-	PUThread* process_thread = p_uthread_create_full((PUThreadFunc)main_func, entry, false, priority, 0, process_name);
-	if (process_thread == NULL)
-	{
-		wimp_log_fail("Failed to create thread: %s", process_name);
-		return WIMP_PROCESS_FAIL;
-	}
-	return WIMP_PROCESS_SUCCESS;
-}
-
-//This function acts differently in windows vs in linux - bear in mind when debugging
-//it can be messy to follow at times, but all the assumptions are based on information
-//above in the file
 int32_t wimp_start_executable_process(const char* process_name, const char* executable, WimpMainEntry entry)
 {
 	//Get the directory of the running process
@@ -92,14 +44,7 @@ int32_t wimp_start_executable_process(const char* process_name, const char* exec
 	memset(&path_buffer[0], 0, MAX_DIRECTORY_PATH_LEN);
 
 	//Get the path of the currently running executable
-#ifdef _WIN32
 	GetModuleFileName(NULL, path_buffer, MAX_DIRECTORY_PATH_LEN);
-#endif
-
-#ifdef __unix__
-	ssize_t linklen = readlink("/proc/self/exe", path_buffer, MAX_DIRECTORY_PATH_LEN);
-	path_buffer[linklen] = '\0';
-#endif
 
 	//Erase the file part from the string end
 	size_t current_dir_bytes = strlen(path_buffer) * sizeof(char);
@@ -129,9 +74,7 @@ int32_t wimp_start_executable_process(const char* process_name, const char* exec
 	path = sdscat(path, executable);
 
 	//If on windows, add ".exe"
-#ifdef _WIN32
 	path = sdscat(path, ".exe");
-#endif
 
 	//Check the file exists
 	if (access(path, F_OK) != 0)
@@ -140,7 +83,6 @@ int32_t wimp_start_executable_process(const char* process_name, const char* exec
 		return WIMP_PROCESS_FAIL;
 	}
 
-#ifdef _WIN32
 	//Make the entry args
 	PROG_ENTRY prog_entry = malloc(sizeof(struct _PROG_ENTRY));
 	if (prog_entry == NULL)
@@ -163,16 +105,66 @@ int32_t wimp_start_executable_process(const char* process_name, const char* exec
 	}
 
 	//Launch the windows version of the function
-	PUThread* process_thread = p_uthread_create((PUThreadFunc)&wimp_launch_exe, prog_entry, false, process_name);
+	PUThread* process_thread = p_uthread_create((PUThreadFunc)&wimp_launch_binary, prog_entry, false, process_name);
 	if (process_thread == NULL)
 	{
 		wimp_log_fail("Failed to create thread: %s", process_name);
 		return WIMP_PROCESS_FAIL;
 	}
-
+	return WIMP_PROCESS_SUCCESS;
+}
 #endif
 
-#if __unix__
+#ifdef __unix__
+
+#include <unistd.h>
+#include <stdio.h>
+
+int32_t wimp_start_executable_process(const char* process_name, const char* executable, WimpMainEntry entry)
+{
+	//Get the directory of the running process
+	//Use malloc to preserve outside function stack frame (is freed above)
+	char path_buffer[MAX_DIRECTORY_PATH_LEN];
+	memset(&path_buffer[0], 0, MAX_DIRECTORY_PATH_LEN);
+
+	//Get the path of the currently running executable
+	ssize_t linklen = readlink("/proc/self/exe", path_buffer, MAX_DIRECTORY_PATH_LEN);
+	path_buffer[linklen] = '\0';
+
+	//Erase the file part from the string end
+	size_t current_dir_bytes = strlen(path_buffer) * sizeof(char);
+	size_t last_slash_index = MAX_DIRECTORY_PATH_LEN;
+	for (size_t i = current_dir_bytes; i > 0; --i)
+	{
+		if (path_buffer[i] == '/' || path_buffer[i] == '\\')
+		{
+			last_slash_index = i;
+			break;
+		}
+	}
+
+	if (last_slash_index == MAX_DIRECTORY_PATH_LEN)
+	{
+		wimp_log_fail("Issue reading the path of the program! %s\n", path_buffer);
+		return WIMP_PROCESS_FAIL;
+	}
+
+	//Blank everything after the index (except slash)
+	memset(&path_buffer[last_slash_index + 1], 0, MAX_DIRECTORY_PATH_LEN - last_slash_index - 1);
+
+	//Create the heap string for appending
+	sds path = sdsnew(&path_buffer[0]);
+
+	//Add the rest of the path specified - TODO allow ../../ format - currently can't!
+	path = sdscat(path, executable);
+
+	//Check the file exists
+	if (access(path, F_OK) != 0)
+	{
+		wimp_log_fail("%s was not found!\n", path);
+		return WIMP_PROCESS_FAIL;
+	}
+
 	//For linux put all the arguments in one space separated string
 	//First add space after executable
 	path = sdscat(path, " ");
@@ -187,29 +179,34 @@ int32_t wimp_start_executable_process(const char* process_name, const char* exec
 	}
 
 	//Launch the linux version of the function
-	//Launch the windows version of the function
-	PUThread* process_thread = p_uthread_create((PUThreadFunc)&wimp_launch_lin, path, false, process_name);
+	wimp_log("Launching: %s\n", path);
+	FILE* f = popen(path, "r");
+	if (f == NULL)
+	{
+		wimp_log_fail("Error starting executable! %p\n", f);
+		return -1;
+	}
+	sdsfree(path);
+	return WIMP_PROCESS_SUCCESS;
+}
+
+#endif
+
+int32_t wimp_start_library_process(const char* process_name, MAIN_FUNC_PTR main_func, enum PUThreadPriority_ priority, WimpMainEntry entry)
+{
+	wimp_log_important("Starting %s!\n", process_name);
+	PUThread* process_thread = p_uthread_create_full((PUThreadFunc)main_func, entry, false, priority, 0, process_name);
 	if (process_thread == NULL)
 	{
 		wimp_log_fail("Failed to create thread: %s", process_name);
 		return WIMP_PROCESS_FAIL;
 	}
-#endif
 	return WIMP_PROCESS_SUCCESS;
 }
-
-
 
 int32_t wimp_init(void)
 {
 	p_libsys_init();
-
-#ifdef __unix__
-	//Seed random for port assignment on linux - TODO get a better port assignment system
-	struct timeb tb;
-	ftime(&tb);
-	srand(tb.time + (time_t)tb.millitm);
-#endif
 	return WIMP_PROCESS_SUCCESS;
 }
 

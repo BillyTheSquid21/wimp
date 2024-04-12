@@ -66,7 +66,7 @@ void child_write()
 		}
 		wimp_log_important("%s\n", seq_string);
 		sdsfree(seq_string);
-		wimp_data_stop_access("test-sequence", &arena);
+		wimp_data_stop_access(&arena, "test-sequence");
 
 		if (success)
 		{
@@ -150,7 +150,7 @@ int client_main_entry(int argc, char** argv)
 		}
 		wimp_log_important("%s\n", seq_string);
 		sdsfree(seq_string);
-		wimp_data_stop_access("test-sequence", &arena);
+		wimp_data_stop_access(&arena, "test-sequence");
 
 		if (success)
 		{
@@ -223,9 +223,14 @@ int main(void)
 	wimp_init();
 
 	//Init the data table
-	if (wimp_data_init("wimp-master") == WIMP_DATA_SUCCESS);
+	if (wimp_data_init("wimp-master") == WIMP_DATA_SUCCESS)
 	{
 		PASS_MATRIX[STEP_DATA_INIT].status = true;
+	}
+	else
+	{
+		wimp_log_fail("Failed to init data!\n");
+		return -1;
 	}
 
 	//Reserve the data and make the sequence
@@ -253,7 +258,7 @@ int main(void)
 		}
 		wimp_log("\n");
 
-		wimp_data_stop_access("test-sequence", &arena);
+		wimp_data_stop_access(&arena, "test-sequence");
 	}
 
 	//Get unused random ports for the master and end process to run on

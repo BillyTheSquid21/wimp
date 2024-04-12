@@ -13,6 +13,7 @@
 #define WIMP_PROCESS_SUCCESS 0
 #define WIMP_PROCESS_FAIL -1
 #define MAX_PORT_STRING_LEN 6
+#define MAX_DIRECTORY_PATH_LEN 1024
 
 /*
 * Processes can be launched, and the recieve threads and the end processes are
@@ -88,6 +89,17 @@ WIMP_API int32_t wimp_start_library_process(const char* process_name, MAIN_FUNC_
 * @return Returns either WIMP_PROCESS_SUCCESS or WIMP_PROCESS_FAIL
 */
 WIMP_API int32_t wimp_start_executable_process(const char* process_name, const char* executable, WimpMainEntry entry);
+
+#ifdef _WIN32
+typedef struct _PROG_ENTRY* PROG_ENTRY;
+
+/*
+* Helper function for launching binaries in windows (to be launched as thread)
+*
+* @param entry The entry struct containing the path and args
+*/
+static void wimp_launch_binary(PROG_ENTRY entry);
+#endif
 
 /*
 * Creates a persistent collection of arguments to supply, which can be freed after the library main thread is finished

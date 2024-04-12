@@ -35,7 +35,7 @@ void child_write()
 		}
 		wimp_log_important("%s\n", seq_string);
 		sdsfree(seq_string);
-		wimp_data_stop_access("test-sequence", &arena);
+		wimp_data_stop_access(&arena, "test-sequence");
 
 		if (success)
 		{
@@ -74,7 +74,7 @@ int main(int argc, char** argv)
 			process_port = strtol(argv[i + 1], NULL, 10);
 		}
 	}
-
+	
 	//Create a server local to this thread
 	wimp_init_local_server("test_process2", "127.0.0.1", process_port);
 	WimpServer* server = wimp_get_local_server();
@@ -119,7 +119,7 @@ int main(int argc, char** argv)
 		}
 		wimp_log_important("%s\n", seq_string);
 		sdsfree(seq_string);
-		wimp_data_stop_access("test-sequence", &arena);
+		wimp_data_stop_access(&arena, "test-sequence");
 
 		if (success)
 		{
@@ -134,7 +134,7 @@ int main(int argc, char** argv)
 	//Loop while waiting for the master to tell to write
 	//As is a separate executable, check if the parent is alive.
 	bool disconnect = false;
-	while (!disconnect && wimp_server_is_parent_alive(&server))
+	while (!disconnect && wimp_server_is_parent_alive(server))
 	{
 		wimp_instr_queue_high_prio_lock(&server->incomingmsg);
 		WimpInstrNode currentnode = wimp_instr_queue_pop(&server->incomingmsg);
@@ -149,7 +149,7 @@ int main(int argc, char** argv)
 			}
 			else if (strcmp(meta.instr, "write") == 0)
 			{
-				child_write();
+				wimp_add_local_server("master", "STEP_CHILD2_WRITE_DATA", NULL, 0);
 				disconnect = true;
 			}
 

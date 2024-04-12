@@ -9,17 +9,36 @@ static thread_local bool s_IsTableLinked = false;
 
 #define TABLE_LENGTH sizeof(WimpDataSlot) * WIMP_MAX_SHARED_SLOTS
 
-int32_t wimp_data_init(const char* memory_name)
+static PShm* wimp_create_fresh_shm(const char* memory_name, size_t length, PError** error)
 {
 	//Create a shared memory segment for the table
+	//To ensure nothing survived an application crash, free then create again
 	PError* err = NULL;
 	PShm* shm = p_shm_new(
 		memory_name, 
-		TABLE_LENGTH,
+		length,
 		P_SHM_ACCESS_READWRITE, 
-		&err
+		error
 	);
 
+	p_shm_take_ownership(shm);
+	p_shm_free(shm);
+
+	shm = p_shm_new(
+		memory_name, 
+		length,
+		P_SHM_ACCESS_READWRITE, 
+		error
+	);
+	return shm;
+}
+
+int32_t wimp_data_init(const char* memory_name)
+{
+	PError* err = NULL;
+	PShm* shm = wimp_create_fresh_shm(memory_name, TABLE_LENGTH, &err);
+
+	//Continue with the fresh memory
 	psize size = p_shm_get_size(shm);
 
 	if (err != NULL || size < TABLE_LENGTH)
@@ -171,15 +190,10 @@ int32_t wimp_data_reserve(const char* reserved_name, size_t size)
 				(strlen(reserved_name) + 1) * sizeof(char)
 			);
 
-			//Create the shared memory
 			PError* err = NULL;
-			PShm* shm = p_shm_new(
-				reserved_name,
-				size,
-				P_SHM_ACCESS_READWRITE,
-				&err
-			);
+			PShm* shm = wimp_create_fresh_shm(reserved_name, TABLE_LENGTH, &err);
 
+			//Continue with the fresh memory
 			psize shmsize = p_shm_get_size(shm);
 
 			if (err != NULL || shmsize < size)
@@ -337,7 +351,7 @@ void wimp_data_stop_access(WimpDataArena* arena, const char* name)
 	if (entry == NULL)
 	{
 		wimp_log_fail("%s is not linked!\n", name);
-		return WIMP_DATA_FAIL;
+		return;
 	}
 
 	size_t data_index = (size_t)entry->value;
