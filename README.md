@@ -1,7 +1,7 @@
 # Overview
 ---
 
-This project is designed for my use, to make it easier to build modular programs where code is decoupled and reuseable between projects.
+This project is designed for my use, to make it easier to build modular programs where code is decoupled and reuseable between projects. Can be included as a CMake subproject dependency and builds as a shared library.
 
 # Building
 ---
@@ -23,9 +23,9 @@ Prerequisite: Ensure you have a visual studio sdk installed, cd to root director
 
 1. mkdir build && cd build
 2. cmake .. -G "Visual Studio 16 2019"
-3. Use the produced solution file to compile, setting the startup project to the desired project
+3. Use the produced solution file to compile, setting the startup project to the desired project if building tests
 
-Linux (Under development)
+Linux
 ---
 
 Ninja (Preferred):
@@ -34,7 +34,7 @@ Ninja (Preferred):
 2. cmake .. -DCMAKE_CXX_COMPILER=gcc -G "Ninja"
 3. cmake --build . -j10
 
-Alternatively, there is a .vscode folder with launch options added - ensure the build directory has been made before using.
+Alternatively to step 3, there is a .vscode folder with launch options added for tests.
 
 Additional Flags
 ---
