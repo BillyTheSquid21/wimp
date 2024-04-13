@@ -39,7 +39,7 @@ To use the library simply include the "wimp.h" header. Initializing the library 
 To shutdown, simply call a corresponding:
 ```wimp_shutdown();```
 
-Both of these calls should only be called once per process. This includes other threads, but not separate executables so they should have their own init and shutdown call. Think of it like ```WSAStartup``` and ```WSACleanup```.
+These calls should be called at the start and end of a process respectively. Reference counting is used to ensure that the library stays active for the duration of a program.
 
 ### Create a server for a process
 

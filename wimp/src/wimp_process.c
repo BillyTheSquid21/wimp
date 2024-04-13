@@ -7,6 +7,9 @@
 #include <time.h>
 #include <stdlib.h>
 #include <utility/sds.h>
+#include <patomic.h>
+
+static pint s_init_ref_counter = 0;
 
 #ifdef _WIN32
 
@@ -206,13 +209,24 @@ int32_t wimp_start_library_process(const char* process_name, MAIN_FUNC_PTR main_
 
 int32_t wimp_init(void)
 {
-	p_libsys_init();
+	if (p_atomic_int_get(&s_init_ref_counter) == 0)
+	{
+		wimp_log_important("WIMP Init\n");
+		p_libsys_init();
+	}
+	p_atomic_int_inc(&s_init_ref_counter);
 	return WIMP_PROCESS_SUCCESS;
 }
 
 void wimp_shutdown(void)
 {
-	p_libsys_shutdown();
+	p_atomic_int_dec_and_test(&s_init_ref_counter);
+	if (p_atomic_int_get(&s_init_ref_counter) == 0)
+	{
+		wimp_log_important("WIMP Shutdown\n");
+		p_libsys_shutdown();
+	}
+	assert(p_atomic_int_get(&s_init_ref_counter) >= 0 && "More processes called shutdown than init!\n");
 }
 
 WimpMainEntry wimp_get_entry(int32_t argc, ...)
