@@ -67,7 +67,7 @@ int client_main_entry(int argc, char** argv)
 	wimp_start_reciever_thread("master", process_domain, process_port, args);
 
 	//Add the master process to the table for tracking
-	wimp_process_table_add(&server->ptable, "master", "127.0.0.1", WIMP_Process_Parent, master_port, NULL);
+	wimp_process_table_add(&server->ptable, "master", "127.0.0.1", master_port, WIMP_Process_Parent, NULL);
 
 	//Accept the connection to the test_process->master reciever, started by the master thread
 	wimp_server_process_accept(server, 1, "master");
