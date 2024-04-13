@@ -1,13 +1,8 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
-#include <wimp_reciever.h>
-#include <wimp_process.h>
-#include <wimp_process_table.h>
-#include <wimp_server.h>
-#include <wimp_instruction.h>
+#include <wimp.h>
 #include <wimp_test.h>
-#include <wimp_data.h>
 
 PASSMAT PASS_MATRIX[] =
 {

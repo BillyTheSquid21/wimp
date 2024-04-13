@@ -33,7 +33,7 @@ Planned Features:
 
 ### Library initializing
 
-Initializing the library is very simple, and is only one call:
+To use the library simply include the "wimp.h" header. Initializing the library is very simple, and is only one call:
 ```wimp_init()```
 
 To shutdown, simply call a corresponding:
