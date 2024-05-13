@@ -182,12 +182,6 @@ int32_t wimp_reciever_init(PSocket** recsock, PSocketAddress** rec_address, Reci
 	return WIMP_RECIEVER_SUCCESS;
 }
 
-void wimp_reciever_set_process_prio(enum PUThreadPriority_ priority)
-{
-	PUThread* current_thread = p_uthread_current();
-	p_uthread_set_priority(current_thread, priority);
-}
-
 typedef struct _WimpRecieverState
 {
 	//Size of the last packet to be received
@@ -215,75 +209,6 @@ void wimp_reciever_next_packet(WimpRecieverState* state, PSocket* recsock, uint8
 	state->rec_offset = 0;
 }
 
-/*
-* Thread priority
-*
-* Have a ticking counter for idle state and reading state so
-* reciever priority will shift depending on how often is recieving
-* instructions.
-*
-* P_UTHREAD_PRIORITY_LOWEST is as low as it will go
-* P_UTHREAD_PRIORITY_NORMAL is the default, if idles as often as reads should be here
-* P_UTHREAD_PRIORITY_HIGHEST is the highest
-*
-* 0x100000000 is the priority up point, 0x0 is down
-*/
-
-const int64_t PCOUNT_MAX = 0x100000000;
-
-typedef struct _WimpRecieverPrio
-{
-	int64_t priority_counter;
-	enum PUThreadPriority_ priority;
-} WimpRecieverPrio;
-
-void wimp_reciever_prio_tickup(WimpRecieverPrio* prio)
-{
-	prio->priority_counter++;
-}
-
-void wimp_reciever_prio_tickdown(WimpRecieverPrio* prio)
-{
-	prio->priority_counter--;
-}
-
-void wimp_reciever_prio_check(WimpRecieverPrio* prio)
-{
-	//Priority counter handle
-	if (prio->priority_counter > PCOUNT_MAX)
-	{
-		if (prio->priority < P_UTHREAD_PRIORITY_HIGHEST)
-		{
-			prio->priority++;
-			wimp_reciever_set_process_prio(prio->priority);
-			prio->priority_counter = PCOUNT_MAX / 2;
-		}
-		else
-		{
-			//Cap
-			prio->priority_counter = PCOUNT_MAX;
-		}
-	}
-	else if (prio->priority_counter < 0)
-	{
-		if (prio->priority > P_UTHREAD_PRIORITY_LOWEST)
-		{
-			prio->priority--;
-			wimp_reciever_set_process_prio(prio->priority);
-			prio->priority_counter = PCOUNT_MAX / 2;
-		}
-		else
-		{
-			//Cap
-			prio->priority_counter = 0;
-		}
-	}
-}
-
-/*
-* Currently there is a design flaw, where if a packet less than 4 bytes is recieved it will
-* throw off the reading - add checksum in future and prevent < 4 bytes packets being send
-*/
 void wimp_reciever_recieve(RecieverArgs args)
 {	
 	WimpMsgBuffer recbuffer;
@@ -310,10 +235,6 @@ void wimp_reciever_recieve(RecieverArgs args)
 		0
 	};
 
-	WimpRecieverPrio prio;
-	prio.priority_counter = PCOUNT_MAX / 2;
-	prio.priority = P_UTHREAD_PRIORITY_NORMAL;
-
 	bool disconnect = false;
 	while (!disconnect)
 	{
@@ -328,9 +249,6 @@ void wimp_reciever_recieve(RecieverArgs args)
 			{
 				state.state = REC_READING_HEADERS;
 			}
-
-			//Reduce priority counter
-			wimp_reciever_prio_tickdown(&prio);
 		}
 
 		/*
@@ -376,9 +294,6 @@ void wimp_reciever_recieve(RecieverArgs args)
 				memcpy(&state.instruction.instruction[0], &header, sizeof(header));
 				state.instruction_bytes_read = sizeof(header);
 			}
-
-			//Increase priority counter
-			wimp_reciever_prio_tickup(&prio);
 		}
 
 		/*
@@ -427,13 +342,7 @@ void wimp_reciever_recieve(RecieverArgs args)
 			state.instruction.instruction_bytes = 0;
 			state.instruction_bytes_read = 0;
 			state.state = REC_READING_HEADERS;
-
-			//Increase priority counter
-			wimp_reciever_prio_tickup(&prio);
 		}
-
-		//Check priority if needs changing
-		wimp_reciever_prio_check(&prio);
 	}
 
 	WIMP_ZERO_BUFFER(recbuffer);
