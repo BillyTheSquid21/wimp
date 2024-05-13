@@ -7,8 +7,6 @@
 #define _DEBUG
 #endif
 
-#define _DEBUG //For now always define
-
 #endif
 
 #endif
