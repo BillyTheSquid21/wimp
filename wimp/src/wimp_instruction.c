@@ -211,3 +211,27 @@ WimpInstrMeta wimp_instr_get_from_node(WimpInstrNode node)
 {
 	return wimp_instr_get_from_buffer(node->instr.instruction, node->instr.instruction_bytes);
 }
+
+size_t wimp_instr_get_instruction_count(WimpInstrQueue* queue, const char* instruction)
+{
+	size_t instr_count = 0;
+
+	//Return 0 if the queue is exhausted
+	if (queue->nextnode == NULL)
+	{
+		return instr_count;
+	}
+
+	//Otherwise, iterate nodes and check
+	WimpInstrNode current = queue->nextnode;
+	while (current != NULL)
+	{
+		WimpInstrMeta meta = wimp_instr_get_from_node(current);
+		if (strcmp(meta.instr, instruction) == 0)
+		{
+			instr_count++;
+		}
+		current = current->nextnode;
+	}
+	return instr_count;
+}

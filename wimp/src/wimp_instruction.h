@@ -188,4 +188,13 @@ WIMP_API WimpInstrMeta wimp_instr_get_from_buffer(uint8_t* buffer, size_t buffsi
 */
 WIMP_API WimpInstrMeta wimp_instr_get_from_node(WimpInstrNode node);
 
+/*
+* Counts the amount of instructions with a given name in the queue
+* 
+* @param queue The queue to count the instructions in
+* 
+* @return Returns the instruction count
+*/
+WIMP_API size_t wimp_instr_get_instruction_count(WimpInstrQueue* queue, const char* instruction);
+
 #endif
