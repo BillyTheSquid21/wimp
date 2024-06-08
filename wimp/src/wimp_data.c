@@ -191,14 +191,21 @@ int32_t wimp_data_reserve(const char* reserved_name, size_t size)
 			);
 
 			PError* err = NULL;
-			PShm* shm = wimp_create_fresh_shm(reserved_name, TABLE_LENGTH, &err);
+			PShm* shm = wimp_create_fresh_shm(reserved_name, size, &err);
 
 			//Continue with the fresh memory
 			psize shmsize = p_shm_get_size(shm);
 
 			if (err != NULL || shmsize < size)
 			{
-				wimp_log_fail("Failed to allocate data: %s %d\n", p_error_get_message(err), p_error_get_code(err));
+				if (err)
+				{
+					wimp_log_fail("Failed to allocate data: %s %d\n", p_error_get_message(err), p_error_get_code(err));
+				}
+				else
+				{
+					wimp_log_fail("Less memory recieved that allocated!\n");
+				}
 				p_shm_free(shm);
 				p_shm_unlock(s_DataTable, NULL);
 				return WIMP_DATA_FAIL;
