@@ -252,12 +252,27 @@ bool wimp_server_check_process_listening(WimpServer* server, const char* process
 	return false;
 }
 
-void wimp_server_add(WimpServer* server, const char* dest, const char* instr, const void* args, size_t arg_size_bytes)
+typedef struct _InstrBundle
 {
+	uint8_t* instr;
+	size_t size;
+} InstrBundle;
+
+static void wimp_server_free_bundle(InstrBundle* bundle)
+{
+	free(bundle->instr);
+	bundle->instr = NULL;
+	bundle->size = 0;
+}
+
+static InstrBundle wimp_server_bundle_instr(const char* process, const char* dest, const char* instr, const void* args, size_t arg_size_bytes)
+{
+	InstrBundle bundle = { NULL, 0 };
+
 	//Work out formatted size
 	size_t header_bytes = sizeof(int32_t);
 	size_t destp_bytes = (strlen(dest) + 1) * sizeof(char);
-	size_t sourcep_bytes = (strlen(server->process_name) + 1) * sizeof(char);
+	size_t sourcep_bytes = (strlen(process) + 1) * sizeof(char);
 	size_t instr_bytes = (strlen(instr) + 1) * sizeof(char);
 	size_t arglen_bytes = sizeof(int32_t);
 	size_t total_bytes = header_bytes + sourcep_bytes + destp_bytes + instr_bytes + arglen_bytes + arg_size_bytes;
@@ -266,7 +281,7 @@ void wimp_server_add(WimpServer* server, const char* dest, const char* instr, co
 	uint8_t* instrbuff = malloc(total_bytes);
 	if (instrbuff == NULL)
 	{
-		return;
+		return bundle;
 	}
 
 	size_t offset = 0;
@@ -277,7 +292,7 @@ void wimp_server_add(WimpServer* server, const char* dest, const char* instr, co
 	memcpy(&instrbuff[offset], dest, destp_bytes);
 	offset += destp_bytes;
 
-	memcpy(&instrbuff[offset], server->process_name, sourcep_bytes);
+	memcpy(&instrbuff[offset], process, sourcep_bytes);
 	offset += sourcep_bytes;
 
 	memcpy(&instrbuff[offset], instr, instr_bytes);
@@ -291,7 +306,15 @@ void wimp_server_add(WimpServer* server, const char* dest, const char* instr, co
 		memcpy(&instrbuff[offset], args, arg_size_bytes);
 	}
 
-	wimp_instr_queue_add(&server->outgoingmsg, instrbuff, total_bytes);
+	bundle.instr = instrbuff;
+	bundle.size = total_bytes;
+	return bundle;
+}
+
+void wimp_server_add(WimpServer* server, const char* dest, const char* instr, const void* args, size_t arg_size_bytes)
+{
+	InstrBundle instr_bundle = wimp_server_bundle_instr(server->process_name, dest, instr, args, arg_size_bytes);
+	wimp_instr_queue_add(&server->outgoingmsg, instr_bundle.instr, instr_bundle.size);
 }
 
 bool wimp_server_instr_routed(WimpServer* server, const char* dest_process, WimpInstrNode instrnode)
@@ -362,9 +385,30 @@ bool wimp_server_is_parent_alive(WimpServer* server)
 
 void wimp_server_free(WimpServer server)
 {
+	//Send self signal to all connected processes that closes each reciever
+	//Requires the connected processes to be routing for now
+	HashStringEntry* entry = NULL;
+	int i = 0;
+	HASH_STRING_ITER(server.ptable._hash_table, entry, i)
+	{
+		WimpProcessData data = (WimpProcessData)entry->value;
+		if (data->process_active)
+		{
+			//If a valid place to send to is found send the instruction
+			InstrBundle bundle = wimp_server_bundle_instr(server.process_name, server.process_name, WIMP_INSTRUCTION_EXIT, NULL, 0);
+			memcpy(server.sendbuffer, bundle.instr, bundle.size);
+
+			WimpInstrMeta meta = wimp_instr_get_from_buffer(server.sendbuffer, WIMP_MESSAGE_BUFFER_BYTES);
+			pssize sendres = p_socket_send(data->process_connection, server.sendbuffer, bundle.size, NULL);
+			wimp_server_free_bundle(&bundle);
+			WIMP_ZERO_BUFFER(server.sendbuffer);
+		}
+	}
+	p_uthread_sleep(50);
+
 	//Before freeing, send exit signal to any child process
-	HashStringEntry* entry;
-	int i;
+	entry = NULL;
+	i = 0;
 	HASH_STRING_ITER(server.ptable._hash_table, entry, i)
 	{
 		WimpProcessData data = (WimpProcessData)entry->value;
