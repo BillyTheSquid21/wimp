@@ -12,13 +12,6 @@
 * 
 * Current features:
 * - Contiguous Memory
-*
-* Potential future features: 
-* - Debug cast system to allow changing the type of behavior
-*   - Could set to act like std::vector in C++
-*   - Could be set to act like a tree/network
-*   - Would have functions used for those data structures, that when in debug
-*     would check the type of arena
 */
 
 /*

@@ -33,7 +33,7 @@ void wimp_close_local_server()
 		wimp_log_fail("Local server instance doesn't exist!\n");
 		return;
 	}
-	wimp_server_free(*_local_server);
+	wimp_server_free(_local_server);
 	_local_server = NULL;
 }
 
@@ -86,6 +86,7 @@ int32_t wimp_create_server(WimpServer* server, const char* process_name, const c
 	server->parent = NULL;
 	server->incomingmsg = wimp_create_instr_queue();
 	server->outgoingmsg = wimp_create_instr_queue();
+	p_atomic_int_set(&server->active, 1);
 	wimp_log_success("Server created! %s %s:%d\n", process_name, domain, port);
 	return WIMP_SERVER_SUCCESS;
 }
@@ -383,50 +384,36 @@ bool wimp_server_is_parent_alive(WimpServer* server)
 	return wimp_server_check_process_listening(server, server->parent);
 }
 
-void wimp_server_free(WimpServer server)
+void wimp_server_free(WimpServer* server)
 {
-	//Send self signal to all connected processes that closes each reciever
-	//Requires the connected processes to be routing for now
-	HashStringEntry* entry = NULL;
-	int i = 0;
-	HASH_STRING_ITER(server.ptable._hash_table, entry, i)
-	{
-		WimpProcessData data = (WimpProcessData)entry->value;
-		if (data->process_active)
-		{
-			//If a valid place to send to is found send the instruction
-			InstrBundle bundle = wimp_server_bundle_instr(server.process_name, server.process_name, WIMP_INSTRUCTION_EXIT, NULL, 0);
-			memcpy(server.sendbuffer, bundle.instr, bundle.size);
+	//Sets the server to inactive
+	p_atomic_int_set(&server->active, 0);
 
-			WimpInstrMeta meta = wimp_instr_get_from_buffer(server.sendbuffer, WIMP_MESSAGE_BUFFER_BYTES);
-			pssize sendres = p_socket_send(data->process_connection, server.sendbuffer, bundle.size, NULL);
-			wimp_server_free_bundle(&bundle);
-			WIMP_ZERO_BUFFER(server.sendbuffer);
-		}
-	}
-	p_uthread_sleep(50);
+	//Need to sleep to allow the reciever time to pick up the signal
+	p_uthread_sleep(100);
 
 	//Before freeing, send exit signal to any child process
-	entry = NULL;
-	i = 0;
-	HASH_STRING_ITER(server.ptable._hash_table, entry, i)
+	HashStringEntry* entry = NULL;
+	int i = 0;
+	HASH_STRING_ITER(server->ptable._hash_table, entry, i)
 	{
 		WimpProcessData data = (WimpProcessData)entry->value;
 		if (data->process_relation == WIMP_Process_Child)
 		{
-			wimp_server_add(&server, entry->key, WIMP_INSTRUCTION_EXIT, NULL, 0);
+			wimp_server_add(server, entry->key, WIMP_INSTRUCTION_EXIT, NULL, 0);
 		}
 	}
-	wimp_server_send_instructions(&server);
+	wimp_server_send_instructions(server);
+	p_uthread_sleep(100);
 
-	p_socket_address_free(server.addr);
-	p_socket_close(server.server, NULL);
-	wimp_process_table_free(server.ptable);
-	wimp_instr_queue_free(server.incomingmsg);
-	wimp_instr_queue_free(server.outgoingmsg);
-	if (server.parent)
+	p_socket_address_free(server->addr);
+	p_socket_close(server->server, NULL);
+	wimp_process_table_free(server->ptable);
+	wimp_instr_queue_free(server->incomingmsg);
+	wimp_instr_queue_free(server->outgoingmsg);
+	if (server->parent)
 	{
-		sdsfree(server.parent);
+		sdsfree(server->parent);
 	}
-	WIMP_ZERO_BUFFER(server.recbuffer); WIMP_ZERO_BUFFER(server.sendbuffer);
+	WIMP_ZERO_BUFFER(server->recbuffer); WIMP_ZERO_BUFFER(server->sendbuffer);
 }

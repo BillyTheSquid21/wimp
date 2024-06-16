@@ -80,7 +80,7 @@ int main(int argc, char** argv)
 	WimpServer* server = wimp_get_local_server();
 
 	//Start a reciever thread for the master process that called this thread
-	RecieverArgs args = wimp_get_reciever_args("test_process2", master_domain, master_port, &server->incomingmsg);
+	RecieverArgs args = wimp_get_reciever_args("test_process2", master_domain, master_port, &server->incomingmsg, &server->active);
 	wimp_start_reciever_thread("master", process_domain, process_port, args);
 
 	//Add the master process to the table for tracking
@@ -141,8 +141,13 @@ int main(int argc, char** argv)
 		while (currentnode != NULL)
 		{
 			WimpInstrMeta meta = wimp_instr_get_from_node(currentnode);
-			//wimp_log("\nMaster recieved instruction:");
-			//DEBUG_WIMP_PRINT_INSTRUCTION_META(meta);
+			if (wimp_server_instr_routed(server, meta.dest_process, currentnode))
+			{
+				//Add to the outgoing and continue to prevent freeing
+				currentnode = wimp_instr_queue_pop(&server->incomingmsg);
+				continue;
+			}
+
 			if (strcmp(meta.instr, WIMP_INSTRUCTION_EXIT) == 0)
 			{
 				disconnect = true;
@@ -157,14 +162,14 @@ int main(int argc, char** argv)
 			currentnode = wimp_instr_queue_pop(&server->incomingmsg);
 		}
 		wimp_instr_queue_high_prio_unlock(&server->incomingmsg);
+
+		wimp_server_send_instructions(server);
 	}
 
 	wimp_server_send_instructions(server);
 
 	//Unlink from the data table
 	wimp_data_unlink_from_process();
-	p_uthread_sleep(1000);
-
 	wimp_close_local_server();
 
 	//Cleanup

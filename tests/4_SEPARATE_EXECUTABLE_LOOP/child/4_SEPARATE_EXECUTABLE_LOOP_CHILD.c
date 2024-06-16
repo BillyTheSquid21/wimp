@@ -46,7 +46,7 @@ int main(int argc, char** argv)
 	WimpServer* server = wimp_get_local_server();
 
 	//Start a reciever thread for the master process that called this thread
-	RecieverArgs args = wimp_get_reciever_args("test_process", master_domain, master_port, &server->incomingmsg);
+	RecieverArgs args = wimp_get_reciever_args("test_process", master_domain, master_port, &server->incomingmsg, &server->active);
 	wimp_start_reciever_thread("master", process_domain, process_port, args);
 
 	//Add the master process to the table for tracking

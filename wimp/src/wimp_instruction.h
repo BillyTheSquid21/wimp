@@ -13,7 +13,7 @@
 * and one is outgoing. Formatted as FIFO. The reciever(s) for the process
 * add to the incoming queue (as multiple threads could write need to use
 * mutexes) which the process reads and executes. In the process of executing,
-* outgoing instructions may be added from the same thread. Each thread normally
+* outgoing instructions may be added from the same thread. Each thread usually
 * has one server, which is a thread local pointer. This means as long as a
 * server exists on the thread, including the server header calling the function to
 * add instructions is all that needs to be done. Once the instruction data is

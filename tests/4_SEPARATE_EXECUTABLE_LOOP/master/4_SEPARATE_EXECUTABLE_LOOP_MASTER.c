@@ -55,7 +55,7 @@ int main(void)
 	WimpServer* server = wimp_get_local_server();
 
 	//Start a reciever thread for the client process that the master started
-	RecieverArgs args = wimp_get_reciever_args("master", "127.0.0.1", end_process_port, &server->incomingmsg);
+	RecieverArgs args = wimp_get_reciever_args("master", "127.0.0.1", end_process_port, &server->incomingmsg, &server->active);
 	wimp_start_reciever_thread("test_process", "127.0.0.1", master_port, args);
 
 	//Add the test process to the table for tracking
@@ -80,8 +80,12 @@ int main(void)
 		while (currentnode != NULL)
 		{
 			WimpInstrMeta meta = wimp_instr_get_from_node(currentnode);
-			wimp_log("\nMaster recieved instruction:");
-			DEBUG_WIMP_PRINT_INSTRUCTION_META(meta);
+			if (wimp_server_instr_routed(server, meta.dest_process, currentnode))
+			{
+				//Add to the outgoing and continue to prevent freeing
+				currentnode = wimp_instr_queue_pop(&server->incomingmsg);
+				continue;
+			}
 
 			if (strcmp(meta.instr, "blank_instr") == 0)
 			{

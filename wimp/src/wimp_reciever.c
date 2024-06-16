@@ -68,7 +68,7 @@ WimpHandshakeHeader wimp_create_handshake(const char* process_name, uint8_t* mes
 	return header;
 }
 
-RecieverArgs wimp_get_reciever_args(const char* process_name, const char* recfrom_domain, int32_t recfrom_port, WimpInstrQueue* incomingq)
+RecieverArgs wimp_get_reciever_args(const char* process_name, const char* recfrom_domain, int32_t recfrom_port, WimpInstrQueue* incomingq, int32_t* active)
 {
 	RecieverArgs recargs = malloc(sizeof(struct _RecieverArgs));
 	if (recargs == NULL)
@@ -80,6 +80,7 @@ RecieverArgs wimp_get_reciever_args(const char* process_name, const char* recfro
 	recargs->recfrom_domain = sdsnew(recfrom_domain);
 	recargs->incoming_queue = incomingq;
 	recargs->recfrom_port = recfrom_port;
+	recargs->active = active;
 	return recargs;
 }
 
@@ -238,6 +239,19 @@ void wimp_reciever_recieve(RecieverArgs args)
 	bool disconnect = false;
 	while (!disconnect)
 	{
+		/*
+		* CHECK PROCESS: checks if the process is still active
+		*/
+		if (!p_atomic_int_get(args->active))
+		{
+			//If an instruction being built, clear it
+			if (state.instruction.instruction)
+			{
+				free(state.instruction.instruction);
+			}
+			break;
+		}
+
 		/*
 		* IDLE STATE: continuously poll for a new packet until one is recieved
 		* If a packet is recieved, enter reading headers mode

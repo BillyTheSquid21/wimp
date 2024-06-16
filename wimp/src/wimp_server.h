@@ -35,6 +35,8 @@ typedef struct _WimpServer
 	WimpMsgBuffer sendbuffer;
 	WimpMsgBuffer recbuffer;
 
+	int32_t active;
+
 } WimpServer;
 
 /*
@@ -154,6 +156,6 @@ WIMP_API bool wimp_server_is_parent_alive(WimpServer* server);
 * 
 * @param server The server to free
 */
-WIMP_API void wimp_server_free(WimpServer server);
+WIMP_API void wimp_server_free(WimpServer* server);
 
 #endif

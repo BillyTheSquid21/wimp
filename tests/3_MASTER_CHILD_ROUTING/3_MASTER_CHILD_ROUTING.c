@@ -65,7 +65,7 @@ int client_main_entry(int argc, char** argv)
 	WimpServer* server = wimp_get_local_server();
 
 	//Start a reciever thread for the master process that called this thread
-	RecieverArgs args = wimp_get_reciever_args(process_name, master_domain, master_port, &server->incomingmsg);
+	RecieverArgs args = wimp_get_reciever_args(process_name, master_domain, master_port, &server->incomingmsg, &server->active);
 	wimp_start_reciever_thread("master", process_domain, process_port, args);
 
 	//Add the master process to the table for tracking
@@ -101,6 +101,13 @@ int client_main_entry(int argc, char** argv)
 		while (currentnode != NULL)
 		{
 			WimpInstrMeta meta = wimp_instr_get_from_node(currentnode);
+			if (wimp_server_instr_routed(server, meta.dest_process, currentnode))
+			{
+				//Add to the outgoing and continue to prevent freeing
+				currentnode = wimp_instr_queue_pop(&server->incomingmsg);
+				continue;
+			}
+
 			if (strcmp(meta.instr, "say_hello") == 0)
 			{
 				wimp_log("Hello! Recieved from: %s\n", meta.source_process);
@@ -188,10 +195,10 @@ int main(void)
 	WimpServer* server = wimp_get_local_server();
 
 	//Start a reciever thread for the client processes that the master started
-	RecieverArgs args = wimp_get_reciever_args("master", "127.0.0.1", client1_port, &server->incomingmsg);
+	RecieverArgs args = wimp_get_reciever_args("master", "127.0.0.1", client1_port, &server->incomingmsg, &server->active);
 	wimp_start_reciever_thread("client1", "127.0.0.1", master_port, args);
 
-	args = wimp_get_reciever_args("master", "127.0.0.1", client2_port, &server->incomingmsg);
+	args = wimp_get_reciever_args("master", "127.0.0.1", client2_port, &server->incomingmsg, &server->active);
 	wimp_start_reciever_thread("client2", "127.0.0.1", master_port, args);
 
 	//Add the test process to the table for tracking

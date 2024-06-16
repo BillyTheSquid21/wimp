@@ -21,9 +21,9 @@
 *   processes and has a maximum number of entries
 * - Shared segments for each data being stored
 * 
-* Because of access from many processes, pointers that are not within the
-* shared spaces can NOT be used in API calls, as this will not be portable
-* between the processes.
+* Because of access from many process types, raw pointers should not be used
+* between processes, however area pointers relative to the start position
+* are portable.
 * 
 * Slots contain a capacity, the size currently used, and the name of the
 * shared segment. 

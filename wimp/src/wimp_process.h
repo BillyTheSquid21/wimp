@@ -35,21 +35,6 @@ typedef struct _WimpMainEntry
 } *WimpMainEntry;
 
 /*
-* Defines privilege of a process so end processes can reject underprivileged
-* calls. Other than root there is no specific meaning - higher is less privileged
-*/
-typedef enum
-{
-	WIMP_Privilege_Root = 0,	
-	WIMP_Privilege_1 = 1,
-	WIMP_Privilege_2 = 2,
-	WIMP_Privilege_3 = 3,
-	WIMP_Privilege_4 = 4,
-	WIMP_Privilege_5 = 5,
-	WIMP_Privilege_6 = 6,
-} WIMP_ProcessPrivilege;
-
-/*
 * Starts the wimp library
 *
 * @return Returns either WIMP_PROCESS_SUCCESS or WIMP_PROCESS_FAIL
