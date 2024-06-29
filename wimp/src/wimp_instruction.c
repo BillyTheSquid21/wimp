@@ -235,3 +235,65 @@ size_t wimp_instr_get_instruction_count(WimpInstrQueue* queue, const char* instr
 	}
 	return instr_count;
 }
+
+WimpStrPack wimp_instr_pack_strings(size_t count, ...)
+{
+	assert(count <= WIMP_STR_PACK_MAX_STRINGS && "Max strings to pack reached!");
+
+	va_list arg;
+	va_start(arg, count);
+
+	//Work out how many total bytes to allocate
+	size_t total_bytes = sizeof(struct _WimpStrPack);
+
+	char** strings[WIMP_STR_PACK_MAX_STRINGS];
+	size_t strings_sizes[WIMP_STR_PACK_MAX_STRINGS];
+
+	for (size_t i = 0; i < count; ++i)
+	{
+		strings[i] = va_arg(arg, char*);
+		
+		//Include size of both null char, and an extra in case string didn't have one added
+		strings_sizes[i] = (strlen(strings[i]) * sizeof(char)) + 2;
+		total_bytes += strings_sizes[i];
+	}
+	va_end(arg);
+
+	//Allocate and copy
+	uint8_t* pack = malloc(total_bytes);
+	if (pack == NULL)
+	{
+		return NULL;
+	}
+
+	memset(pack, 0, total_bytes);
+
+	//Get the space after the pack and add the strings
+	uint8_t* string_buffer = &pack[sizeof(struct _WimpStrPack)];
+	size_t offset = 0;
+	for (size_t i = 0; i < count; ++i)
+	{
+		memcpy(&string_buffer[offset], strings[i], strings_sizes[i] - 1); //Avoid copying buffer null char
+		((WimpStrPack)pack)->strings[i] = offset;
+		offset += strings_sizes[i];
+	}
+
+	((WimpStrPack)pack)->pack_size = total_bytes;
+	((WimpStrPack)pack)->str_count = count;
+	return (WimpStrPack)pack;
+}
+
+char* wimp_instr_pack_get_string(WimpStrPack pack, int32_t index)
+{
+	assert(index < WIMP_STR_PACK_MAX_STRINGS && "Cannot have that many stings!");
+	uint8_t* string_buffer = &((uint8_t*)pack)[sizeof(struct _WimpStrPack)];
+	char* string = (char*)&string_buffer[pack->strings[index]];
+	return string;
+}
+
+void wimp_instr_pack_free(WimpStrPack* pack)
+{
+	free(*pack);
+	*pack = NULL;
+	return;
+}

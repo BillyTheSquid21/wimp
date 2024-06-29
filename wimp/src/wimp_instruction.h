@@ -68,6 +68,20 @@ typedef struct _WimpInstrQueue
 	PMutex* _lowpriomutex; //Uses the triple mutex pattern
 } WimpInstrQueue;
 
+#define WIMP_STR_PACK_MAX_STRINGS 8
+
+/*
+* Provides an easy way to send multiple string arguments
+* - Strings are stored in the same memory chunk as the pack data for easy copying
+* - Strings are given as offsets to avoid pointer invalidation
+*/
+typedef struct _WimpStrPack
+{
+	size_t pack_size;
+	size_t str_count;
+	size_t strings[WIMP_STR_PACK_MAX_STRINGS];
+} *WimpStrPack;
+
 /*
 * Instruction metadata that can be pulled from a buffer
 */
@@ -196,5 +210,34 @@ WIMP_API WimpInstrMeta wimp_instr_get_from_node(WimpInstrNode node);
 * @return Returns the instruction count
 */
 WIMP_API size_t wimp_instr_get_instruction_count(WimpInstrQueue* queue, const char* instruction);
+
+/*
+* Packs a collection of up to WIMP_STR_PACK_MAX_STRINGS strings
+* 
+* @param count The number of strings
+* @param ... The strings to pack
+* 
+* @return Returns a pointer to the packed strings interface
+*/
+WIMP_API WimpStrPack wimp_instr_pack_strings(size_t count, ...);
+
+/*
+* Gets a string of a given index from the string pack
+* 
+* @param pack The pack to get the string from
+* @param index The index of the string
+* 
+* @return Returns the C style string pointer
+*/
+WIMP_API char* wimp_instr_pack_get_string(WimpStrPack pack, int32_t index);
+
+/*
+* Frees a string pack allocated with pack strings
+* 
+* This doesn't need to be called when a pack is retrieved from an instruction
+* 
+* @param pack A pointer to the pack to free
+*/
+WIMP_API void wimp_instr_pack_free(WimpStrPack* pack);
 
 #endif
