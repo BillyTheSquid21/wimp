@@ -1,3 +1,4 @@
+#include <string.h>
 #include <wimp_data.h>
 #include <utility/thread_local.h>
 
@@ -97,9 +98,17 @@ int32_t wimp_data_link_to_process(const char* memory_name)
 
 	//Init the cache lookup
 	s_DataTableCacheMap = HashString_create(WIMP_MAX_SHARED_SLOTS);
-
 	s_DataTable = shm;
-	s_MemoryName = memory_name;
+
+    //Copy memory name
+    size_t memory_name_size = (strlen(memory_name) + 1) * sizeof(char);
+	s_MemoryName = malloc(memory_name_size);
+    if (!s_MemoryName)
+    {
+        return WIMP_DATA_FAIL;    
+    }
+    memcpy(s_MemoryName, memory_name, memory_name_size);    
+
 	s_IsTableLinked = true;
 	wimp_log_success("Successfully linked to the data table\n");
 	return WIMP_DATA_SUCCESS;
@@ -179,7 +188,7 @@ int32_t wimp_data_reserve(const char* reserved_name, size_t size)
 
 	//Find a free slot
 	p_shm_lock(s_DataTable, NULL);
-	for (int i = 0; i < WIMP_MAX_SHARED_SLOTS; ++i)
+	for (size_t i = 0; i < WIMP_MAX_SHARED_SLOTS; ++i)
 	{
 		if (data_table[i].share_counter == 0)
 		{
@@ -237,7 +246,7 @@ int32_t wimp_data_link_to_data(const char* name)
 
 	//Check if the data is in the table
 	p_shm_lock(s_DataTable, &err);
-	for (int i = 0; i < WIMP_MAX_SHARED_SLOTS; ++i)
+	for (size_t i = 0; i < WIMP_MAX_SHARED_SLOTS; ++i)
 	{
 		if (data_table[i].share_counter != 0)
 		{
@@ -306,12 +315,12 @@ void wimp_data_unlink_from_data(const char* name)
 					wimp_log_important("%s was removed from shared data!\n", name);
 				}
 				p_shm_unlock(s_DataTable, NULL);
-				return WIMP_DATA_SUCCESS;
+				return;
 			}
 		}
 	}
 	p_shm_unlock(s_DataTable, NULL);
-	return WIMP_DATA_FAIL;
+	return;
 }
 
 int32_t wimp_data_access(WimpDataArena* arena, const char* name)

@@ -54,7 +54,7 @@ SArenaPtr sarena_alloc(SArena* arena, size_t size)
 	assert(new_arena_ptr <= arena->_arena_capacity && "Alloc out of bounds!");
 	if (new_arena_ptr >= arena->_arena_capacity)
 	{
-		return NULL;
+		return (SArenaPtr)NULL;
 	}
 
 	size_t old_arena_ptr = arena->_arena_pointer;
