@@ -44,31 +44,10 @@ int32_t wimp_start_executable_process(const char* process_name, const char* exec
 	//Get the directory of the running process
 	//Use malloc to preserve outside function stack frame (is freed above)
 	char path_buffer[MAX_DIRECTORY_PATH_LEN];
-	memset(&path_buffer[0], 0, MAX_DIRECTORY_PATH_LEN);
-
-	//Get the path of the currently running executable
-	GetModuleFileName(NULL, path_buffer, MAX_DIRECTORY_PATH_LEN);
-
-	//Erase the file part from the string end
-	size_t current_dir_bytes = strlen(path_buffer) * sizeof(char);
-	size_t last_slash_index = MAX_DIRECTORY_PATH_LEN;
-	for (size_t i = current_dir_bytes; i > 0; --i)
+	if (wimp_get_running_executable_directory(path_buffer) != WIMP_PROCESS_SUCCESS)
 	{
-		if (path_buffer[i] == '/' || path_buffer[i] == '\\')
-		{
-			last_slash_index = i;
-			break;
-		}
-	}
-
-	if (last_slash_index == MAX_DIRECTORY_PATH_LEN)
-	{
-		wimp_log_fail("Issue reading the path of the program! %s\n", path_buffer);
 		return WIMP_PROCESS_FAIL;
 	}
-
-	//Blank everything after the index (except slash)
-	memset(&path_buffer[last_slash_index + 1], 0, MAX_DIRECTORY_PATH_LEN - last_slash_index - 1);
 
 	//Create the heap string for appending
 	sds path = sdsnew(&path_buffer[0]);
@@ -116,6 +95,39 @@ int32_t wimp_start_executable_process(const char* process_name, const char* exec
 	}
 	return WIMP_PROCESS_SUCCESS;
 }
+
+int32_t wimp_get_running_executable_directory(char* path)
+{
+	//Get the directory of the running process
+	//Use malloc to preserve outside function stack frame (is freed above)
+	memset(&path[0], 0, MAX_DIRECTORY_PATH_LEN);
+
+	//Get the path of the currently running executable
+	GetModuleFileName(NULL, path, MAX_DIRECTORY_PATH_LEN);
+
+	//Erase the file part from the string end
+	size_t current_dir_bytes = strlen(path) * sizeof(char);
+	size_t last_slash_index = MAX_DIRECTORY_PATH_LEN;
+	for (size_t i = current_dir_bytes; i > 0; --i)
+	{
+		if (path[i] == '/' || path[i] == '\\')
+		{
+			last_slash_index = i;
+			break;
+		}
+	}
+
+	if (last_slash_index == MAX_DIRECTORY_PATH_LEN)
+	{
+		wimp_log_fail("Issue reading the path of the program! %s\n", path);
+		return WIMP_PROCESS_FAIL;
+	}
+
+	//Blank everything after the index (except slash)
+	memset(&path[last_slash_index + 1], 0, MAX_DIRECTORY_PATH_LEN - last_slash_index - 1);
+	return WIMP_PROCESS_SUCCESS;
+}
+
 #endif
 
 #ifdef __unix__
@@ -126,35 +138,12 @@ int32_t wimp_start_executable_process(const char* process_name, const char* exec
 int32_t wimp_start_executable_process(const char* process_name, const char* executable, WimpMainEntry entry)
 {
 	//Get the directory of the running process
-	//Use malloc to preserve outside function stack frame (is freed above)
 	char path_buffer[MAX_DIRECTORY_PATH_LEN];
-	memset(&path_buffer[0], 0, MAX_DIRECTORY_PATH_LEN);
-
-	//Get the path of the currently running executable
-	ssize_t linklen = readlink("/proc/self/exe", path_buffer, MAX_DIRECTORY_PATH_LEN);
-	path_buffer[linklen] = '\0';
-
-	//Erase the file part from the string end
-	size_t current_dir_bytes = strlen(path_buffer) * sizeof(char);
-	size_t last_slash_index = MAX_DIRECTORY_PATH_LEN;
-	for (size_t i = current_dir_bytes; i > 0; --i)
+	if (wimp_get_running_executable_directory(path_buffer) != WIMP_PROCESS_SUCCESS)
 	{
-		if (path_buffer[i] == '/' || path_buffer[i] == '\\')
-		{
-			last_slash_index = i;
-			break;
-		}
-	}
-
-	if (last_slash_index == MAX_DIRECTORY_PATH_LEN)
-	{
-		wimp_log_fail("Issue reading the path of the program! %s\n", path_buffer);
 		return WIMP_PROCESS_FAIL;
 	}
-
-	//Blank everything after the index (except slash)
-	memset(&path_buffer[last_slash_index + 1], 0, MAX_DIRECTORY_PATH_LEN - last_slash_index - 1);
-
+	
 	//Create the heap string for appending
 	sds path = sdsnew(&path_buffer[0]);
 
@@ -191,6 +180,38 @@ int32_t wimp_start_executable_process(const char* process_name, const char* exec
 	}
 	sdsfree(path);
 	return WIMP_PROCESS_SUCCESS;
+}
+
+int32_t wimp_get_running_executable_directory(char* path)
+{
+	//Get the directory of the running process
+	//Use malloc to preserve outside function stack frame (is freed above)
+	memset(&path[0], 0, MAX_DIRECTORY_PATH_LEN);
+
+	//Get the path of the currently running executable
+	ssize_t linklen = readlink("/proc/self/exe", path, MAX_DIRECTORY_PATH_LEN);
+	path[linklen] = '\0';
+
+	//Erase the file part from the string end
+	size_t current_dir_bytes = strlen(path) * sizeof(char);
+	size_t last_slash_index = MAX_DIRECTORY_PATH_LEN;
+	for (size_t i = current_dir_bytes; i > 0; --i)
+	{
+		if (path[i] == '/' || path[i] == '\\')
+		{
+			last_slash_index = i;
+			break;
+		}
+	}
+
+	if (last_slash_index == MAX_DIRECTORY_PATH_LEN)
+	{
+		wimp_log_fail("Issue reading the path of the program! %s\n", path_buffer);
+		return WIMP_PROCESS_FAIL;
+	}
+
+	//Blank everything after the index (except slash)
+	memset(&path[last_slash_index + 1], 0, MAX_DIRECTORY_PATH_LEN - last_slash_index - 1);
 }
 
 #endif

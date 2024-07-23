@@ -87,6 +87,15 @@ static void wimp_launch_binary(PROG_ENTRY entry);
 #endif
 
 /*
+* Helper function to get the directory of the currently running executable
+* 
+* @param path Pointer to a buffer to write the path into (must be at least MAX_DIRECTORY_PATH_LEN)
+* 
+* @return Returns WIMP_PROCESS_SUCCESS or WIMP_PROCESS_FAIL
+*/
+WIMP_API int32_t wimp_get_running_executable_directory(char* path);
+
+/*
 * Creates a persistent collection of arguments to supply, which can be freed after the library main thread is finished
 * 
 * @param argc The number of arguments supplied
