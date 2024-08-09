@@ -102,6 +102,11 @@ typedef struct _WimpInstrMeta
 #define WIMP_INSTR_START(meta) (uint8_t*)(meta.dest_process - WIMP_INSTRUCTION_DEST_OFFSET)
 
 /*
+* Get the offset into the raw instruction data
+*/
+#define WIMP_INSTR_OFFSET(meta, offset) (uint8_t*)(meta.dest_process - WIMP_INSTRUCTION_DEST_OFFSET + offset)
+
+/*
 * Creates a new instruction queue
 * 
 * @return Returns a new instruction queue

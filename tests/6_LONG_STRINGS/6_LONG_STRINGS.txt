@@ -1,0 +1,7 @@
+This test should do the following:
+
+- Send instructions with longer strings, over the buffer size
+
+Checks:
+
+- String is sent correctly and appears the same on the other side

@@ -359,13 +359,21 @@ int32_t wimp_server_send_instructions(WimpServer* server)
 			if (data->process_active)
 			{
 				//If a valid place to send to is found send the instruction
-				memcpy(server->sendbuffer, WIMP_INSTR_START(currentn_meta), currentn_meta.total_bytes);
-			
-				WimpInstrMeta meta = wimp_instr_get_from_buffer(server->sendbuffer, WIMP_MESSAGE_BUFFER_BYTES);
-				pssize sendres = p_socket_send(data->process_connection, server->sendbuffer, currentn_meta.total_bytes, NULL);
+				size_t sent_bytes = 0;
+				while (sent_bytes < currentn_meta.total_bytes)
+				{
+					size_t bytes_to_send = currentn_meta.total_bytes - sent_bytes;
+					if (bytes_to_send > WIMP_MESSAGE_BUFFER_BYTES)
+					{
+						bytes_to_send = WIMP_MESSAGE_BUFFER_BYTES;
+					}
+					memcpy(server->sendbuffer, WIMP_INSTR_OFFSET(currentn_meta, sent_bytes), bytes_to_send);
 
-				//DEBUG_WIMP_PRINT_INSTRUCTION_META(meta);
-				WIMP_ZERO_BUFFER(server->sendbuffer);
+					pssize sendres = p_socket_send(data->process_connection, server->sendbuffer, bytes_to_send, NULL);
+
+					WIMP_ZERO_BUFFER(server->sendbuffer);
+					sent_bytes += sendres;
+				}
 			}
 		}
 		wimp_instr_node_free(currentn);
