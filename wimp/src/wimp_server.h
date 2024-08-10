@@ -119,6 +119,19 @@ WIMP_API bool wimp_server_check_process_listening(WimpServer* server, const char
 WIMP_API void wimp_server_add(WimpServer* server, const char* dest, const char* instr, const void* args, size_t arg_size_bytes);
 
 /*
+* Awaits the server to recieve a specific instruction. Blocks and must not be
+* called when queue mutexes are already locked!
+* 
+* @param server The server to await the response to
+* @param instr The instruction to await
+* @param timeout The timeout in milliseconds before returning back
+* 
+* @return Returns the node of the awaited instruction. Returns NULL if failed.
+* The node should be freed after using.
+*/
+WIMP_API WimpInstrNode wimp_server_wait_response(WimpServer* server, const char* instr, int32_t timeout);
+
+/*
 * Routes server instructions if they don't belong to this server. If instruction
 * is successfully routed (returns true) do not try to free the instr node as
 * ownership is passed to the outgoing queue

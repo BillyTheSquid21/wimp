@@ -37,6 +37,7 @@
 #define WIMP_INSTRUCTION_H
 
 #include <stdint.h>
+#include <stdbool.h>
 #include <string.h>
 #include <plibsys.h>
 #include <assert.h>
@@ -148,7 +149,7 @@ WIMP_API void wimp_instr_queue_high_prio_unlock(WimpInstrQueue* queue);
 * @param instr A heap pointer to the instruction buffer, which will later be freed automatically
 * @param bytes The size of the instruction buffer in bytes
 * 
-* @return Returns either WIMP_INSTRUCTION_SUCCESS or WIMP_INSTRUCTIOn_FAIL
+* @return Returns either WIMP_INSTRUCTION_SUCCESS or WIMP_INSTRUCTION_FAIL
 */
 WIMP_API int32_t wimp_instr_queue_add(WimpInstrQueue* queue, void* instr, size_t bytes);
 
@@ -158,9 +159,29 @@ WIMP_API int32_t wimp_instr_queue_add(WimpInstrQueue* queue, void* instr, size_t
 * @param queue The pointer to the queue to add to
 * @param node The node to give to the queue
 * 
-* @return Returns either WIMP_INSTRUCTION_SUCCESS or WIMP_INSTRUCTIOn_FAIL
+* @return Returns either WIMP_INSTRUCTION_SUCCESS or WIMP_INSTRUCTION_FAIL
 */
 WIMP_API int32_t wimp_instr_queue_add_existing(WimpInstrQueue* queue, WimpInstrNode node);
+
+/*
+* Adds an existing queue to the front of a queue
+* 
+* @param queue The queue being added to
+* @param add The queue to add
+* 
+* @return Returns either WIMP_INSTRUCTION_SUCCESS or WIMP_INSTRUCTION_FAIL
+*/
+WIMP_API int32_t wimp_instr_queue_prepend_queue(WimpInstrQueue* queue, WimpInstrQueue* add);
+
+/*
+* Adds an existing queue to the back of a queue
+*
+* @param queue The queue being added to
+* @param add The queue to add
+*
+* @return Returns either WIMP_INSTRUCTION_SUCCESS or WIMP_INSTRUCTION_FAIL
+*/
+WIMP_API int32_t wimp_instr_queue_append_queue(WimpInstrQueue* queue, WimpInstrQueue* add);
 
 /*
 * Pops the top node off the queue, handing it to the user.
@@ -206,6 +227,16 @@ WIMP_API WimpInstrMeta wimp_instr_get_from_buffer(uint8_t* buffer, size_t buffsi
 * @return Returns the metadata of the instruction
 */
 WIMP_API WimpInstrMeta wimp_instr_get_from_node(WimpInstrNode node);
+
+/*
+* Compares two instructions to check if they're the same
+* 
+* @param instr1 The first instruction
+* @param instr2 The second instruction
+* 
+* @return Returns whether the instructions match or not
+*/
+WIMP_API bool wimp_instr_check(const char* instr1, const char* instr2);
 
 /*
 * Counts the amount of instructions with a given name in the queue

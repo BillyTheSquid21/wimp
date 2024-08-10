@@ -89,6 +89,37 @@ int32_t wimp_instr_queue_add_existing(WimpInstrQueue* queue, WimpInstrNode node)
 	return WIMP_INSTRUCTION_SUCCESS;
 }
 
+int32_t wimp_instr_queue_append_queue(WimpInstrQueue* queue, WimpInstrQueue* add)
+{
+	if (queue == NULL || add == NULL)
+	{
+		return WIMP_INSTRUCTION_FAIL;
+	}
+
+	//Iterate queue, adding to back
+	WimpInstrNode currentnode = wimp_instr_queue_pop(add);
+	while (currentnode != NULL)
+	{
+		wimp_instr_queue_add_existing(queue, currentnode);
+		currentnode = wimp_instr_queue_pop(add);
+	}
+	return WIMP_INSTRUCTION_SUCCESS;
+}
+
+int32_t wimp_instr_queue_prepend_queue(WimpInstrQueue* queue, WimpInstrQueue* add)
+{
+	//Iterate normal queue, adding to back of add. Then swap the queues.
+	int32_t success = wimp_instr_queue_append_queue(add, queue);
+	if (success == WIMP_INSTRUCTION_SUCCESS)
+	{
+		WimpInstrQueue queue_orig = *queue;
+		WimpInstrQueue add_orig = *add;
+		*queue = add_orig;
+		*add = queue_orig;
+	}
+	return success;
+}
+
 WimpInstrNode wimp_instr_queue_pop(WimpInstrQueue* queue)
 {
 	//Return null if the queue is exhausted
@@ -210,6 +241,12 @@ WimpInstrMeta wimp_instr_get_from_buffer(uint8_t* buffer, size_t buffsize)
 WimpInstrMeta wimp_instr_get_from_node(WimpInstrNode node)
 {
 	return wimp_instr_get_from_buffer(node->instr.instruction, node->instr.instruction_bytes);
+}
+
+bool wimp_instr_check(const char* instr1, const char* instr2)
+{
+	//For now is just exportable strcmp
+	return strcmp(instr1, instr2) == 0;
 }
 
 size_t wimp_instr_get_instruction_count(WimpInstrQueue* queue, const char* instruction)

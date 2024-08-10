@@ -318,6 +318,52 @@ void wimp_server_add(WimpServer* server, const char* dest, const char* instr, co
 	wimp_instr_queue_add(&server->outgoingmsg, instr_bundle.instr, instr_bundle.size);
 }
 
+WimpInstrNode wimp_server_wait_response(WimpServer* server, const char* instr, int32_t timeout)
+{
+	//Create a temporary instruction queue to pass instructions over to
+	WimpInstrQueue tmpqueue = wimp_create_instr_queue();
+	WimpInstrNode node = NULL;
+	bool disconnect = false;
+	while (!disconnect)
+	{
+		//Reading stage
+		wimp_instr_queue_high_prio_lock(&server->incomingmsg);
+		WimpInstrNode currentnode = wimp_instr_queue_pop(&server->incomingmsg);
+		while (currentnode != NULL)
+		{
+			//Extract the instruction and process
+			WimpInstrMeta meta = wimp_instr_get_from_node(currentnode);
+			if (wimp_instr_check(meta.instr, instr))
+			{
+				node = currentnode;
+				disconnect = true;
+				break;
+			}
+			else if (wimp_instr_check(meta.instr, WIMP_INSTRUCTION_EXIT))
+			{
+				wimp_instr_node_free(currentnode);
+				disconnect = true;
+				break;
+			}
+			else
+			{
+				//Add node to tmp queue
+				wimp_instr_queue_add_existing(&tmpqueue, currentnode);
+			}
+			currentnode = wimp_instr_queue_pop(&server->incomingmsg);
+		}
+		wimp_instr_queue_high_prio_unlock(&server->incomingmsg);
+	}
+
+	//Add tmp queue to front of incoming queue
+	wimp_instr_queue_high_prio_lock(&server->incomingmsg);
+	int32_t success = wimp_instr_queue_prepend_queue(&server->incomingmsg, &tmpqueue);
+	assert(success == WIMP_INSTRUCTION_SUCCESS && "Error recombining queues!");
+	wimp_instr_queue_high_prio_unlock(&server->incomingmsg);
+	wimp_instr_queue_free(tmpqueue);
+	return node;
+}
+
 bool wimp_server_instr_routed(WimpServer* server, const char* dest_process, WimpInstrNode instrnode)
 {
 	if (strcmp(dest_process, server->process_name) != 0)

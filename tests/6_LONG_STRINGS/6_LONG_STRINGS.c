@@ -12,6 +12,7 @@
 PASSMAT PASS_MATRIX[] =
 {
 	{ "RAW LONG MESSAGE", false, },
+	{ "RESPONSE AWAITING", false},
 	{ "PACKED LONG MESSAGE", false},
 	{ "PACKED MULTIPLE LONG MESSAGES", false},
 };
@@ -19,8 +20,9 @@ PASSMAT PASS_MATRIX[] =
 enum TEST_ENUMS
 {
 	RAW_LONG_MESSAGE,
+	AWAITING_RESPONSE,
 	PACKED_LONG_MESSAGE,
-	PACKED_MULTIPLE_LONG_MESSAGES
+	PACKED_MULTIPLE_LONG_MESSAGES,
 };
 
 const char* long_message = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.";
@@ -77,12 +79,16 @@ int client_main_entry(int argc, char** argv)
 	wimp_add_local_server("master", "long_message", long_message, ((strlen(long_message) + 1) * sizeof(char)));
 	wimp_server_send_instructions(server);
 
-	//2. Send the packed long message
+	//2. Send response to await
+	wimp_add_local_server("master", "response_await", NULL, 0);
+	wimp_server_send_instructions(server);
+
+	//3. Send the packed long message
 	WimpStrPack pack2 = wimp_instr_pack_strings(1, long_message);
 	wimp_add_local_server("master", "long_message_packed", pack2, pack2->pack_size);
 	wimp_server_send_instructions(server);
 
-	//3. Send the multiple packed long messages
+	//4. Send the multiple packed long messages
 	WimpStrPack pack3 = wimp_instr_pack_strings(4, long_message, long_message, long_message, long_message);
 	wimp_add_local_server("master", "long_messages_packed", pack3, pack3->pack_size);
 	wimp_server_send_instructions(server);
@@ -156,14 +162,39 @@ int main(void)
 		while (currentnode != NULL)
 		{
 			WimpInstrMeta meta = wimp_instr_get_from_node(currentnode);
-			if (strcmp(meta.instr, "long_message") == 0)
+			if (wimp_instr_check(meta.instr, "long_message"))
 			{
 				if (strcmp(meta.args, long_message) == 0)
 				{
 					PASS_MATRIX[RAW_LONG_MESSAGE].status = true;
 				}
+				wimp_instr_node_free(currentnode);
+				disconnect = true;
+				break;
 			}
-			else if (strcmp(meta.instr, "long_message_packed") == 0)
+			currentnode = wimp_instr_queue_pop(&server->incomingmsg);
+		}
+		wimp_instr_queue_high_prio_unlock(&server->incomingmsg);
+		p_uthread_sleep(1);
+	}
+
+	//Await the response
+	WimpInstrNode response = wimp_server_wait_response(server, "response_await", 0);
+	if (response)
+	{
+		PASS_MATRIX[AWAITING_RESPONSE].status = true;
+		wimp_instr_node_free(response);
+	}
+
+	disconnect = false;
+	while (!disconnect)
+	{
+		wimp_instr_queue_high_prio_lock(&server->incomingmsg);
+		WimpInstrNode currentnode = wimp_instr_queue_pop(&server->incomingmsg);
+		while (currentnode != NULL)
+		{
+			WimpInstrMeta meta = wimp_instr_get_from_node(currentnode);
+			if (wimp_instr_check(meta.instr, "long_message_packed"))
 			{
 				WimpStrPack pack = meta.args;
 				if (strcmp(wimp_instr_pack_get_string(pack, 0), long_message) == 0)
@@ -171,7 +202,7 @@ int main(void)
 					PASS_MATRIX[PACKED_LONG_MESSAGE].status = true;
 				}
 			}
-			else if (strcmp(meta.instr, "long_messages_packed") == 0)
+			else if (wimp_instr_check(meta.instr, "long_messages_packed"))
 			{
 				WimpStrPack pack = meta.args;
 				bool success = true;
@@ -186,7 +217,7 @@ int main(void)
 				}
 				PASS_MATRIX[PACKED_MULTIPLE_LONG_MESSAGES].status = success;
 			}
-			else if (strcmp(meta.instr, WIMP_INSTRUCTION_EXIT) == 0)
+			else if (wimp_instr_check(meta.instr, WIMP_INSTRUCTION_EXIT))
 			{
 				wimp_log("\n");
 				disconnect = true;
@@ -206,6 +237,6 @@ int main(void)
 	//Cleanup
 	wimp_shutdown();
 
-	wimp_test_validate_passmat(PASS_MATRIX, 3);
+	wimp_test_validate_passmat(PASS_MATRIX, 4);
 	return 0;
 }
