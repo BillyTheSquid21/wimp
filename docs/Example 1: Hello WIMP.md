@@ -1,7 +1,7 @@
 
 ### Hello WIMP
 
-Creating a WIMP system is pretty simple, but first you'll want to ensure everything is setup correctly. This tutorial is for using WIMP in C/C++ and so will use CMake - this is currently the only supported build automation tool, although I'm sure an enterprising individual can use the project with alternative systems such as MAKE.
+Creating a WIMP system is pretty simple, but first you'll want to ensure everything is setup correctly. This tutorial is for using WIMP in C/C++ and so will use CMake - this is currently the only supported build automation tool, although I'm sure an enterprising individual can use the project with alternative systems such as MAKE. This tutorial covers a lot of boilerplate, so bear with it, later tutorials (shouldn't) be as long!
 
 ### CMake
 
@@ -231,4 +231,105 @@ This now gives us our port variables. Now, the next part involves both the clien
 So we added a lot of new code. I'll break down the broad strokes of what we're doing before I explain the functions themselves.
 
 Both the master and client want to start a reciever thread. This is essentially a thread that recieves instructions from a connected server, and adds them to the server's incoming queue so that it doesn't interrupt the potentially heavy task the server might be doing. This is how the instructions can be fire and forget. The master process starts a reciever that recieves from the client process, and vice versa. We then accept each process on each end which sends a handshake to each respective reciever and confirms the connection. We now have a relationship that looks like this:
+
 ![Untitled Diagram drawio](https://github.com/user-attachments/assets/98456c35-385a-494a-8a97-08a9ef352c10)
+So our processes can send and recieve from each other now. But let's go into the actual code changes.
+
+Both processes are mostly similar changes so I'll go over them together. For both processes we need to get the reciever arguments - as they are on a separate thread they also need some information to know where to look for their respective server connection. We call [wimp_get_reciever_args(...)](https://docs.hdoc.io/billythesquid/WIMP/f2BB36AD9FD0DED8F.html) and for each we specify the name of the process to write to (i.e. the process starting the thread), the domain to recieve from, the port to recieve from, the queue to write to and the active flag of the local server. To access those last two we get our local server pointer with [wimp_get_local_server()](https://docs.hdoc.io/billythesquid/WIMP/fDF892825DF51C8E8.html) and access the respective fields. We then start the reciever thread with [wimp_start_reciever_thread()](https://docs.hdoc.io/billythesquid/WIMP/fD3CE639BDC74A9D6.html) and specify the name of the process to recieve from, the domain the reciever writes to, the port the reciever writes to, and the reciever args previously made. We then use [wimp_process_table_add()](https://docs.hdoc.io/billythesquid/WIMP/f68A93A01FC416282.html) to add the connection to the respective other process to the server process table - a table that contains the information of the server connections - and specify the relation - `WIMP_Process_Child` for the master process's connection to the child and `WIMP_Process_Parent` for the child's connection to the master process. *Finally* we accept the connection on each end with [wimp_server_process_accept(...)](https://docs.hdoc.io/billythesquid/WIMP/f246FCFF51E90C1C5.html) - making sure to specify the number of connections to accept as multiple could be accepted with a variadic parameter - and the two processes are linked. The program should now print that both sides connected successfully!
+
+### Simple connection loop
+
+So we have the simplest possible connection, but how do we send instructions? We simply use [wimp_add_local_server(...)](https://docs.hdoc.io/billythesquid/WIMP/f4693CB6EB14AF573.html) to add an instruction to the server outgoing queue (directed at the target server) and [wimp_server_send_instructions(...)](https://docs.hdoc.io/billythesquid/WIMP/fB084685A0237FB1C.html) to send them - this means we can queue a lot of instructions up before sending. On the client side, let's send some arbitrary instructions to the master process:
+
+    //Add instructions
+    wimp_add_local_server("master", "blank_instr", NULL, 0);
+    wimp_add_local_server("master", "say_hello", NULL, 0);
+    
+    const  char*  echo_string  =  "Echo!";
+    wimp_add_local_server("master", "echo", echo_string, (strlen(echo_string) +  1) *  sizeof(char));
+    wimp_log_success("Sent instructions!\n");
+    wimp_add_local_server("master", WIMP_INSTRUCTION_EXIT, NULL, 0);
+    wimp_server_send_instructions(server);
+    p_uthread_sleep(1000);
+
+Here we just send some arbitrary instructions - plus the special WIMP exit instruction at the end. In [wimp_add_local_server(...)](https://docs.hdoc.io/billythesquid/WIMP/f4693CB6EB14AF573.html) we simply specify the destination server, the string of the instruction, and a pointer to the arguments (if any exist) and their size. We then send with [wimp_server_send_instructions(server)](https://docs.hdoc.io/billythesquid/WIMP/fB084685A0237FB1C.html) using our local server pointer from earlier, and the instructions are sent to the master server! And if you were wondering, the special exit instruction tells the recieving server to close, and closes the recievers neatly in the process - any user defined exit command wouldn't shut the recievers down! We also use the **wimp_log** set of functions now - they act like printf except once a parent is connected they print the message to the parent process console and neatly tag them with the process name - *as long as _DEBUG is defined!* If it isn't, it won't print anything so feel free to use printf instead if you prefer.
+
+Then, on the master process side, we need to recieve these instructions:
+
+    //Simple loop
+    bool disconnect = false;
+    while (!disconnect)
+    {
+    	wimp_instr_queue_high_prio_lock(&server->incomingmsg);
+    	WimpInstrNode currentnode = wimp_instr_queue_pop(&server->incomingmsg);
+    	while (currentnode != NULL)
+    	{
+    		WimpInstrMeta meta = wimp_instr_get_from_node(currentnode);
+    		if (wimp_instr_check(meta.instr, "blank_instr"))
+    		{
+    			wimp_log("\n");
+    		}
+    		else if (wimp_instr_check(meta.instr, "say_hello"))
+    		{
+    			wimp_log("HELLO!\n");
+    		}
+    		else if (wimp_instr_check(meta.instr, "echo"))
+    		{
+    			//Get the arguments
+    			const char* echo_string = (const char*)meta.args;
+    			wimp_log("%s\n", echo_string);
+    		}
+    		else if (wimp_instr_check(meta.instr, WIMP_INSTRUCTION_LOG))
+    		{
+    			wimp_log(meta.args);
+    		}
+    		else if (wimp_instr_check(meta.instr, WIMP_INSTRUCTION_EXIT))
+    		{
+    			wimp_log("\n");
+    			disconnect = true;
+    		}
+    
+    		wimp_instr_node_free(currentnode);
+    		currentnode = wimp_instr_queue_pop(&server->incomingmsg);
+    	}
+    	wimp_instr_queue_high_prio_unlock(&server->incomingmsg);
+    }
+
+There are two loops in this situation: the outer program loop, and the inner instruction read loop. The program loop repeats until the exit signal is recieved. For each iteration of the program loop, the incoming instruction queue is locked (to prevent the reciever thread sneakily writing to it!), and the first instruction node is popped from the queue with [wimp_instr_queue_pop(&server->incomingmsg)](https://docs.hdoc.io/billythesquid/WIMP/fEC31211799FE536B.html). This instruction node contains the information of one instruction, and so if one wasn't sent, it will be NULL and the inner loop is skipped. The inner loop just keeps popping the next instruction until we have no more. Popping the node also implicitly passes us ownership so we need to free each one when we're done. Then we extract the instruction data from the node with [wimp_instr_get_from_node](https://docs.hdoc.io/billythesquid/WIMP/f5E47EA49A9889DF6.html) which lets us access the instruction data as if they were fields in a struct (actually they are laid out in a contiguous block of memory but as the field sizes aren't known at compile time accessing them any other way is a nightmare!). We can then check each instruction with [wimp_instr_check(...)](https://docs.hdoc.io/billythesquid/WIMP/f92171AE6E06C8E17.html) and perform the desired action. We add log in to the checking as when a child process uses [wimp_log(...)](https://docs.hdoc.io/billythesquid/WIMP/f6187A2C6E54E453F.html) it sends the log string to it's parent (and it's parents parent, and so on) to make sure the logs are all printed to the same console - so we need to check and print the message somewhere!
+
+This should give a console output that looks something like this:
+
+    WIMP Init
+    Server created! master 127.0.0.1:39319
+    WIMP succeeded on port: 39319
+    Starting client!
+    Starting Reciever for master recieving from client
+    Server master waiting to accept 1 connections
+    Server created! client 127.0.0.1:39479
+    WIMP client succeeded on port: 39479
+    Starting Reciever for client recieving from master
+    master reciever failed to connect - trying again...
+    Server client waiting to accept 1 connections
+    client reciever connection at 127.0.0.1:39319
+    Valid process found: client
+    Adding to master process table: client
+    Process added!
+    master found every process!
+    Successfully linked to client!
+    master reciever failed to connect - trying again...
+    master reciever connection at 127.0.0.1:39479
+    Valid process found: master
+    Adding to client process table: master
+    Process added!
+    Successfully linked to master!
+    [client] client found every process!
+    
+    HELLO!
+    Echo!
+    [client] Sent instructions!
+And that's it! A simple connection between two processes than can send instructions! The full code is located [here](https://github.com/BillyTheSquid21/wimp/blob/master/examples/hello-wimp.c) if you want to see it all together.
+
+### Next Steps
+
+With this set up, the next steps can be to make the client also operate as a loop so it can also recieve from the master. Currently this is the only tutorial, but the [tests folder](https://github.com/BillyTheSquid21/wimp/tree/master/tests) in the main repository contains some other usage examples for different features with some documentation.
+
