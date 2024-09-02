@@ -13,6 +13,7 @@
 #include <wimp_instruction.h>
 #include <wimp_log.h>
 
+/// @brief The result of wimp server operations
 enum WimpServerResult
 {
 	WIMP_SERVER_SUCCESS =  0, ///< Result if server operation is successful
@@ -23,8 +24,6 @@ enum WimpServerResult
 
 typedef int32_t WimpServerType;
 
-///
-/// @struct WimpServer
 ///
 /// @brief The struct containing the WIMP server information
 ///

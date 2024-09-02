@@ -1,6 +1,6 @@
 [project]
 name = "WIMP"
-version = "0.1.1"
+version = "0.2.0"
 
 git_repo_url = "https://github.com/BillyTheSquid21/wimp/"
 git_default_branch = "master"
@@ -17,5 +17,12 @@ paths = [
 paths = [
     "/dependencies/",
     "/tests/",
-    "/wimp/src/utility/"
+    "/wimp/src/utility/",
+    "/wimp/src/wimp_data.c",
+    "/wimp/src/wimp_instruction.c",
+    "/wimp/src/wimp_log.c",
+    "/wimp/src/wimp_process_table.c",
+    "/wimp/src/wimp_process.c",
+    "/wimp/src/wimp_reciever.c",
+    "/wimp/src/wimp_server.c",
 ]

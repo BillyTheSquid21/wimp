@@ -1,3 +1,4 @@
+
 # Overview
 
 Will's Interesting Message Protocol (WIMP) is designed to make it easier to make modular programs with many decoupled processes. It relies on plibsys for platform independent sockets, threads and shared memory. It works by each process having at least one associated "server" which recieves instructions from other servers by way of a "reciever" process, one for each process that the server is directly connected to. Servers and recievers are simply TCP sockets with some additional features, such as a instruction queues. A simple system with a master process and two other processes might look like this:
@@ -31,19 +32,21 @@ Planned Features:
 
 # How to use
 
+Full documentation is available [here](https://docs.hdoc.io/billythesquid/WIMP/index.html)
+
 ### Library initializing
 
 To use the library simply include the "wimp.h" header. Initializing the library is very simple, and is only one call:
-```wimp_init()```
+[wimp_init()](https://docs.hdoc.io/billythesquid/WIMP/fBCB46A4E40C621C4.html)
 
 To shutdown, simply call a corresponding:
-```wimp_shutdown();```
+[wimp_shutdown()](https://docs.hdoc.io/billythesquid/WIMP/fAD292975D80D2D11.html)
 
 These calls should be called at the start and end of a process respectively. Reference counting is used to ensure that the library stays active for the duration of a program.
 
 ### Create a server for a process
 
-A server only needs two things, an address, and a port. The port *must* be unique to the process. A function therefore is provided to assign a local random unused port, although any port can be used if desired. A server can be directly created, however the preferred method is to create a local server. This creates a thread local server that can be accessed from anywhere in the thread without having to pass a struct pointer around, which can also be a benefit when calling from non C/C++ code. A local server state could be set up like this:
+A server only needs two things, an address, and a port. The port *must* be unique to the process. A function therefore is provided to assign a local random unused port, although any port can be used if desired. A server can be directly created, however the preferred method is to create a local server. This creates a thread local server that can be accessed from anywhere in the thread without having to pass a struct pointer around, which can also be a benefit when calling from non C/C++ code. A local server state could be set up by calling [wimp_init_local_server()](https://docs.hdoc.io/billythesquid/WIMP/f52B924C25076A05B.html) like this:
 
 ````
 int32_t master_port = wimp_assign_unused_local_port();
@@ -51,7 +54,7 @@ wimp_init_local_server("master", "127.0.0.1", master_port);
 WimpServer* server = wimp_get_local_server();
 ````
 
-to cleanup the local server, call ```wimp_close_local_server();```
+to cleanup the local server, call [wimp_close_local_server()](https://docs.hdoc.io/billythesquid/WIMP/f7AAFE5F6C6C04A8A.html)
 
 ### Launch a process
 
@@ -144,9 +147,9 @@ When recieving instructions the queue should be locked with the high prio flag -
 
 ### Shared Data
 
-A shared data space can be created by calling ```wimp_data_init("data_space_name")``` and destroyed by calling ```wimp_data_free()```. This *must* only be called once per program, in a master process that lasts the duration that data may be accessed. Any other process must instead link to the initialized data by calling ```wimp_data_link_to_process("data_space_name")``` and unlinked by calling ```wimp_data_unlink_from_process()```. Each data space has a specific amount of slots defined by the macro ```WIMP_MAX_SHARED_SLOTS``` (normally 64).
+A shared data space can be created by calling [wimp_data_init("data_space_name")](https://docs.hdoc.io/billythesquid/WIMP/f15D3A968992199E7.html) and destroyed by calling [wimp_data_free()](https://docs.hdoc.io/billythesquid/WIMP/f58A37E54B16836C8.html). This *must* only be called once per program, in a master process that lasts the duration that data may be accessed. Any other process must instead link to the initialized data by calling [wimp_data_link_to_process("data_space_name")](https://docs.hdoc.io/billythesquid/WIMP/f0B2CCC120AD23D1F.html) and unlinked by calling [wimp_data_unlink_from_process()](https://docs.hdoc.io/billythesquid/WIMP/fA3E5D92036D59575.html). Each data space has a specific amount of slots defined by the macro ```WIMP_MAX_SHARED_SLOTS``` (normally 64).
 
-Reserving data is simple, and can be done by calling ```wimp_data_reserve("data_name", data_size)```. It is accessed through an arena structure, an example of access would be like this:
+Reserving data is simple, and can be done by calling [wimp_data_reserve("data_name", data_size)](https://docs.hdoc.io/billythesquid/WIMP/f87DFDE8016ED5DB7.html). It is accessed through an arena structure, an example of access would be like this:
 
 ```
 WimpDataArena arena;
@@ -214,3 +217,4 @@ Additional Flags
 
 To build the tests:
 -DWIMP_BUILD_TESTS=1
+
