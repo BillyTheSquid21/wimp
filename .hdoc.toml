@@ -1,0 +1,16 @@
+[project]
+name = "WIMP"
+version = "0.1.1"
+
+git_repo_url = "https://github.com/BillyTheSquid21/wimp/"
+git_default_branch = "master"
+
+[paths]
+compile_commands = "build/compile_commands.json"
+
+[ignore]
+paths = [
+    "/dependencies/",
+    "/tests/",
+    "/wimp/src/utility/"
+]

@@ -47,6 +47,8 @@ typedef struct _WimpServer
 WIMP_API WimpServer* wimp_get_local_server(void);
 
 /*
+* @brief Initializes the local server
+*
 * Initializes the local thread server. Must be closed afterwards. The local thread
 * server provides an easy point of contact for sending instructions.
 * 
