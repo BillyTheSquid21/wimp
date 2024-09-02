@@ -2,7 +2,7 @@
 
 Will's Interesting Message Protocol (WIMP) is designed to make it easier to make modular programs with many decoupled processes. It relies on plibsys for platform independent sockets, threads and shared memory. It works by each process having at least one associated "server" which recieves instructions from other servers by way of a "reciever" process, one for each process that the server is directly connected to. Servers and recievers are simply TCP sockets with some additional features, such as a instruction queues. A simple system with a master process and two other processes might look like this:
 
-![Simple drawio(4)](https://github.com/BillyTheSquid21/Wills-Interesting-Message-Protocol/assets/97798337/fa7d79f9-8d31-4416-a8a0-3352fd36ff20)
+![Simple drawio(5)](https://github.com/user-attachments/assets/223626e3-2ba0-49cf-a092-27eaea5e2c24)
 
 (Reciever names are written as "source-destination-reciever")
 
