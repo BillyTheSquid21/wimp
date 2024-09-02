@@ -9,8 +9,13 @@ git_default_branch = "master"
 compile_commands = "build/compile_commands.json"
 
 [pages]
+homepage = "docs/Project Overview.md"
 paths = [
-    "README.md"
+    "docs/Project Overview.md",
+    "docs/Getting Started.md",
+    "docs/Building.md",
+    "docs/Examples.md",
+    "docs/Example 1: Hello WIMP.md"
 ]
 
 [ignore]

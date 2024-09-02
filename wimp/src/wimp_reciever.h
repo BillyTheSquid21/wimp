@@ -4,6 +4,8 @@
 /// This header defines the interfaces to the wimp_reciever
 ///
 
+///TODO: I SPELLED RECEIVER WRONG THIS WHOLE TIME I SHOULD FIX THIS
+
 #ifndef WIMP_RECIEVER_H
 #define WIMP_RECIEVER_H
 
