@@ -206,7 +206,7 @@ int32_t wimp_get_running_executable_directory(char* path)
 
 	if (last_slash_index == MAX_DIRECTORY_PATH_LEN)
 	{
-		wimp_log_fail("Issue reading the path of the program! %s\n", path_buffer);
+		wimp_log_fail("Issue reading the path of the program! %s\n", path);
 		return WIMP_PROCESS_FAIL;
 	}
 

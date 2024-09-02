@@ -8,6 +8,11 @@ git_default_branch = "master"
 [paths]
 compile_commands = "build/compile_commands.json"
 
+[pages]
+paths = [
+    "README.md"
+]
+
 [ignore]
 paths = [
     "/dependencies/",
