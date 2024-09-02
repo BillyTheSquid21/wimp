@@ -231,6 +231,4 @@ This now gives us our port variables. Now, the next part involves both the clien
 So we added a lot of new code. I'll break down the broad strokes of what we're doing before I explain the functions themselves.
 
 Both the master and client want to start a reciever thread. This is essentially a thread that recieves instructions from a connected server, and adds them to the server's incoming queue so that it doesn't interrupt the potentially heavy task the server might be doing. This is how the instructions can be fire and forget. The master process starts a reciever that recieves from the client process, and vice versa. We then accept each process on each end which sends a handshake to each respective reciever and confirms the connection. We now have a relationship that looks like this:
-(insert on github)
-
-
+![Untitled Diagram drawio](https://github.com/user-attachments/assets/98456c35-385a-494a-8a97-08a9ef352c10)
