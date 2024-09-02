@@ -1,7 +1,7 @@
 
 ### Hello WIMP
 
-Creating a WIMP system is pretty simple, but first you'll want to ensure everything is setup correctly. This tutorial is for using WIMP in C/C++ and so will use CMake - this is currently the only supported build automation tool, although I'm sure an enterprising individual can use the project with alternative systems such as MAKE. This tutorial covers a lot of boilerplate, so bear with it, later tutorials (shouldn't) be as long!
+Creating a WIMP system is pretty simple, but first you'll want to ensure everything is setup correctly. This tutorial is for using WIMP in C/C++ and so will use CMake - this is currently the only supported build automation tool, although I'm sure an enterprising individual can use the project with alternative systems such as MAKE. This tutorial covers a lot of boilerplate, so it is a bit long, if you want to skip to the final code, it's located [here!](https://github.com/BillyTheSquid21/wimp/blob/master/examples/hello-wimp.c)
 
 ### CMake
 
