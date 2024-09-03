@@ -32,9 +32,9 @@ Planned Features:
 
 # How to use
 
-Full documentation is available [here](https://docs.hdoc.io/billythesquid/WIMP/index.html).
+Full documentation is available [here](https://billythesquid21.github.io/wimp/).
 
-For getting started, check out the guide [here](https://docs.hdoc.io/billythesquid/WIMP/docGetting%20Started.html)
+For getting started, check out the guide [here](https://billythesquid21.github.io/wimp/docGettingStarted.html)
 
 ### Other notes
 
