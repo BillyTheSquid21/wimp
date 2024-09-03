@@ -10,13 +10,12 @@ output_dir = "docs"
 compile_commands = "build/compile_commands.json"
 
 [pages]
-homepage = "docs/Project Overview.md"
+homepage = "docs/ProjectOverview.md"
 paths = [
-    "docs/Project Overview.md",
-    "docs/Getting Started.md",
+    "docs/ProjectOverview.md",
+    "docs/GettingStarted.md",
     "docs/Building.md",
-    "docs/Examples.md",
-    "docs/Example 1: Hello WIMP.md"
+    "docs/Example1-HelloWIMP.md"
 ]
 
 [ignore]
