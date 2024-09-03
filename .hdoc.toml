@@ -12,10 +12,11 @@ compile_commands = "build/compile_commands.json"
 [pages]
 homepage = "docs/ProjectOverview.md"
 paths = [
-    "docs/ProjectOverview.md",
-    "docs/GettingStarted.md",
+    "docs/Project-Overview.md",
+    "docs/Getting-Started.md",
     "docs/Building.md",
-    "docs/Example1-HelloWIMP.md"
+    "docs/Examples.md",
+    "docs/Hello-WIMP.md"
 ]
 
 [ignore]
