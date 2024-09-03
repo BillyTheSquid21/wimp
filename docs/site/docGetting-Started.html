@@ -1,0 +1,126 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"></meta><meta content="width=device-width, initial-scale=1" name="viewport"></meta><title>Getting-Started</title><link href="styles.css" rel="stylesheet"></link><script src="highlight.min.js"></script><script>hljs.highlightAll();</script><link href="katex.min.css" rel="stylesheet"></link><script src="katex.min.js"></script><script src="auto-render.min.js"></script><script>
+    document.addEventListener("DOMContentLoaded", function() {
+      renderMathInElement(document.body, {
+        delimiters: [
+          {left: '$$', right: '$$', display: true},
+          {left: '$', right: '$', display: false},
+        ],
+      });
+    });
+  </script><link href="apple-touch-icon.png" sizes="180x180" rel="apple-touch-icon"></link><link href="favicon-32x32.png" sizes="32x32" type="image/png" rel="icon"></link><link href="favicon-16x16.png" sizes="16x16" type="image/png" rel="icon"></link></head><body><div id="wrapper"><section class="section"><div class="container"><div class="columns"><aside class="column is-one-fifth"><details display="none" list-style="none" open=""><summary class="is-size-4">WIMP 0.2.0</summary><ul class="menu-list"><p class="menu-label">Navigation</p><li><a href="index.html">Home</a></li><li><a href="search.html">Search</a></li><li><a href="https://github.com/BillyTheSquid21/wimp/">Repository</a></li><li><a href="https://hdoc.io">Made with hdoc</a></li><p class="menu-label">Pages</p><li><a href="docProject-Overview.html">Project-Overview</a></li><li><a href="docGetting-Started.html">Getting-Started</a></li><li><a href="docBuilding.html">Building</a></li><li><a href="docExamples.html">Examples</a></li><li><a href="docHello-WIMP.html">Hello-WIMP</a></li><p class="menu-label">API Documentation</p><li><a href="functions.html">Functions</a></li><li><a href="records.html">Records</a></li><li><a href="enums.html">Enums</a></li><li><a href="namespaces.html">Namespaces</a></li></ul></details></aside><div class="column" style="overflow-x: auto"><main class="content"><h3>CMake</h3>
+<p>To use WIMP in a CMake project, ensure the repository has been cloned recursively, as otherwise the dependencies will not be included. This should be to a place in your own CMake project. Then all you need to do is use <code>add_subdirectory(wimp)</code> in your CMakeLists.txt file. And that's all that's needed to include the project!</p>
+<h3>Library Initialization</h3>
+<p>To use the library simply include the &quot;wimp.h&quot; header. Initializing the library is very simple, and is only one call:
+<a href="https://docs.hdoc.io/billythesquid/WIMP/fBCB46A4E40C621C4.html">wimp_init()</a></p>
+<p>To shutdown, simply call a corresponding:
+<a href="https://docs.hdoc.io/billythesquid/WIMP/fAD292975D80D2D11.html">wimp_shutdown()</a></p>
+<p>These calls should be called at the start and end of a process respectively. Reference counting is used to ensure that the library stays active for the duration of a program.</p>
+<h3>Create a server for a process</h3>
+<p>A server only needs two things, an address, and a port. The port <em>must</em> be unique to the process. A function therefore is provided to assign a local random unused port, although any port can be used if desired. A server can be directly created, however the preferred method is to create a local server. This creates a thread local server that can be accessed from anywhere in the thread without having to pass a struct pointer around, which can also be a benefit when calling from non C/C++ code. A local server state could be set up by calling <a href="https://docs.hdoc.io/billythesquid/WIMP/f52B924C25076A05B.html">wimp_init_local_server()</a> like this:</p>
+<pre><code>int32_t master_port = wimp_assign_unused_local_port();
+wimp_init_local_server(&quot;master&quot;, &quot;127.0.0.1&quot;, master_port);
+WimpServer* server = wimp_get_local_server();
+</code></pre>
+<p>to cleanup the local server, call <a href="https://docs.hdoc.io/billythesquid/WIMP/f7AAFE5F6C6C04A8A.html">wimp_close_local_server()</a></p>
+<h3>Launch a process</h3>
+<p>A process can either be launched from a C/C++ function pointer, or from an executable in the binary directory. Both the parent and the child process need to know each other's address and port, so unless the port is known at compile time, the process needs to be launched with the addresses and ports provided as arguments. This is done by creating a <code>WimpMainEntry</code> struct instance. An example of both a binary launch and a function pointer launch would look like this:</p>
+<pre><code>//Get unused random ports for the master and end process to run on
+int32_t master_port = wimp_assign_unused_local_port();
+int32_t end_process_port1 = wimp_assign_unused_local_port();
+int32_t end_process_port2 = wimp_assign_unused_local_port();
+
+//The ports are converted to strings for use as command line arguments
+WimpPortStr port_string1;
+wimp_port_to_string(end_process_port1, port_string1);
+
+WimpPortStr port_string2;
+wimp_port_to_string(end_process_port2, port_string2);
+
+WimpPortStr master_port_string;
+wimp_port_to_string(master_port, master_port_string);
+
+//Start the first client process, creating the command line arguments and creating a new thread
+WimpMainEntry entry1 = wimp_get_entry(4, &quot;--master-port&quot;, master_port_string, &quot;--process-port&quot;, port_string1);
+wimp_start_library_process(&quot;test_process1&quot;, (MAIN_FUNC_PTR)&amp;client_main_lib_entry, P_UTHREAD_PRIORITY_LOW, entry1);
+
+//Start the second client
+WimpMainEntry entry2 = wimp_get_entry(4, &quot;--master-port&quot;, master_port_string, &quot;--process-port&quot;, port_string2);
+wimp_start_executable_process(&quot;test_process2&quot;, &quot;executable.exe&quot;, entry2);
+</code></pre>
+<p>Both the binary and the functions ran as processes should have the standard C entry pointer arguements, e.g. <code>int client_main_entry(int argc, char** argv)</code></p>
+<h3>Setup the reciever and connect to the server</h3>
+<p>For each other process a process wants to recieve from, whether thats a master or child, you want to create a reciever thread, add the process to recieve from to the server process table, and accept the connection:</p>
+<pre><code>//Start a reciever thread for the client process that the master started
+RecieverArgs args = wimp_get_reciever_args(&quot;master&quot;, &quot;127.0.0.1&quot;, end_process_port, &amp;server-&gt;incomingmsg);
+wimp_start_reciever_thread(&quot;test_process&quot;, &quot;127.0.0.1&quot;, master_port, args);
+
+//Add the test process to the table for tracking
+wimp_process_table_add(&amp;server-&gt;ptable, &quot;test_process&quot;, &quot;127.0.0.1&quot;, end_process_port, WIMP_Process_Child, NULL);
+
+//Accept the connection to the master-&gt;test_process reciever, started by the test_process
+wimp_server_process_accept(server, 1, &quot;test_process&quot;);
+</code></pre>
+<h3>Recieving/Sending instructions</h3>
+<p>By this point the servers are connected, but aren't sending anything. A while loop can easily be set up to recieve instructions - this isn't strictly necessary but the user needs to consider how their program will actually run. Instructions are recieved as nodes in an instruction queue, from which the string based metadata can be read and used. An example loop would look like this:</p>
+<pre><code>//This is a simple loop. 
+bool disconnect = false;
+while (!disconnect)
+{
+	wimp_instr_queue_high_prio_lock(&amp;server-&gt;incomingmsg);
+	WimpInstrNode currentnode = wimp_instr_queue_pop(&amp;server-&gt;incomingmsg);
+	while (currentnode != NULL)
+	{
+		WimpInstrMeta meta = wimp_instr_get_from_node(currentnode);
+		if (wimp_instr_check(meta.instr, &quot;blank_instr&quot;) == 0)
+		{
+			wimp_log(&quot;\n&quot;);
+		}
+		else if (wimp_instr_check(meta.instr, &quot;say_hello&quot;) == 0)
+		{
+			wimp_log(&quot;HELLO!\n&quot;);
+		}
+		else if (wimp_instr_check(meta.instr, &quot;echo&quot;) == 0)
+		{
+			//Get the arguments
+			const char* echo_string = (const char*)meta.args;
+			wimp_log(&quot;%s\n&quot;, echo_string);
+		}
+		else if (wimp_instr_check(meta.instr, WIMP_INSTRUCTION_EXIT) == 0)
+		{
+			wimp_log(&quot;\n&quot;);
+			disconnect = true;
+		}
+
+		wimp_instr_node_free(currentnode);
+		currentnode = wimp_instr_queue_pop(&amp;server-&gt;incomingmsg);
+	}
+	wimp_instr_queue_high_prio_unlock(&amp;server-&gt;incomingmsg);
+}
+</code></pre>
+<p>When recieving instructions the queue should be locked with the high prio flag - this is to allow all instructions in the queue to be read quickly without the reciever writing instructions. Then an inner loop is formed by checking if the node is null, while processing each node and popping to get the next.</p>
+<h3>Shared Data</h3>
+<p>A shared data space can be created by calling <a href="https://docs.hdoc.io/billythesquid/WIMP/f15D3A968992199E7.html">wimp_data_init(&quot;data_space_name&quot;)</a> and destroyed by calling <a href="https://docs.hdoc.io/billythesquid/WIMP/f58A37E54B16836C8.html">wimp_data_free()</a>. This <em>must</em> only be called once per program, in a master process that lasts the duration that data may be accessed. Any other process must instead link to the initialized data by calling <a href="https://docs.hdoc.io/billythesquid/WIMP/f0B2CCC120AD23D1F.html">wimp_data_link_to_process(&quot;data_space_name&quot;)</a> and unlinked by calling <a href="https://docs.hdoc.io/billythesquid/WIMP/fA3E5D92036D59575.html">wimp_data_unlink_from_process()</a>. Each data space has a specific amount of slots defined by the macro <code>WIMP_MAX_SHARED_SLOTS</code> (normally 64).</p>
+<p>Reserving data is simple, and can be done by calling <a href="https://docs.hdoc.io/billythesquid/WIMP/f87DFDE8016ED5DB7.html">wimp_data_reserve(&quot;data_name&quot;, data_size)</a>. It is accessed through an arena structure, an example of access would be like this:</p>
+<pre><code>WimpDataArena arena;
+if (wimp_data_access(&amp;arena, &quot;test-sequence&quot;) == WIMP_DATA_SUCCESS)
+{
+	WArenaPtr ptr = WIMP_ARENA_ALLOC(arena, 64);
+	for (int i = 0; i &lt; 64; ++i)
+	{
+		WIMP_ARENA_INDEX(arena, i) = i;
+	}
+
+	//Read back sequence (use uint8_t* to test both
+	wimp_log_important(&quot;Sequence to check:\n&quot;);
+	uint8_t* rawptr = WIMP_ARENA_GET_PTR(arena, ptr);
+	for (int i = 0; i &lt; 64; ++i)
+	{
+		wimp_log_important(&quot;%d &quot;, (int32_t)rawptr[i]);
+	}
+	wimp_log(&quot;\n&quot;);
+
+	wimp_data_stop_access(&amp;arena, &quot;test-sequence&quot;);
+}
+</code></pre>
+<p>A WArenaPtr is simply a <code>size_t</code> type that is an offset into the arena, regardless of what raw pointer address the memory has been mapped to. Arena access can be done using the WIMP_ARENA macros.</p>
+</main></div></div></div></section></div><footer class="footer"><p>Documentation for WIMP 0.2.0.</p><p>Generated by <a href="https://hdoc.io/">hdoc</a> version 1.4.1-hdocInternal on 2024-09-03T13:55:55 UTC.</p><p class="has-text-grey-light">19AD43E11B2996</p></footer></body></html>
