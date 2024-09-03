@@ -10,7 +10,7 @@ output_dir = "docs"
 compile_commands = "build/compile_commands.json"
 
 [pages]
-homepage = "docs/ProjectOverview.md"
+homepage = "docs/Project-Overview.md"
 paths = [
     "docs/Project-Overview.md",
     "docs/Getting-Started.md",
