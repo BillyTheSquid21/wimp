@@ -1,6 +1,6 @@
 [project]
 name = "WIMP"
-version = "0.2.0"
+version = "0.1.0"
 
 git_repo_url = "https://github.com/BillyTheSquid21/wimp/"
 git_default_branch = "master"

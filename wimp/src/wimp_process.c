@@ -46,7 +46,7 @@ int32_t wimp_start_executable_process(const char* process_name, const char* exec
 	char path_buffer[MAX_DIRECTORY_PATH_LEN];
 	if (wimp_get_running_executable_directory(path_buffer) != WIMP_PROCESS_SUCCESS)
 	{
-		return WIMP_PROCESS_FAIL;
+		return WIMP_PROCESS_UNRESOLVED_EXE_DIR;
 	}
 
 	//Create the heap string for appending
@@ -62,7 +62,7 @@ int32_t wimp_start_executable_process(const char* process_name, const char* exec
 	if (access(path, F_OK) != 0)
 	{
 		wimp_log_fail("%s was not found!\n", path);
-		return WIMP_PROCESS_FAIL;
+		return WIMP_PROCESS_INVALID_PATH;
 	}
 
 	//Make the entry args
@@ -120,7 +120,7 @@ int32_t wimp_get_running_executable_directory(char* path)
 	if (last_slash_index == MAX_DIRECTORY_PATH_LEN)
 	{
 		wimp_log_fail("Issue reading the path of the program! %s\n", path);
-		return WIMP_PROCESS_FAIL;
+		return WIMP_PROCESS_UNRESOLVED_EXE_DIR;
 	}
 
 	//Blank everything after the index (except slash)
@@ -141,7 +141,7 @@ int32_t wimp_start_executable_process(const char* process_name, const char* exec
 	char path_buffer[MAX_DIRECTORY_PATH_LEN];
 	if (wimp_get_running_executable_directory(path_buffer) != WIMP_PROCESS_SUCCESS)
 	{
-		return WIMP_PROCESS_FAIL;
+		return WIMP_PROCESS_UNRESOLVED_EXE_DIR;
 	}
 	
 	//Create the heap string for appending
@@ -154,7 +154,7 @@ int32_t wimp_start_executable_process(const char* process_name, const char* exec
 	if (access(path, F_OK) != 0)
 	{
 		wimp_log_fail("%s was not found!\n", path);
-		return WIMP_PROCESS_FAIL;
+		return WIMP_PROCESS_INVALID_PATH;
 	}
 
 	//For linux put all the arguments in one space separated string
@@ -176,7 +176,7 @@ int32_t wimp_start_executable_process(const char* process_name, const char* exec
 	if (f == NULL)
 	{
 		wimp_log_fail("Error starting executable! %p\n", f);
-		return -1;
+		return WIMP_PROCESS_FAIL;
 	}
 	sdsfree(path);
 	return WIMP_PROCESS_SUCCESS;
@@ -207,11 +207,12 @@ int32_t wimp_get_running_executable_directory(char* path)
 	if (last_slash_index == MAX_DIRECTORY_PATH_LEN)
 	{
 		wimp_log_fail("Issue reading the path of the program! %s\n", path);
-		return WIMP_PROCESS_FAIL;
+		return WIMP_PROCESS_INVALID_PATH;
 	}
 
 	//Blank everything after the index (except slash)
 	memset(&path[last_slash_index + 1], 0, MAX_DIRECTORY_PATH_LEN - last_slash_index - 1);
+	return WIMP_PROCESS_SUCCESS;
 }
 
 #endif

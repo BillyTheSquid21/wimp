@@ -16,8 +16,14 @@
 /// @brief The result of wimp server operations
 enum WimpServerResult
 {
-	WIMP_SERVER_SUCCESS =  0, ///< Result if server operation is successful
-	WIMP_SERVER_FAIL 	= -1, ///< Result if server operation fails for an unspecified reason
+	WIMP_SERVER_SUCCESS            =  0, ///< Result if server operation is successful
+	WIMP_SERVER_FAIL 	           = -1, ///< Result if server operation fails for an unspecified reason
+	WIMP_SERVER_ADDRESS_FAIL       = -2, ///< Result if server fails to create a new address
+	WIMP_SERVER_SOCKET_FAIL        = -3, ///< Result if server fails to create a new socket
+	WIMP_SERVER_BIND_FAIL          = -4, ///< Result if server fails to bind it's socket
+	WIMP_SERVER_LISTEN_FAIL        = -5, ///< Result if server socket fails to listen
+	WIMP_SERVER_TOO_FEW_PROCESSES  = -6, ///< Result if fewer processes than expected attempt to accept
+	WIMP_SERVER_UNEXPECTED_PROCESS = -7, ///< Result if an unexpected process attempts to accept
 };
 
 #define WIMP_SERVER_ACCEPT_TIMEOUT 5000 //Waits 5000 ms before timing out on the blocking calls
@@ -69,7 +75,7 @@ WIMP_API WimpServer* wimp_get_local_server(void);
 /// @param port The port for the server to run on
 /// @param parent The parent process name (e.g. master process) - may be NULL if is not a child
 /// 
-/// @return Returns either WIMP_SERVER_SUCCESS or WIMP_SERVER_FAIL
+/// @return Returns a WimpServerResult enum
 ///
 WIMP_API int32_t wimp_init_local_server(const char* process_name, const char* domain, int32_t port);
 
@@ -99,7 +105,7 @@ WIMP_API void wimp_add_local_server(const char* dest, const char* instr, const v
 /// @param domain The domain for the server to run on
 /// @param port The port for the server to run on
 /// 
-/// @return Returns either WIMP_SERVER_SUCCESS or WIMP_SERVER_FAIL
+/// @return Returns a WimpServerResult enum
 ///
 WIMP_API int32_t wimp_create_server(WimpServer* server, const char* process_name, const char* domain, int32_t port);
 
@@ -112,7 +118,7 @@ WIMP_API int32_t wimp_create_server(WimpServer* server, const char* process_name
 /// @param pcount The number of processes to accept
 /// @param ... The names of the processes to accept
 /// 
-/// @return Returns either WIMP_SERVER_SUCCESS or WIMP_SERVER_FAIL
+/// @return Returns a WimpServerResult enum
 ///
 WIMP_API int32_t wimp_server_process_accept(WimpServer* server, int pcount, ...);
 

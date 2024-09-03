@@ -59,7 +59,7 @@ int32_t wimp_create_server(WimpServer* server, const char* process_name, const c
 
 	if ((addr = p_socket_address_new(domain, port)) == NULL)
 	{
-		return WIMP_SERVER_FAIL;
+		return WIMP_SERVER_ADDRESS_FAIL;
 	}
 
 	if ((s = p_socket_new(P_SOCKET_FAMILY_INET, P_SOCKET_TYPE_STREAM, P_SOCKET_PROTOCOL_TCP, &err)) == NULL)
@@ -67,7 +67,7 @@ int32_t wimp_create_server(WimpServer* server, const char* process_name, const c
 		wimp_log_fail("Failed to create server socket! (%d): %s\n", p_error_get_code(err), p_error_get_message(err));
 		p_error_free(err);
 		p_socket_address_free(addr);
-		return WIMP_SERVER_FAIL;
+		return WIMP_SERVER_SOCKET_FAIL;
 	}
 
 	if (!p_socket_bind(s, addr, TRUE, &err))
@@ -76,7 +76,7 @@ int32_t wimp_create_server(WimpServer* server, const char* process_name, const c
 		p_error_free(err);
 		p_socket_address_free(addr);
 		p_socket_free(s);
-		return WIMP_SERVER_FAIL;
+		return WIMP_SERVER_BIND_FAIL;
 	}
 	
 	server->process_name = process_name;
@@ -114,7 +114,7 @@ int32_t wimp_server_process_accept(WimpServer* server, int pcount, ...)
 	//Set the server to listen for incoming connections - should succeed
 	if (!p_socket_listen(server->server, NULL))
 	{
-		return WIMP_SERVER_FAIL;
+		return WIMP_SERVER_LISTEN_FAIL;
 	}
 	wimp_log("Server %s waiting to accept %d connections\n", server->process_name, pcount);
 
@@ -122,8 +122,9 @@ int32_t wimp_server_process_accept(WimpServer* server, int pcount, ...)
 	p_socket_set_timeout(server->server, WIMP_SERVER_ACCEPT_TIMEOUT);
 	
 	//Wait for pcount many connections to be made, perform checks/handshake
-	int accepted_count = 0;
-	for (int i = 0; i < pcount; ++i)
+	int32_t accepted_count = 0;
+	int32_t failure_reason = WIMP_SERVER_TOO_FEW_PROCESSES;
+	for (int32_t i = 0; i < pcount; ++i)
 	{
 		PError* err = NULL;
 		PSocket* con = p_socket_accept(server->server, &err);
@@ -165,13 +166,14 @@ int32_t wimp_server_process_accept(WimpServer* server, int pcount, ...)
 			{
 				wimp_log_important("An incoming connection wasn't a valid one! This may be malicious\n");
 				i--; //Try again, hoping the next connection won't be bad
+				failure_reason = WIMP_SERVER_UNEXPECTED_PROCESS;
 				continue;
 			}
 
 			//Add connection to the process table
 			WimpProcessData procdat = NULL;
 			wimp_log("Adding to %s process table: %s\n", server->process_name, proc_name);
-			if (wimp_process_table_get(&procdat, server->ptable, proc_name) == WIMP_PROCESS_TABLE_FAIL)
+			if (wimp_process_table_get(&procdat, server->ptable, proc_name) != WIMP_PROCESS_TABLE_SUCCESS)
 			{
 				wimp_log_fail("Process not found! %s\n", proc_name);
 				continue;
@@ -220,7 +222,7 @@ int32_t wimp_server_process_accept(WimpServer* server, int pcount, ...)
 	if (accepted_count != pcount)
 	{
 		wimp_log_fail("%s couldn't find every process!\n", server->process_name);
-		return WIMP_SERVER_FAIL;
+		return failure_reason;
 	}
 	wimp_log_success("%s found every process!\n", server->process_name);
 	return WIMP_SERVER_SUCCESS;

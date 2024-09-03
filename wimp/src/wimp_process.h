@@ -13,8 +13,10 @@
 /// @brief The result of a WIMP process operation
 enum WimpProcessResult
 {
-	WIMP_PROCESS_SUCCESS = 0, ///< Result if process operation is successful
-	WIMP_PROCESS_FAIL = -1,   ///< Result if process operation fails for an unspecified reason
+	WIMP_PROCESS_SUCCESS            =  0, ///< Result if process operation is successful
+	WIMP_PROCESS_FAIL               = -1, ///< Result if process operation fails for an unspecified reason
+	WIMP_PROCESS_INVALID_PATH       = -2, ///< Result if path provided to process operation is invalid
+	WIMP_PROCESS_UNRESOLVED_EXE_DIR = -3  ///< Result if executable directory cannot be resolved
 };
 
 #define MAX_PORT_STRING_LEN 6
@@ -84,7 +86,7 @@ WIMP_API int32_t wimp_start_library_process(const char* process_name, MAIN_FUNC_
 /// @param executable The executable relative to the location the program binary is running from (e.g. bin directory)
 /// @param entry The entry arguments
 /// 
-/// @return Returns either WIMP_PROCESS_SUCCESS or WIMP_PROCESS_FAIL
+/// @return Returns a WimpProcessResult enum
 ///
 WIMP_API int32_t wimp_start_executable_process(const char* process_name, const char* executable, WimpMainEntry entry);
 
