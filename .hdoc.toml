@@ -6,6 +6,7 @@ git_repo_url = "https://github.com/BillyTheSquid21/wimp/"
 git_default_branch = "master"
 
 [paths]
+output_dir = "docs"
 compile_commands = "build/compile_commands.json"
 
 [pages]

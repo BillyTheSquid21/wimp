@@ -42,6 +42,8 @@ The tests folder of the repository contains examples of code, which can be built
 
 # Building
 
+Should first clone the repository with ```git clone --recursive``` to ensure the dependencies are included.
+
 Windows
 ---
 

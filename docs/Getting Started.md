@@ -1,4 +1,5 @@
 ### CMake
+
 To use WIMP in a CMake project, ensure the repository has been cloned recursively, as otherwise the dependencies will not be included. This should be to a place in your own CMake project. Then all you need to do is use `add_subdirectory(wimp)` in your CMakeLists.txt file. And that's all that's needed to include the project!
 
 ### Library Initialization
