@@ -6,17 +6,17 @@ git_repo_url = "https://github.com/BillyTheSquid21/wimp/"
 git_default_branch = "master"
 
 [paths]
-output_dir = "docs/site"
+output_dir = "docs"
 compile_commands = "build/compile_commands.json"
 
 [pages]
-homepage = "docs/Project-Overview.md"
+homepage = "docs/src/Project-Overview.md"
 paths = [
-    "docs/Project-Overview.md",
-    "docs/Getting-Started.md",
-    "docs/Building.md",
-    "docs/Examples.md",
-    "docs/Hello-WIMP.md"
+    "docs/src/Project-Overview.md",
+    "docs/src/Getting-Started.md",
+    "docs/src/Building.md",
+    "docs/src/Examples.md",
+    "docs/src/Hello-WIMP.md"
 ]
 
 [ignore]
