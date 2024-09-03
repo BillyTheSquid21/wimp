@@ -34,7 +34,7 @@ Planned Features:
 
 Full documentation is available [here](https://billythesquid21.github.io/wimp/).
 
-For getting started, check out the guide [here](https://billythesquid21.github.io/wimp/docGettingStarted.html)
+For getting started, check out the guide [here](https://billythesquid21.github.io/wimp/docGetting-Started.html)
 
 ### Other notes
 
