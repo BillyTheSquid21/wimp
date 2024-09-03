@@ -11,16 +11,16 @@ compile_commands = "build/compile_commands.json"
 
 [ignore]
 paths = [
-    "/dependencies/",
-    "/tests/",
-    "/wimp/src/utility/",
-    "/wimp/src/wimp_data.c",
-    "/wimp/src/wimp_instruction.c",
-    "/wimp/src/wimp_log.c",
-    "/wimp/src/wimp_process_table.c",
-    "/wimp/src/wimp_process.c",
-    "/wimp/src/wimp_reciever.c",
-    "/wimp/src/wimp_server.c",
+    "dependencies/",
+    "tests/",
+    "wimp/src/utility/",
+    "wimp/src/wimp_data.c",
+    "wimp/src/wimp_instruction.c",
+    "wimp/src/wimp_log.c",
+    "wimp/src/wimp_process_table.c",
+    "wimp/src/wimp_process.c",
+    "wimp/src/wimp_reciever.c",
+    "wimp/src/wimp_server.c",
 ]
 
 [pages]
