@@ -243,7 +243,7 @@ void wimp_log_important(const char* format, ...)
 
 void wimp_log_internal(const char* format, va_list arg) 
 {
-#ifndef _DEBUG
+#ifdef _DEBUG
 #if LOG_DIRECTION_BEHAVIOR
 
 	WimpServer* server = wimp_get_local_server();
