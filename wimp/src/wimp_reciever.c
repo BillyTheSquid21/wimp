@@ -341,7 +341,7 @@ void wimp_reciever_recieve(RecieverArgs args)
 			//Check for the exit signal
 			//Will be the "exit" instruction and this process will be the destination
 			WimpInstrMeta meta = wimp_instr_get_from_buffer(state.instruction.instruction, state.instruction.instruction_bytes);
-			if (strcmp(meta.instr, "exit") == 0 && strcmp(meta.dest_process, args->process_name) == 0)
+			if (wimp_instr_check(meta.instr, WIMP_INSTRUCTION_EXIT) && strcmp(meta.dest_process, args->process_name) == 0)
 			{
 				disconnect = true;
 			}

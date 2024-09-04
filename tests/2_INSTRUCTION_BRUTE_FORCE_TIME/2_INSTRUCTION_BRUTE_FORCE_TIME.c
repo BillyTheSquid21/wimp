@@ -30,6 +30,14 @@ enum TEST_ENUMS
 #define SHORT_INSTR_COUNT 50000
 #define LONG_INSTR_COUNT 10000
 
+enum TEST_INSTRUCTIONS
+{
+	INCR_SHORT = WINSTR('i','n','c','r','_','s','h','r','t'),
+	INCR_LONG = WINSTR('i','n','c','r','e','m','e','n','t','_','c','o','u','n','t','e','r','_','l','o','n','g'),
+	INCR_SHORT_BATCH = WINSTR('i','n','c','r','_','s','h','t','_','b','c','h'),
+	INCR_LONG_BATCH = WINSTR('i','n','c','r','e','m','e','n','t','_','c','t','e','r','_','l','o','n','g','_','b','c','h'),
+};
+
 /*
 * This is an example client main. It takes the domains and ports as cmd arguments and creates and starts a server.
 * After sending the commands, the server closes.
@@ -83,7 +91,7 @@ int client_main_entry(int argc, char** argv)
 	wimp_log("Sending %d short instructions...\n", SHORT_INSTR_COUNT);
 	for (int32_t i = 0; i < SHORT_INSTR_COUNT; ++i)
 	{
-		wimp_add_local_server("master", "incr_sht", NULL, 0);
+		wimp_add_local_server("master", INCR_SHORT, NULL, 0);
 		if (i % (SHORT_INSTR_COUNT / 10) == 0)
 		{
 			float pc = (float)i / (float)SHORT_INSTR_COUNT;
@@ -107,7 +115,7 @@ int client_main_entry(int argc, char** argv)
 	wimp_log("Sending %d long instructions...\n", LONG_INSTR_COUNT);
 	for (int32_t i = 0; i < LONG_INSTR_COUNT; ++i)
 	{
-		wimp_add_local_server("master", "increment_counter_long", &long_instr_args[0], 64 * sizeof(int32_t));
+		wimp_add_local_server("master", INCR_LONG, &long_instr_args[0], 64 * sizeof(int32_t));
 		if (i % (LONG_INSTR_COUNT / 10) == 0)
 		{
 			float pc = (float)i / (float)LONG_INSTR_COUNT;
@@ -128,7 +136,7 @@ int client_main_entry(int argc, char** argv)
 	wimp_log("Sending %d short instructions in batch...\n", SHORT_INSTR_COUNT);
 	for (int32_t i = 0; i < SHORT_INSTR_COUNT; ++i)
 	{
-		wimp_add_local_server("master", "shrt_btc", NULL, 0);
+		wimp_add_local_server("master", INCR_SHORT_BATCH, NULL, 0);
 		if (i % (SHORT_INSTR_COUNT / 10) == 0)
 		{
 			float pc = (float)i / (float)SHORT_INSTR_COUNT;
@@ -152,7 +160,7 @@ int client_main_entry(int argc, char** argv)
 	wimp_log("Sending %d long instructions in batch...\n", LONG_INSTR_COUNT);
 	for (int32_t i = 0; i < LONG_INSTR_COUNT; ++i)
 	{
-		wimp_add_local_server("master", "batched64_counter_long", NULL, 0);
+		wimp_add_local_server("master", INCR_LONG_BATCH, NULL, 0);
 		if (i % (LONG_INSTR_COUNT / 10) == 0)
 		{
 			float pc = (float)i / (float)LONG_INSTR_COUNT;
@@ -172,7 +180,7 @@ int client_main_entry(int argc, char** argv)
 	wimp_log("Done!\n");
 
 	//Exit
-	wimp_add_local_server("master", "exit", NULL, 0);
+	wimp_add_local_server("master", WIMP_INSTRUCTION_EXIT, NULL, 0);
 	wimp_server_send_instructions(server);
 	p_uthread_sleep(10000);
 
@@ -251,8 +259,9 @@ int main(void)
 		while (currentnode != NULL)
 		{
 			WimpInstrMeta meta = wimp_instr_get_from_node(currentnode);
-			if (strcmp(meta.instr, "incr_sht") == 0)
+			switch (meta.instr)
 			{
+			case INCR_SHORT:
 				if (inc_sht_counter % (SHORT_INSTR_COUNT / 10) == 0)
 				{
 					float pc = (float)inc_sht_counter / (float)SHORT_INSTR_COUNT;
@@ -266,9 +275,8 @@ int main(void)
 				{
 					timer_end(&PASS_MATRIX[SHORT_INSTRUCTIONS_ARRIVED].timer);
 				}
-			}
-			else if (strcmp(meta.instr, "increment_counter_long") == 0)
-			{
+				break;
+			case INCR_LONG:
 				if (inc_lng_counter % (LONG_INSTR_COUNT / 10) == 0)
 				{
 					float pc = (float)inc_lng_counter / (float)LONG_INSTR_COUNT;
@@ -282,9 +290,8 @@ int main(void)
 				{
 					timer_end(&PASS_MATRIX[LONG_INSTRUCTIONS_ARRIVED].timer);
 				}
-			}
-			else if (strcmp(meta.instr, "shrt_btc") == 0)
-			{
+				break;
+			case INCR_SHORT_BATCH:
 				if (inc_sht_btch_counter % (SHORT_INSTR_COUNT / 10) == 0)
 				{
 					float pc = (float)inc_sht_btch_counter / (float)SHORT_INSTR_COUNT;
@@ -298,9 +305,8 @@ int main(void)
 				{
 					timer_end(&PASS_MATRIX[SHORT_BATCH_ARRIVED].timer);
 				}
-			}
-			else if (strcmp(meta.instr, "batched64_counter_long") == 0)
-			{
+				break;
+			case INCR_LONG_BATCH:
 				if (inc_lng_btch_counter % (LONG_INSTR_COUNT / 10) == 0)
 				{
 					float pc = (float)inc_lng_btch_counter / (float)LONG_INSTR_COUNT;
@@ -314,11 +320,14 @@ int main(void)
 				{
 					timer_end(&PASS_MATRIX[LONG_BATCH_ARRIVED].timer);
 				}
-			}
-			else if (strcmp(meta.instr, WIMP_INSTRUCTION_EXIT) == 0)
-			{
+				break;
+			case WIMP_INSTRUCTION_EXIT:
 				wimp_log("\n");
 				disconnect = true;
+				break;
+			default:
+				wimp_log_important("Unexpected instruction recieved!\n");
+				break;
 			}
 
 			wimp_instr_node_free(currentnode);

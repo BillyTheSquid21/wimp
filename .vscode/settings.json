@@ -1,5 +1,8 @@
 {
     "files.associations": {
-        "wimp_server.h": "c"
+        "wimp_server.h": "c",
+        "compare": "c",
+        "cstdint": "c",
+        "format": "c"
     }
 }

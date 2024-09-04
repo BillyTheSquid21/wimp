@@ -5,7 +5,7 @@
 ///
 /// An instruction is formatted as such:
 /// 
-/// TOTAL_BYTES-DESTPROCESS\0-SOURCEPROCESS\0-INSTRUCTION\0-ARG_BYTES-...
+/// TOTAL_BYTES-DESTPROCESS\0-SOURCEPROCESS\0-INSTRUCTION-ARG_BYTES-...
 /// 
 /// An individual instruction can only be up to WIMP_MESSAGE_BUFFER_BYTES long.
 /// 
@@ -22,12 +22,6 @@
 /// 
 /// Some design considerations to change depending on performance for different
 /// applications:
-// 
-/// - Formatting the instructions as strings with constantly reused identifiers
-///   is not ideal. Can improve by converting the plain text process names and
-///   instructions with a hashed value which would reduce memory footprint.
-///   Hashed values would also be faster for instruction lookup at the other end.
-///   Therefore, this will be changed in the future once the base system works.
 ///
 /// - Nodes could share some memory space for faster reading of instructions,
 ///   potentially working like buckets of instructions up to a limit size.
@@ -44,10 +38,107 @@
 #include <wimp_core.h>
 #include <wimp_debug.h>
 
-#define WIMP_INSTRUCTION_EXIT "exit"
-#define WIMP_INSTRUCTION_LOG "log"
-#define WIMP_INSTRUCTION_PING "ping"
-#define WIMP_INSTRUCTION_HANDSHAKE_STATUS "handshake_status"
+///
+/// Instructions are hashed at compile time for fast lookup.
+/// Non static version of the function (wimp_instr(...)) is provided to allow runtime matching.
+/// The static hash function takes up to 32 characters.
+///
+
+#define WIMP_INSTRUCTION_MAX_LENGTH 32
+
+#define WIMP_INSTR_HASH_BASIS 17ULL
+#define WIMP_INSTR_HASH_PRIME 11ULL
+
+#define W_HASH_1(ARG1) ((ARG1 ^ WIMP_INSTR_HASH_BASIS) * WIMP_INSTR_HASH_PRIME)
+#define W_HASH_2(ARG1, ARG2) ((ARG2 ^ W_HASH_1(ARG1)) * WIMP_INSTR_HASH_PRIME)
+#define W_HASH_3(ARG1, ARG2, ARG3) ((ARG3 ^ W_HASH_2(ARG1, ARG2)) * WIMP_INSTR_HASH_PRIME)
+#define W_HASH_4(ARG1, ARG2, ARG3, ARG4)                                       \
+    ((ARG4 ^ W_HASH_3(ARG1, ARG2, ARG3)) * WIMP_INSTR_HASH_PRIME)
+#define HASH_5(ARG1, ARG2, ARG3, ARG4, ARG5)                                   \
+    ((ARG5 ^ W_HASH_4(ARG1, ARG2, ARG3, ARG4)) * WIMP_INSTR_HASH_PRIME)
+#define HASH_6(ARG1, ARG2, ARG3, ARG4, ARG5, ARG6)                             \
+    ((ARG6 ^ HASH_5(ARG1, ARG2, ARG3, ARG4, ARG5)) * WIMP_INSTR_HASH_PRIME)
+#define HASH_7(ARG1, ARG2, ARG3, ARG4, ARG5, ARG6, ARG7)                       \
+    ((ARG7 ^ HASH_6(ARG1, ARG2, ARG3, ARG4, ARG5, ARG6)) * WIMP_INSTR_HASH_PRIME)
+#define HASH_8(ARG1, ARG2, ARG3, ARG4, ARG5, ARG6, ARG7, ARG8)                 \
+    ((ARG8 ^ HASH_7(ARG1, ARG2, ARG3, ARG4, ARG5, ARG6, ARG7)) * WIMP_INSTR_HASH_PRIME)
+#define HASH_9(ARG1, ARG2, ARG3, ARG4, ARG5, ARG6, ARG7, ARG8, ARG9)           \
+    ((ARG9 ^ HASH_8(ARG1, ARG2, ARG3, ARG4, ARG5, ARG6, ARG7, ARG8)) * WIMP_INSTR_HASH_PRIME)
+#define HASH_10(ARG1, ARG2, ARG3, ARG4, ARG5, ARG6, ARG7, ARG8, ARG9, ARG10)   \
+    ((ARG10 ^ HASH_9(ARG1, ARG2, ARG3, ARG4, ARG5, ARG6, ARG7, ARG8, ARG9)) * WIMP_INSTR_HASH_PRIME)
+#define HASH_11(ARG1, ARG2, ARG3, ARG4, ARG5, ARG6, ARG7, ARG8, ARG9, ARG10, ARG11) \
+    ((ARG11 ^ HASH_10(ARG1, ARG2, ARG3, ARG4, ARG5, ARG6, ARG7, ARG8, ARG9, ARG10)) * WIMP_INSTR_HASH_PRIME)
+#define HASH_12(ARG1, ARG2, ARG3, ARG4, ARG5, ARG6, ARG7, ARG8, ARG9, ARG10, ARG11, ARG12) \
+    ((ARG12 ^ HASH_11(ARG1, ARG2, ARG3, ARG4, ARG5, ARG6, ARG7, ARG8, ARG9, ARG10, ARG11)) * WIMP_INSTR_HASH_PRIME)
+#define HASH_13(ARG1, ARG2, ARG3, ARG4, ARG5, ARG6, ARG7, ARG8, ARG9, ARG10, ARG11, ARG12, ARG13) \
+    ((ARG13 ^ HASH_12(ARG1, ARG2, ARG3, ARG4, ARG5, ARG6, ARG7, ARG8, ARG9, ARG10, ARG11, ARG12)) * WIMP_INSTR_HASH_PRIME)
+#define HASH_14(ARG1, ARG2, ARG3, ARG4, ARG5, ARG6, ARG7, ARG8, ARG9, ARG10, ARG11, ARG12, ARG13, ARG14) \
+    ((ARG14 ^ HASH_13(ARG1, ARG2, ARG3, ARG4, ARG5, ARG6, ARG7, ARG8, ARG9, ARG10, ARG11, ARG12, ARG13)) * WIMP_INSTR_HASH_PRIME)
+#define HASH_15(ARG1, ARG2, ARG3, ARG4, ARG5, ARG6, ARG7, ARG8, ARG9, ARG10, ARG11, ARG12, ARG13, ARG14, ARG15) \
+    ((ARG15 ^ HASH_14(ARG1, ARG2, ARG3, ARG4, ARG5, ARG6, ARG7, ARG8, ARG9, ARG10, ARG11, ARG12, ARG13, ARG14)) * WIMP_INSTR_HASH_PRIME)
+#define HASH_16(ARG1, ARG2, ARG3, ARG4, ARG5, ARG6, ARG7, ARG8, ARG9, ARG10, ARG11, ARG12, ARG13, ARG14, ARG15, ARG16) \
+    ((ARG16 ^ HASH_15(ARG1, ARG2, ARG3, ARG4, ARG5, ARG6, ARG7, ARG8, ARG9, ARG10, ARG11, ARG12, ARG13, ARG14, ARG15)) * WIMP_INSTR_HASH_PRIME)
+#define HASH_17(ARG1, ARG2, ARG3, ARG4, ARG5, ARG6, ARG7, ARG8, ARG9, ARG10, ARG11, ARG12, ARG13, ARG14, ARG15, ARG16, ARG17) \
+    ((ARG17 ^ HASH_16(ARG1, ARG2, ARG3, ARG4, ARG5, ARG6, ARG7, ARG8, ARG9, ARG10, ARG11, ARG12, ARG13, ARG14, ARG15, ARG16)) * WIMP_INSTR_HASH_PRIME)
+#define HASH_18(ARG1, ARG2, ARG3, ARG4, ARG5, ARG6, ARG7, ARG8, ARG9, ARG10, ARG11, ARG12, ARG13, ARG14, ARG15, ARG16, ARG17, ARG18) \
+    ((ARG18 ^ HASH_17(ARG1, ARG2, ARG3, ARG4, ARG5, ARG6, ARG7, ARG8, ARG9, ARG10, ARG11, ARG12, ARG13, ARG14, ARG15, ARG16, ARG17)) * WIMP_INSTR_HASH_PRIME)
+#define HASH_19(ARG1, ARG2, ARG3, ARG4, ARG5, ARG6, ARG7, ARG8, ARG9, ARG10, ARG11, ARG12, ARG13, ARG14, ARG15, ARG16, ARG17, ARG18, ARG19) \
+    ((ARG19 ^ HASH_18(ARG1, ARG2, ARG3, ARG4, ARG5, ARG6, ARG7, ARG8, ARG9, ARG10, ARG11, ARG12, ARG13, ARG14, ARG15, ARG16, ARG17, ARG18)) * WIMP_INSTR_HASH_PRIME)
+#define HASH_20(ARG1, ARG2, ARG3, ARG4, ARG5, ARG6, ARG7, ARG8, ARG9, ARG10, ARG11, ARG12, ARG13, ARG14, ARG15, ARG16, ARG17, ARG18, ARG19, ARG20) \
+    ((ARG20 ^ HASH_19(ARG1, ARG2, ARG3, ARG4, ARG5, ARG6, ARG7, ARG8, ARG9, ARG10, ARG11, ARG12, ARG13, ARG14, ARG15, ARG16, ARG17, ARG18, ARG19)) * WIMP_INSTR_HASH_PRIME)
+#define HASH_21(ARG1, ARG2, ARG3, ARG4, ARG5, ARG6, ARG7, ARG8, ARG9, ARG10, ARG11, ARG12, ARG13, ARG14, ARG15, ARG16, ARG17, ARG18, ARG19, ARG20, ARG21) \
+    ((ARG21 ^ HASH_20(ARG1, ARG2, ARG3, ARG4, ARG5, ARG6, ARG7, ARG8, ARG9, ARG10, ARG11, ARG12, ARG13, ARG14, ARG15, ARG16, ARG17, ARG18, ARG19, ARG20)) * WIMP_INSTR_HASH_PRIME)
+#define HASH_22(ARG1, ARG2, ARG3, ARG4, ARG5, ARG6, ARG7, ARG8, ARG9, ARG10, ARG11, ARG12, ARG13, ARG14, ARG15, ARG16, ARG17, ARG18, ARG19, ARG20, ARG21, ARG22) \
+    ((ARG22 ^ HASH_21(ARG1, ARG2, ARG3, ARG4, ARG5, ARG6, ARG7, ARG8, ARG9, ARG10, ARG11, ARG12, ARG13, ARG14, ARG15, ARG16, ARG17, ARG18, ARG19, ARG20, ARG21)) * WIMP_INSTR_HASH_PRIME)
+#define HASH_23(ARG1, ARG2, ARG3, ARG4, ARG5, ARG6, ARG7, ARG8, ARG9, ARG10, ARG11, ARG12, ARG13, ARG14, ARG15, ARG16, ARG17, ARG18, ARG19, ARG20, ARG21, ARG22, ARG23) \
+    ((ARG23 ^ HASH_22(ARG1, ARG2, ARG3, ARG4, ARG5, ARG6, ARG7, ARG8, ARG9, ARG10, ARG11, ARG12, ARG13, ARG14, ARG15, ARG16, ARG17, ARG18, ARG19, ARG20, ARG21, ARG22)) * WIMP_INSTR_HASH_PRIME)
+#define HASH_24(ARG1, ARG2, ARG3, ARG4, ARG5, ARG6, ARG7, ARG8, ARG9, ARG10, ARG11, ARG12, ARG13, ARG14, ARG15, ARG16, ARG17, ARG18, ARG19, ARG20, ARG21, ARG22, ARG23, ARG24) \
+    ((ARG24 ^ HASH_23(ARG1, ARG2, ARG3, ARG4, ARG5, ARG6, ARG7, ARG8, ARG9, ARG10, ARG11, ARG12, ARG13, ARG14, ARG15, ARG16, ARG17, ARG18, ARG19, ARG20, ARG21, ARG22, ARG23)) * WIMP_INSTR_HASH_PRIME)
+#define HASH_25(ARG1, ARG2, ARG3, ARG4, ARG5, ARG6, ARG7, ARG8, ARG9, ARG10, ARG11, ARG12, ARG13, ARG14, ARG15, ARG16, ARG17, ARG18, ARG19, ARG20, ARG21, ARG22, ARG23, ARG24, ARG25) \
+    ((ARG25 ^ HASH_24(ARG1, ARG2, ARG3, ARG4, ARG5, ARG6, ARG7, ARG8, ARG9, ARG10, ARG11, ARG12, ARG13, ARG14, ARG15, ARG16, ARG17, ARG18, ARG19, ARG20, ARG21, ARG22, ARG23, ARG24)) * WIMP_INSTR_HASH_PRIME)
+#define HASH_26(ARG1, ARG2, ARG3, ARG4, ARG5, ARG6, ARG7, ARG8, ARG9, ARG10, ARG11, ARG12, ARG13, ARG14, ARG15, ARG16, ARG17, ARG18, ARG19, ARG20, ARG21, ARG22, ARG23, ARG24, ARG25, ARG26) \
+    ((ARG26 ^ HASH_25(ARG1, ARG2, ARG3, ARG4, ARG5, ARG6, ARG7, ARG8, ARG9, ARG10, ARG11, ARG12, ARG13, ARG14, ARG15, ARG16, ARG17, ARG18, ARG19, ARG20, ARG21, ARG22, ARG23, ARG24, ARG25)) * WIMP_INSTR_HASH_PRIME)
+#define HASH_27(ARG1, ARG2, ARG3, ARG4, ARG5, ARG6, ARG7, ARG8, ARG9, ARG10, ARG11, ARG12, ARG13, ARG14, ARG15, ARG16, ARG17, ARG18, ARG19, ARG20, ARG21, ARG22, ARG23, ARG24, ARG25, ARG26, ARG27) \
+    ((ARG27 ^ HASH_26(ARG1, ARG2, ARG3, ARG4, ARG5, ARG6, ARG7, ARG8, ARG9, ARG10, ARG11, ARG12, ARG13, ARG14, ARG15, ARG16, ARG17, ARG18, ARG19, ARG20, ARG21, ARG22, ARG23, ARG24, ARG25, ARG26)) * WIMP_INSTR_HASH_PRIME)
+#define HASH_28(ARG1, ARG2, ARG3, ARG4, ARG5, ARG6, ARG7, ARG8, ARG9, ARG10, ARG11, ARG12, ARG13, ARG14, ARG15, ARG16, ARG17, ARG18, ARG19, ARG20, ARG21, ARG22, ARG23, ARG24, ARG25, ARG26, ARG27, ARG28) \
+    ((ARG28 ^ HASH_27(ARG1, ARG2, ARG3, ARG4, ARG5, ARG6, ARG7, ARG8, ARG9, ARG10, ARG11, ARG12, ARG13, ARG14, ARG15, ARG16, ARG17, ARG18, ARG19, ARG20, ARG21, ARG22, ARG23, ARG24, ARG25, ARG26, ARG27)) * WIMP_INSTR_HASH_PRIME)
+#define HASH_29(ARG1, ARG2, ARG3, ARG4, ARG5, ARG6, ARG7, ARG8, ARG9, ARG10, ARG11, ARG12, ARG13, ARG14, ARG15, ARG16, ARG17, ARG18, ARG19, ARG20, ARG21, ARG22, ARG23, ARG24, ARG25, ARG26, ARG27, ARG28, ARG29) \
+    ((ARG29 ^ HASH_28(ARG1, ARG2, ARG3, ARG4, ARG5, ARG6, ARG7, ARG8, ARG9, ARG10, ARG11, ARG12, ARG13, ARG14, ARG15, ARG16, ARG17, ARG18, ARG19, ARG20, ARG21, ARG22, ARG23, ARG24, ARG25, ARG26, ARG27, ARG28)) * WIMP_INSTR_HASH_PRIME)
+#define HASH_30(ARG1, ARG2, ARG3, ARG4, ARG5, ARG6, ARG7, ARG8, ARG9, ARG10, ARG11, ARG12, ARG13, ARG14, ARG15, ARG16, ARG17, ARG18, ARG19, ARG20, ARG21, ARG22, ARG23, ARG24, ARG25, ARG26, ARG27, ARG28, ARG29, ARG30) \
+    ((ARG30 ^ HASH_29(ARG1, ARG2, ARG3, ARG4, ARG5, ARG6, ARG7, ARG8, ARG9, ARG10, ARG11, ARG12, ARG13, ARG14, ARG15, ARG16, ARG17, ARG18, ARG19, ARG20, ARG21, ARG22, ARG23, ARG24, ARG25, ARG26, ARG27, ARG28, ARG29)) * WIMP_INSTR_HASH_PRIME)
+#define HASH_31(ARG1, ARG2, ARG3, ARG4, ARG5, ARG6, ARG7, ARG8, ARG9, ARG10, ARG11, ARG12, ARG13, ARG14, ARG15, ARG16, ARG17, ARG18, ARG19, ARG20, ARG21, ARG22, ARG23, ARG24, ARG25, ARG26, ARG27, ARG28, ARG29, ARG30, ARG31) \
+    ((ARG31 ^ HASH_30(ARG1, ARG2, ARG3, ARG4, ARG5, ARG6, ARG7, ARG8, ARG9, ARG10, ARG11, ARG12, ARG13, ARG14, ARG15, ARG16, ARG17, ARG18, ARG19, ARG20, ARG21, ARG22, ARG23, ARG24, ARG25, ARG26, ARG27, ARG28, ARG29, ARG30)) * WIMP_INSTR_HASH_PRIME)
+#define HASH_32(ARG1, ARG2, ARG3, ARG4, ARG5, ARG6, ARG7, ARG8, ARG9, ARG10, ARG11, ARG12, ARG13, ARG14, ARG15, ARG16, ARG17, ARG18, ARG19, ARG20, ARG21, ARG22, ARG23, ARG24, ARG25, ARG26, ARG27, ARG28, ARG29, ARG30, ARG31, ARG32) \
+    ((ARG32 ^ HASH_31(ARG1, ARG2, ARG3, ARG4, ARG5, ARG6, ARG7, ARG8, ARG9, ARG10, ARG11, ARG12, ARG13, ARG14, ARG15, ARG16, ARG17, ARG18, ARG19, ARG20, ARG21, ARG22, ARG23, ARG24, ARG25, ARG26, ARG27, ARG28, ARG29, ARG30, ARG31)) * WIMP_INSTR_HASH_PRIME)
+
+#define W_HASH_COUNT(ARG1, ARG2, ARG3, ARG4, ARG5, ARG6, ARG7, ARG8, ARG9, ARG10, ARG11, ARG12, ARG13, ARG14, ARG15, ARG16, ARG17, ARG18, ARG19, ARG20, ARG21, ARG22, ARG23, ARG24, ARG25, ARG26, ARG27, ARG28, ARG29, ARG30, ARG31, ARG32, func, ...)  \
+    func
+
+/// @brief Static hash function for up to 32 characters, allows using switch statements on instructions
+#define WINSTR(...)                                                              \
+    W_HASH_COUNT(__VA_ARGS__, HASH_32(__VA_ARGS__), HASH_31(__VA_ARGS__), HASH_30(__VA_ARGS__), \
+               HASH_29(__VA_ARGS__), HASH_28(__VA_ARGS__), HASH_27(__VA_ARGS__), \
+               HASH_26(__VA_ARGS__), HASH_25(__VA_ARGS__), HASH_24(__VA_ARGS__), \
+               HASH_23(__VA_ARGS__), HASH_22(__VA_ARGS__), HASH_21(__VA_ARGS__), \
+               HASH_20(__VA_ARGS__), HASH_19(__VA_ARGS__), HASH_18(__VA_ARGS__), \
+               HASH_17(__VA_ARGS__), HASH_16(__VA_ARGS__), HASH_15(__VA_ARGS__), \
+               HASH_14(__VA_ARGS__), HASH_13(__VA_ARGS__), HASH_12(__VA_ARGS__), \
+               HASH_11(__VA_ARGS__), HASH_10(__VA_ARGS__), HASH_9(__VA_ARGS__), \
+               HASH_8(__VA_ARGS__), HASH_7(__VA_ARGS__), HASH_6(__VA_ARGS__), \
+               HASH_5(__VA_ARGS__), W_HASH_4(__VA_ARGS__), W_HASH_3(__VA_ARGS__), \
+               W_HASH_2(__VA_ARGS__), W_HASH_1(__VA_ARGS__)) 
+
+
+
+/// @brief The reserved core instructions for WIMP - Hashed at compile time
+enum WIMPInstructionsCore
+{
+	WIMP_INSTRUCTION_EXIT             = WINSTR('e','x','i','t'),				///< Signals the target process and it's children to exit
+	WIMP_INSTRUCTION_LOG              = WINSTR('l','o','g'),					///< Signals a logging instruction
+	WIMP_INSTRUCTION_PING             = WINSTR('p','i','n','g'),				///< Used for checking a server is still listening
+	WIMP_INSTRUCTION_HANDSHAKE_STATUS = WINSTR('h','_','s','t','a','t','u','s'),///< Used for determining if a server has correctly connected
+};
+
 #define WIMP_INSTRUCTION_DEST_OFFSET sizeof(int32_t)
 
 /// @brief The result of a WIMP instruction operation
@@ -100,12 +191,22 @@ typedef struct _WimpInstrMeta
 {
 	const char* source_process;	///< Name of the source process
 	const char* dest_process;	///< Name of the destination process
-	const char* instr;			///< Instruction string
+	uint64_t instr;			    ///< Instruction value
 	void* args;					///< Pointer to the arguments
 	size_t total_bytes;			///< Total size in bytes of the instruction
 	int32_t arg_bytes;			///< Total size in bytes of the arguments only
 	int32_t instr_bytes;		///< Total size in bytes of the instruction only
 } WimpInstrMeta;
+
+///
+/// @brief The runtime equivalent of the wimp instruction hasher. 
+/// Is not cryptographically secure, but will create a unique ID.
+///
+/// @param text The text instruction to hash
+///
+/// @return Returns the 64 bit hash of the instruction
+///
+uint64_t wimp_instr(const char *text);
 
 ///
 /// Get the start of the raw instruction data 
@@ -255,7 +356,7 @@ WIMP_API WimpInstrMeta wimp_instr_get_from_node(WimpInstrNode node);
 /// 
 /// @return Returns whether the instructions match or not
 ///
-WIMP_API bool wimp_instr_check(const char* instr1, const char* instr2);
+WIMP_API bool wimp_instr_check(uint64_t instr1, uint64_t instr2);
 
 ///
 /// @brief Counts the amount of instructions with a given name in the queue

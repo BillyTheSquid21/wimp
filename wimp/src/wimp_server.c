@@ -37,7 +37,7 @@ void wimp_close_local_server()
 	_local_server = NULL;
 }
 
-void wimp_add_local_server(const char* dest, const char* instr, const void* args, size_t arg_size_bytes)
+void wimp_add_local_server(const char* dest, uint64_t instr, const void* args, size_t arg_size_bytes)
 {
 	if (_local_server == NULL)
 	{
@@ -268,7 +268,7 @@ static void wimp_server_free_bundle(InstrBundle* bundle)
 	bundle->size = 0;
 }
 
-static InstrBundle wimp_server_bundle_instr(const char* process, const char* dest, const char* instr, const void* args, size_t arg_size_bytes)
+static InstrBundle wimp_server_bundle_instr(const char* process, const char* dest, uint64_t instr, const void* args, size_t arg_size_bytes)
 {
 	InstrBundle bundle = { NULL, 0 };
 
@@ -276,7 +276,7 @@ static InstrBundle wimp_server_bundle_instr(const char* process, const char* des
 	size_t header_bytes = sizeof(int32_t);
 	size_t destp_bytes = (strlen(dest) + 1) * sizeof(char);
 	size_t sourcep_bytes = (strlen(process) + 1) * sizeof(char);
-	size_t instr_bytes = (strlen(instr) + 1) * sizeof(char);
+	size_t instr_bytes  = sizeof(uint64_t);
 	size_t arglen_bytes = sizeof(int32_t);
 	size_t total_bytes = header_bytes + sourcep_bytes + destp_bytes + instr_bytes + arglen_bytes + arg_size_bytes;
 
@@ -298,7 +298,7 @@ static InstrBundle wimp_server_bundle_instr(const char* process, const char* des
 	memcpy(&instrbuff[offset], process, sourcep_bytes);
 	offset += sourcep_bytes;
 
-	memcpy(&instrbuff[offset], instr, instr_bytes);
+	memcpy(&instrbuff[offset], &instr, instr_bytes);
 	offset += instr_bytes;
 
 	memcpy(&instrbuff[offset], &arg_size_bytes, arglen_bytes);
@@ -314,13 +314,13 @@ static InstrBundle wimp_server_bundle_instr(const char* process, const char* des
 	return bundle;
 }
 
-void wimp_server_add(WimpServer* server, const char* dest, const char* instr, const void* args, size_t arg_size_bytes)
+void wimp_server_add(WimpServer* server, const char* dest, uint64_t instr, const void* args, size_t arg_size_bytes)
 {
 	InstrBundle instr_bundle = wimp_server_bundle_instr(server->process_name, dest, instr, args, arg_size_bytes);
 	wimp_instr_queue_add(&server->outgoingmsg, instr_bundle.instr, instr_bundle.size);
 }
 
-WimpInstrNode wimp_server_wait_response(WimpServer* server, const char* instr, int32_t timeout)
+WimpInstrNode wimp_server_wait_response(WimpServer* server, uint64_t instr, int32_t timeout)
 {
 	//Create a temporary instruction queue to pass instructions over to
 	WimpInstrQueue tmpqueue = wimp_create_instr_queue();

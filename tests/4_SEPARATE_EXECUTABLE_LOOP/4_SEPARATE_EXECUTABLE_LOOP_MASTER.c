@@ -26,6 +26,13 @@ enum TEST_ENUMS
 	STEP_INSTRUCTION_4,
 };
 
+enum TEST_INSTRUCTIONS
+{
+	BLANK_INSTR = WINSTR('b','l','a','n','k'),
+	SAY_HELLO = WINSTR('h','e','l','l','o'),
+	ECHO = WINSTR('e','c','h','o'),
+};
+
 /*
 * This is the main master thread. 
 */
@@ -86,18 +93,17 @@ int main(void)
 				continue;
 			}
 
-			if (strcmp(meta.instr, "blank_instr") == 0)
+			switch (meta.instr)
 			{
+			case BLANK_INSTR:
 				wimp_log("\n");
 				PASS_MATRIX[STEP_INSTRUCTION_1].status = true;
-			}
-			else if (strcmp(meta.instr, "say_hello") == 0)
-			{
+				break;
+			case SAY_HELLO:
 				wimp_log("HELLO!\n");
 				PASS_MATRIX[STEP_INSTRUCTION_2].status = true;
-			}
-			else if (strcmp(meta.instr, "echo") == 0)
-			{
+				break;	
+			case ECHO:
 				//Get the arguments
 				const char* echo_string = (const char*)meta.args;
 				wimp_log("%s\n", echo_string);
@@ -106,18 +112,18 @@ int main(void)
 				{
 					PASS_MATRIX[STEP_INSTRUCTION_3].status = true;
 				}
-			}
-			else if (strcmp(meta.instr, WIMP_INSTRUCTION_LOG) == 0)
-			{
+				break;		
+			case WIMP_INSTRUCTION_LOG:
 				wimp_log("%s", meta.args);
-			}
-			else if (strcmp(meta.instr, WIMP_INSTRUCTION_EXIT) == 0)
-			{
+				break;
+			case WIMP_INSTRUCTION_EXIT:
 				wimp_log("\n");
 				PASS_MATRIX[STEP_INSTRUCTION_4].status = true;
 				disconnect = true;
+				break;
+			default:
+				break;
 			}
-
 			wimp_instr_node_free(currentnode);
 			currentnode = wimp_instr_queue_pop(&server->incomingmsg);
 		}

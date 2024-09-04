@@ -77,11 +77,11 @@ typedef struct _RecieverArgs
 	int32_t* active;
 } *RecieverArgs;
 
-#if defined _DEBUG && WIMP_PRINT_INSTRS
+#if defined __DEBUG && WIMP_PRINT_INSTRS
 
 static void _debug_wimp_print_instruction_meta(WimpInstrMeta meta)
 {
-	printf("\nREAL INSTRUCTION FROM: %s\nTO: %s\nINSTR: %s\nARG SIZE: %d\nTOTAL SIZE: %d\n\n",meta.source_process,meta.dest_process,meta.instr,meta.arg_bytes,(int32_t)meta.total_bytes);
+	printf("\nREAL INSTRUCTION FROM: %s\nTO: %s\nINSTR: %lu\nARG SIZE: %d\nTOTAL SIZE: %d\n\n",meta.source_process,meta.dest_process,meta.instr,meta.arg_bytes,(int32_t)meta.total_bytes);
 }
 
 //Prints incoming instructions for debugging purposes

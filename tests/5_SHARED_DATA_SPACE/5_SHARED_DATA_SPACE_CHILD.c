@@ -9,6 +9,17 @@
 #include <wimp_test.h>
 #include <wimp_data.h>
 
+enum TEST_INSTRUCTIONS
+{
+	CHILD2_LINK_TABLE = WINSTR('S','T','E','P','_','C','H','I','L','D','2','_','L','I','N','K','_','T','A','B','L','E'),
+	CHILD2_LINK_DATA = WINSTR('S','T','E','P','_','C','H','I','L','D','2','_','L','I','N','K','_','D','A','T','A'),
+	CHILD2_READ_DATA = WINSTR('S','T','E','P','_','C','H','I','L','D','2','_','R','E','A','D','_','D','A','T','A'),
+	TESTPROC1_DONE = WINSTR('t','e','s','t','p','r','o','c','1','_','d','o','n','e'),
+	TESTPROC2_DONE = WINSTR('t','e','s','t','p','r','o','c','2','_','d','o','n','e'),
+	CHILD2_WRITE_DATA = WINSTR('S','T','E','P','_','C','H','I','L','D','2','_','W','R','I','T','E','_','D','A','T','A'),
+	WRITE = WINSTR('w','r','i','t','e'),
+};
+
 void child_write()
 {
 	//Write the reverse sequence
@@ -39,7 +50,7 @@ void child_write()
 
 		if (success)
 		{
-			wimp_add_local_server("master", "STEP_CHILD2_WRITE_DATA", NULL, 0);
+			wimp_add_local_server("master", CHILD2_WRITE_DATA, NULL, 0);
 		}
 	}
 }
@@ -74,7 +85,7 @@ int main(int argc, char** argv)
 			process_port = strtol(argv[i + 1], NULL, 10);
 		}
 	}
-	
+
 	//Create a server local to this thread
 	wimp_init_local_server("test_process2", "127.0.0.1", process_port);
 	WimpServer* server = wimp_get_local_server();
@@ -92,13 +103,13 @@ int main(int argc, char** argv)
 	//Link to data table
 	if (wimp_data_link_to_process("wimp-master") == WIMP_DATA_SUCCESS)
 	{
-		wimp_add_local_server("master", "STEP_CHILD2_LINK_TABLE", NULL, 0);
+		wimp_add_local_server("master", CHILD2_LINK_TABLE, NULL, 0);
 	}
 
 	//Link to the data
 	if (wimp_data_link_to_data("test-sequence") == WIMP_DATA_SUCCESS)
 	{
-		wimp_add_local_server("master", "STEP_CHILD2_LINK_DATA", NULL, 0);
+		wimp_add_local_server("master", CHILD2_LINK_DATA, NULL, 0);
 	}
 
 	//Read the data
@@ -123,12 +134,12 @@ int main(int argc, char** argv)
 
 		if (success)
 		{
-			wimp_add_local_server("master", "STEP_CHILD2_READ_DATA", NULL, 0);
+			wimp_add_local_server("master", CHILD2_READ_DATA, NULL, 0);
 		}
 	}
 
 	//Tell the master have read
-	wimp_add_local_server("master", "testproc2_done", NULL, 0);
+	wimp_add_local_server("master", TESTPROC2_DONE, NULL, 0);
 	wimp_server_send_instructions(server);
 
 	//Loop while waiting for the master to tell to write
@@ -147,14 +158,14 @@ int main(int argc, char** argv)
 				currentnode = wimp_instr_queue_pop(&server->incomingmsg);
 				continue;
 			}
-
-			if (strcmp(meta.instr, WIMP_INSTRUCTION_EXIT) == 0)
+			
+			if (wimp_instr_check(meta.instr, WIMP_INSTRUCTION_EXIT))
 			{
 				disconnect = true;
 			}
-			else if (strcmp(meta.instr, "write") == 0)
+			else if (wimp_instr_check(meta.instr, WRITE))
 			{
-				wimp_add_local_server("master", "STEP_CHILD2_WRITE_DATA", NULL, 0);
+				wimp_add_local_server("master", CHILD2_WRITE_DATA, NULL, 0);
 				disconnect = true;
 			}
 

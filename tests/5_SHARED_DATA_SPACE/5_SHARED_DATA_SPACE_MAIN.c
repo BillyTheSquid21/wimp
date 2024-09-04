@@ -40,6 +40,18 @@ enum TEST_ENUMS
 	STEP_PROCESS_VALIDATION,
 };
 
+enum TEST_INSTRUCTIONS
+{
+	CHILD2_LINK_TABLE = WINSTR('S','T','E','P','_','C','H','I','L','D','2','_','L','I','N','K','_','T','A','B','L','E'),
+	CHILD2_LINK_DATA = WINSTR('S','T','E','P','_','C','H','I','L','D','2','_','L','I','N','K','_','D','A','T','A'),
+	CHILD2_READ_DATA = WINSTR('S','T','E','P','_','C','H','I','L','D','2','_','R','E','A','D','_','D','A','T','A'),
+	TESTPROC1_DONE = WINSTR('t','e','s','t','p','r','o','c','1','_','d','o','n','e'),
+	TESTPROC2_DONE = WINSTR('t','e','s','t','p','r','o','c','2','_','d','o','n','e'),
+	CHILD1_WRITE_DATA = WINSTR('S','T','E','P','_','C','H','I','L','D','1','_','W','R','I','T','E','_','D','A','T','A'),
+	CHILD2_WRITE_DATA = WINSTR('S','T','E','P','_','C','H','I','L','D','2','_','W','R','I','T','E','_','D','A','T','A'),
+	WRITE = WINSTR('w','r','i','t','e'),
+};
+
 void child_write()
 {
 	//Write the reverse sequence
@@ -159,7 +171,7 @@ int client_main_entry(int argc, char** argv)
 	}
 
 	//Tell the master have read
-	wimp_add_local_server("master", "testproc1_done", NULL, 0);
+	wimp_add_local_server("master", TESTPROC1_DONE, NULL, 0);
 	wimp_server_send_instructions(server);
 
 	//Loop while waiting for the master to tell to write
@@ -178,11 +190,11 @@ int client_main_entry(int argc, char** argv)
 				continue;
 			}
 
-			if (strcmp(meta.instr, WIMP_INSTRUCTION_EXIT) == 0)
+			if (wimp_instr_check(meta.instr, WIMP_INSTRUCTION_EXIT))
 			{
 				disconnect = true;
 			}
-			else if (strcmp(meta.instr, "write") == 0)
+			else if (wimp_instr_check(meta.instr, WRITE))
 			{
 				child_write();
 				disconnect = true;
@@ -201,7 +213,7 @@ int client_main_entry(int argc, char** argv)
 	wimp_data_unlink_from_process();
 
 	//Tell the master to close
-	wimp_add_local_server("master", "exit", NULL, 0);
+	wimp_add_local_server("master", WIMP_INSTRUCTION_EXIT, NULL, 0);
 	wimp_server_send_instructions(server);
 
 	//This should also shut down the reciever
@@ -337,37 +349,41 @@ int main(void)
 				continue;
 			}
 
-			if (strcmp(meta.instr, WIMP_INSTRUCTION_EXIT) == 0)
+			if (wimp_instr_check(meta.instr, WIMP_INSTRUCTION_EXIT))
 			{
 				disconnect = true;
 			}
-			else if (strcmp(meta.instr, WIMP_INSTRUCTION_LOG) == 0)
+			else if (wimp_instr_check(meta.instr, WIMP_INSTRUCTION_LOG))
 			{
 				wimp_log("%s", meta.args);
 			}
-			else if (strcmp(meta.instr, "STEP_CHILD2_LINK_TABLE") == 0)
+			else if (wimp_instr_check(meta.instr, CHILD2_LINK_TABLE))
 			{
 				PASS_MATRIX[STEP_CHILD2_LINK_TABLE].status = true;
 			}
-			else if (strcmp(meta.instr, "STEP_CHILD2_LINK_DATA") == 0)
+			else if (wimp_instr_check(meta.instr, CHILD2_LINK_DATA))
 			{
 				PASS_MATRIX[STEP_CHILD2_LINK_DATA].status = true;
 			}
-			else if (strcmp(meta.instr, "STEP_CHILD2_READ_DATA") == 0)
+			else if (wimp_instr_check(meta.instr, CHILD2_READ_DATA))
 			{
 				PASS_MATRIX[STEP_CHILD2_READ_DATA].status = true;
 			}
-			else if (strcmp(meta.instr, "testproc1_done") == 0)
+			else if (wimp_instr_check(meta.instr, TESTPROC1_DONE))
 			{
 				wimp_log_important("test process 1 done\n");
 				tp1_done = true;
 			}
-			else if (strcmp(meta.instr, "testproc2_done") == 0)
+			else if (wimp_instr_check(meta.instr, TESTPROC2_DONE))
 			{
 				wimp_log_important("test process 2 done\n");
 				tp2_done = true;
 			}
-			else if (strcmp(meta.instr, "STEP_CHILD2_WRITE_DATA") == 0)
+			else if (wimp_instr_check(meta.instr, CHILD1_WRITE_DATA))
+			{
+				PASS_MATRIX[STEP_CHILD1_WRITE_DATA].status = true;
+			}
+			else if (wimp_instr_check(meta.instr, CHILD2_WRITE_DATA))
 			{
 				PASS_MATRIX[STEP_CHILD2_WRITE_DATA].status = true;
 			}
@@ -380,8 +396,8 @@ int main(void)
 		if (tp1_done && tp2_done && !tp_sent_instr)
 		{
 			wimp_log_important("Both done, next step...\n");
-			wimp_add_local_server("test_process1", "write", NULL, 0);
-			wimp_add_local_server("test_process2", "write", NULL, 0);
+			wimp_add_local_server("test_process1", WRITE, NULL, 0);
+			wimp_add_local_server("test_process2", WRITE, NULL, 0);
 			wimp_server_send_instructions(server);
 			tp_sent_instr = true;
 		}

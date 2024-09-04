@@ -22,6 +22,13 @@ enum TEST_ENUMS
 	STEP_INSTRUCTION_4,
 };
 
+enum TEST_INSTRUCTIONS
+{
+	BLANK_INSTR = WINSTR('b','l','a','n','k'),
+	SAY_HELLO = WINSTR('h','e','l','l','o'),
+	ECHO = WINSTR('e','c','h','o'),
+};
+
 /*
 * This is an example client main. It takes the domains and ports as cmd arguments and creates and starts a server.
 * After sending the commands, the server closes.
@@ -71,17 +78,17 @@ int client_main_entry(int argc, char** argv)
 	//This server won't loop, so send some instructions to the master thread
 	
 	//Instruction 1 - This sends a simple instr that the master will ignore. It has no additional arguments
-	wimp_add_local_server("master", "blank_instr", NULL, 0);
+	wimp_add_local_server("master", BLANK_INSTR, NULL, 0);
 
 	//Instruction 2 - This sends a simple instr that tells the master to say hello. It has no additional arguments
-	wimp_add_local_server("master", "say_hello", NULL, 0);
+	wimp_add_local_server("master", SAY_HELLO, NULL, 0);
 
 	//Instruction 3 - This sends a more complex instr, that tells the master to echo the string sent.
 	const char* echo_string = "Echo!";
-	wimp_add_local_server("master", "echo", echo_string, (strlen(echo_string) + 1) * sizeof(char));
+	wimp_add_local_server("master", ECHO, echo_string, (strlen(echo_string) + 1) * sizeof(char));
 
-	//Instruction 4 - This simple tells the master to exit - TODO: This implementation may change in the future
-	wimp_add_local_server("master", "exit", NULL, 0);
+	//Instruction 4 - This simple tells the master to exit
+	wimp_add_local_server("master", WIMP_INSTRUCTION_EXIT, NULL, 0);
 
 	//This tells the server to send off the instructions
 	wimp_server_send_instructions(server);
@@ -157,21 +164,17 @@ int main(void)
 		while (currentnode != NULL)
 		{
 			WimpInstrMeta meta = wimp_instr_get_from_node(currentnode);
-			//wimp_log("\nMaster recieved instruction:");
-			//DEBUG_WIMP_PRINT_INSTRUCTION_META(meta);
-
-			if (strcmp(meta.instr, "blank_instr") == 0)
+			switch (meta.instr)
 			{
+			case BLANK_INSTR:
 				wimp_log("\n");
 				PASS_MATRIX[STEP_INSTRUCTION_1].status = true;
-			}
-			else if (strcmp(meta.instr, "say_hello") == 0)
-			{
+				break;
+			case SAY_HELLO:
 				wimp_log("HELLO!\n");
 				PASS_MATRIX[STEP_INSTRUCTION_2].status = true;
-			}
-			else if (strcmp(meta.instr, "echo") == 0)
-			{
+				break;
+			case ECHO:
 				//Get the arguments
 				const char* echo_string = (const char*)meta.args;
 				wimp_log("%s\n", echo_string);
@@ -180,12 +183,15 @@ int main(void)
 				{
 					PASS_MATRIX[STEP_INSTRUCTION_3].status = true;
 				}
-			}
-			else if (strcmp(meta.instr, WIMP_INSTRUCTION_EXIT) == 0)
-			{
+				break;
+			case WIMP_INSTRUCTION_EXIT:
 				wimp_log("\n");
 				PASS_MATRIX[STEP_INSTRUCTION_4].status = true;
 				disconnect = true;
+				break;
+			default:
+				wimp_log_important("Unexpected instruction recieved!\n");
+				break;
 			}
 
 			wimp_instr_node_free(currentnode);

@@ -25,6 +25,14 @@ enum TEST_ENUMS
 	PACKED_MULTIPLE_LONG_MESSAGES,
 };
 
+enum TEST_INSTRUCTIONS
+{
+	LONG_MESSAGE = WINSTR('l','o','n','g','_','m','e','s','s','a','g','e'),
+	RESPONSE_AWAIT = WINSTR('r','e','s','p','o','n','s','e','_','a','w','a','i','t'),
+	LONG_MESSAGE_PACKED = WINSTR('l','o','n','g','_','m','e','s','s','a','g','e','_','p','a','c','k','e','d'),
+	LONG_MESSAGES_PACKED = WINSTR('l','o','n','g','_','m','e','s','s','a','g','e','s','_','p','a','c','k','e','d'),
+};
+
 const char* long_message = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.";
 
 /*
@@ -76,25 +84,25 @@ int client_main_entry(int argc, char** argv)
 	//This server won't loop, so send some instructions to the master thread
 	
 	//1. Send the long message
-	wimp_add_local_server("master", "long_message", long_message, ((strlen(long_message) + 1) * sizeof(char)));
+	wimp_add_local_server("master", LONG_MESSAGE, long_message, ((strlen(long_message) + 1) * sizeof(char)));
 	wimp_server_send_instructions(server);
 
 	//2. Send response to await
-	wimp_add_local_server("master", "response_await", NULL, 0);
+	wimp_add_local_server("master", RESPONSE_AWAIT, NULL, 0);
 	wimp_server_send_instructions(server);
 
 	//3. Send the packed long message
 	WimpStrPack pack2 = wimp_instr_pack_strings(1, long_message);
-	wimp_add_local_server("master", "long_message_packed", pack2, pack2->pack_size);
+	wimp_add_local_server("master", LONG_MESSAGE_PACKED, pack2, pack2->pack_size);
 	wimp_server_send_instructions(server);
 
 	//4. Send the multiple packed long messages
 	WimpStrPack pack3 = wimp_instr_pack_strings(4, long_message, long_message, long_message, long_message);
-	wimp_add_local_server("master", "long_messages_packed", pack3, pack3->pack_size);
+	wimp_add_local_server("master", LONG_MESSAGES_PACKED, pack3, pack3->pack_size);
 	wimp_server_send_instructions(server);
 
 	//Exit
-	wimp_add_local_server("master", "exit", NULL, 0);
+	wimp_add_local_server("master", WIMP_INSTRUCTION_EXIT, NULL, 0);
 	wimp_server_send_instructions(server);
 	p_uthread_sleep(10000);
 
@@ -162,7 +170,7 @@ int main(void)
 		while (currentnode != NULL)
 		{
 			WimpInstrMeta meta = wimp_instr_get_from_node(currentnode);
-			if (wimp_instr_check(meta.instr, "long_message"))
+			if (wimp_instr_check(meta.instr, LONG_MESSAGE))
 			{
 				if (strcmp(meta.args, long_message) == 0)
 				{
@@ -179,7 +187,7 @@ int main(void)
 	}
 
 	//Await the response
-	WimpInstrNode response = wimp_server_wait_response(server, "response_await", 0);
+	WimpInstrNode response = wimp_server_wait_response(server, RESPONSE_AWAIT, 0);
 	if (response)
 	{
 		PASS_MATRIX[AWAITING_RESPONSE].status = true;
@@ -194,7 +202,7 @@ int main(void)
 		while (currentnode != NULL)
 		{
 			WimpInstrMeta meta = wimp_instr_get_from_node(currentnode);
-			if (wimp_instr_check(meta.instr, "long_message_packed"))
+			if (wimp_instr_check(meta.instr, LONG_MESSAGE_PACKED))
 			{
 				WimpStrPack pack = meta.args;
 				if (strcmp(wimp_instr_pack_get_string(pack, 0), long_message) == 0)
@@ -202,7 +210,7 @@ int main(void)
 					PASS_MATRIX[PACKED_LONG_MESSAGE].status = true;
 				}
 			}
-			else if (wimp_instr_check(meta.instr, "long_messages_packed"))
+			else if (wimp_instr_check(meta.instr, LONG_MESSAGES_PACKED))
 			{
 				WimpStrPack pack = meta.args;
 				bool success = true;

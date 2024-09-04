@@ -7,6 +7,15 @@ typedef struct _WimpInstrNode
 	struct _WimpInstrNode* nextnode;
 } *WimpInstrNode;
 
+uint64_t wimp_instr(const char *text) {
+    uint64_t h = WIMP_INSTR_HASH_BASIS;
+    char c;
+    while ((c = *text++) != '\0') {
+        h = (c ^ h) * WIMP_INSTR_HASH_PRIME;
+    }
+    return h;
+}
+
 WimpInstrQueue wimp_create_instr_queue()
 {
 	WimpInstrQueue q;
@@ -167,7 +176,7 @@ WimpInstrMeta wimp_instr_get_from_buffer(uint8_t* buffer, size_t buffsize)
 	instr.arg_bytes = 0;
 	instr.dest_process = NULL;
 	instr.source_process = NULL;
-	instr.instr = NULL;
+	instr.instr = 0;
 	instr.args = NULL;
 	instr.instr_bytes = 0;
 	instr.total_bytes = 0;
@@ -208,22 +217,8 @@ WimpInstrMeta wimp_instr_get_from_buffer(uint8_t* buffer, size_t buffsize)
 		offset++;
 	}
 
-	//Record start to get start of instr length
-	size_t instr_start = offset;
-
-	instr.instr = &buffer[offset];
-	offset++;
-	current_char = ' ';
-
-	//Find start of arg bytes
-	while (current_char != '\0' && offset < buffsize)
-	{
-		current_char = (char)buffer[offset];
-		offset++;
-	}
-
-	//Use diff to get length of instr
-	instr.instr_bytes = offset - instr_start;
+	instr.instr = *(uint64_t*)&buffer[offset];
+	offset += sizeof(uint64_t);
 
 	instr.arg_bytes = *(int32_t*)&buffer[offset];
 	offset += sizeof(int32_t);
@@ -243,10 +238,10 @@ WimpInstrMeta wimp_instr_get_from_node(WimpInstrNode node)
 	return wimp_instr_get_from_buffer(node->instr.instruction, node->instr.instruction_bytes);
 }
 
-bool wimp_instr_check(const char* instr1, const char* instr2)
+bool wimp_instr_check(uint64_t instr1, uint64_t instr2)
 {
 	//For now is just exportable strcmp
-	return strcmp(instr1, instr2) == 0;
+	return instr1 == instr2;
 }
 
 size_t wimp_instr_get_instruction_count(WimpInstrQueue* queue, const char* instruction)

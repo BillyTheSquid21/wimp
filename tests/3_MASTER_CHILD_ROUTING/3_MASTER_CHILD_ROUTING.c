@@ -23,6 +23,11 @@ enum TEST_ENUMS
 	C2_RECIEVESFROM_C1,
 };
 
+enum TEST_INSTRUCTIONS
+{
+	INSTR_HELLO = WINSTR('h','e','l','l','o')
+};
+
 /*
 * This is an example client main. It takes the domains and ports as cmd arguments and creates and starts a server.
 * After sending the commands, the server closes.
@@ -87,8 +92,8 @@ int client_main_entry(int argc, char** argv)
 	wimp_log("Other client: %s\n", other_client);
 
 	//Send the instr here
-	wimp_add_local_server(other_client, "say_hello", NULL, 0);
-	wimp_add_local_server(other_client, "exit", NULL, 0);
+	wimp_add_local_server(other_client, INSTR_HELLO, NULL, 0);
+	wimp_add_local_server(other_client, WIMP_INSTRUCTION_EXIT, NULL, 0);
 	wimp_server_send_instructions(server);
 
 	//Program loop here
@@ -108,8 +113,9 @@ int client_main_entry(int argc, char** argv)
 				continue;
 			}
 
-			if (strcmp(meta.instr, "say_hello") == 0)
+			switch (meta.instr)
 			{
+			case INSTR_HELLO:
 				wimp_log("Hello! Recieved from: %s\n", meta.source_process);
 				if (strcmp(meta.source_process, other_client) == 0)
 				{
@@ -122,11 +128,13 @@ int client_main_entry(int argc, char** argv)
 						PASS_MATRIX[C2_RECIEVESFROM_C1].status = true;
 					} 
 				}
-			}
-			else if (strcmp(meta.instr, WIMP_INSTRUCTION_EXIT) == 0)
-			{
+				break;
+			case WIMP_INSTRUCTION_EXIT:
 				wimp_log("Exiting!\n");
 				disconnect = true;
+				break;			
+			default:
+				break;
 			}
 			wimp_instr_node_free(currentnode);
 			currentnode = wimp_instr_queue_pop(&server->incomingmsg);
@@ -140,7 +148,7 @@ int client_main_entry(int argc, char** argv)
 	p_uthread_sleep(1000);
 
 	//Will get two arriving but this shouldn't matter
-	wimp_add_local_server("master", "exit", NULL, 0);
+	wimp_add_local_server("master", WIMP_INSTRUCTION_EXIT, NULL, 0);
 
 	//This should also shut down the reciever
 	wimp_log("Client thread closed\n");
@@ -229,21 +237,25 @@ int main(void)
 		while (currentnode != NULL)
 		{
 			WimpInstrMeta meta = wimp_instr_get_from_node(currentnode);
-			//DEBUG_WIMP_PRINT_INSTRUCTION_META(meta);
 			if (wimp_server_instr_routed(server, meta.dest_process, currentnode))
 			{
 				//Add to the outgoing and continue to prevent freeing
 				currentnode = wimp_instr_queue_pop(&server->incomingmsg);
 				continue;
 			}
-			else if (strcmp(meta.instr, WIMP_INSTRUCTION_LOG) == 0)
+
+			switch (meta.instr)
 			{
+			case WIMP_INSTRUCTION_LOG:
 				wimp_log("%s", meta.args);
-			}
-			else if (strcmp(meta.instr, WIMP_INSTRUCTION_EXIT) == 0)
-			{
+				break;
+			case WIMP_INSTRUCTION_EXIT:
 				wimp_log("Exiting!\n");
 				disconnect = true;
+				break;
+			default:
+				wimp_log_important("Unexpected instruction recieved!\n");
+				break;
 			}
 			wimp_instr_node_free(currentnode);
 			currentnode = wimp_instr_queue_pop(&server->incomingmsg);

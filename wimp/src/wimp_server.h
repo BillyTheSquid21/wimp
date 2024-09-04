@@ -88,10 +88,11 @@ WIMP_API void wimp_close_local_server(void);
 /// @brief Adds instructions to the local server outgoing queue
 /// 
 /// @param dest The name of the destination process
-/// @param instr The name of the instruction
-/// @param instr_size The size of the allocated instruction
+/// @param instr The instruction
+/// @param args Any additional arguments to be copied
+/// @param arg_size_bytes The size of any arguments to copy
 ///
-WIMP_API void wimp_add_local_server(const char* dest, const char* instr, const void* args, size_t arg_size_bytes);
+WIMP_API void wimp_add_local_server(const char* dest, uint64_t instr, const void* args, size_t arg_size_bytes);
 
 ///
 /// @brief Creates an instance of a WIMP server
@@ -139,10 +140,11 @@ WIMP_API bool wimp_server_check_process_listening(WimpServer* server, const char
 /// 
 /// @param server The server to add to
 /// @param dest The name of the destination process
-/// @param instr The name of the instruction
-/// @param instr_size The size of the allocated instruction
+/// @param instr The instruction
+/// @param args Any additional arguments to be copied
+/// @param arg_size_bytes The size of any arguments to copy
 ///
-WIMP_API void wimp_server_add(WimpServer* server, const char* dest, const char* instr, const void* args, size_t arg_size_bytes);
+WIMP_API void wimp_server_add(WimpServer* server, const char* dest, uint64_t instr, const void* args, size_t arg_size_bytes);
 
 ///
 /// @brief Waits until the specified instruction is recieved
@@ -157,7 +159,7 @@ WIMP_API void wimp_server_add(WimpServer* server, const char* dest, const char* 
 /// @return Returns the node of the awaited instruction. Returns NULL if failed.
 /// The node should be freed after using.
 ///
-WIMP_API WimpInstrNode wimp_server_wait_response(WimpServer* server, const char* instr, int32_t timeout);
+WIMP_API WimpInstrNode wimp_server_wait_response(WimpServer* server, uint64_t instr, int32_t timeout);
 
 ///
 /// @brief Routes server instructions 

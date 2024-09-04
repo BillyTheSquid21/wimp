@@ -8,6 +8,13 @@
 #include <wimp_instruction.h>
 #include <wimp_test.h>
 
+enum TEST_INSTRUCTIONS
+{
+	BLANK_INSTR = WINSTR('b','l','a','n','k'),
+	SAY_HELLO = WINSTR('h','e','l','l','o'),
+	ECHO = WINSTR('e','c','h','o'),
+};
+
 /*
 * This is an example client main. It takes the domains and ports as cmd arguments and creates and starts a server.
 * After sending the commands, the server closes.
@@ -60,17 +67,17 @@ int main(int argc, char** argv)
 	wimp_log("Sending instructions to master!\n");
 	
 	//Instruction 1 - This sends a simple instr that the master will ignore. It has no additional arguments
-	wimp_add_local_server("master", "blank_instr", NULL, 0);
+	wimp_add_local_server("master", BLANK_INSTR, NULL, 0);
 
 	//Instruction 2 - This sends a simple instr that tells the master to say hello. It has no additional arguments
-	wimp_add_local_server("master", "say_hello", NULL, 0);
+	wimp_add_local_server("master", SAY_HELLO, NULL, 0);
 
 	//Instruction 3 - This sends a more complex instr, that tells the master to echo the string sent.
 	const char* echo_string = "Echo!";
-	wimp_add_local_server("master", "echo", echo_string, (strlen(echo_string) + 1) * sizeof(char));
+	wimp_add_local_server("master", ECHO, echo_string, (strlen(echo_string) + 1) * sizeof(char));
 
 	//Instruction 4 - This simple tells the master to exit - TODO: This implementation may change in the future
-	wimp_add_local_server("master", "exit", NULL, 0);
+	wimp_add_local_server("master", WIMP_INSTRUCTION_EXIT, NULL, 0);
 
 	wimp_log("Instructions sent to master!\n");
 
