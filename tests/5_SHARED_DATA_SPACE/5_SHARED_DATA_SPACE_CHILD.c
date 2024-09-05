@@ -11,13 +11,14 @@
 
 enum TEST_INSTRUCTIONS
 {
-	CHILD2_LINK_TABLE = WINSTR('S','T','E','P','_','C','H','I','L','D','2','_','L','I','N','K','_','T','A','B','L','E'),
-	CHILD2_LINK_DATA = WINSTR('S','T','E','P','_','C','H','I','L','D','2','_','L','I','N','K','_','D','A','T','A'),
-	CHILD2_READ_DATA = WINSTR('S','T','E','P','_','C','H','I','L','D','2','_','R','E','A','D','_','D','A','T','A'),
-	TESTPROC1_DONE = WINSTR('t','e','s','t','p','r','o','c','1','_','d','o','n','e'),
-	TESTPROC2_DONE = WINSTR('t','e','s','t','p','r','o','c','2','_','d','o','n','e'),
-	CHILD2_WRITE_DATA = WINSTR('S','T','E','P','_','C','H','I','L','D','2','_','W','R','I','T','E','_','D','A','T','A'),
-	WRITE = WINSTR('w','r','i','t','e'),
+    CHILD2_LINK_TABLE = 0,
+    CHILD2_LINK_DATA = 1,
+    CHILD2_READ_DATA = 2,
+    TESTPROC1_DONE = 3,
+    TESTPROC2_DONE = 4,
+    CHILD1_WRITE_DATA = 5,
+    CHILD2_WRITE_DATA = 6,
+    WRITE = 7,
 };
 
 void child_write()

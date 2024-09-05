@@ -32,10 +32,10 @@ enum TEST_ENUMS
 
 enum TEST_INSTRUCTIONS
 {
-	INCR_SHORT = WINSTR('i','n','c','r','_','s','h','r','t'),
-	INCR_LONG = WINSTR('i','n','c','r','e','m','e','n','t','_','c','o','u','n','t','e','r','_','l','o','n','g'),
-	INCR_SHORT_BATCH = WINSTR('i','n','c','r','_','s','h','t','_','b','c','h'),
-	INCR_LONG_BATCH = WINSTR('i','n','c','r','e','m','e','n','t','_','c','t','e','r','_','l','o','n','g','_','b','c','h'),
+	INCR_SHORT = 0,
+	INCR_LONG = 1,
+	INCR_SHORT_BATCH = 2,
+	INCR_LONG_BATCH = 3,
 };
 
 /*

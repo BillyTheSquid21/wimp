@@ -28,9 +28,9 @@ enum TEST_ENUMS
 
 enum TEST_INSTRUCTIONS
 {
-	BLANK_INSTR = WINSTR('b','l','a','n','k'),
-	SAY_HELLO = WINSTR('h','e','l','l','o'),
-	ECHO = WINSTR('e','c','h','o'),
+	BLANK_INSTR = 0,
+	SAY_HELLO = 1,
+	ECHO = 2,
 };
 
 /*
@@ -105,14 +105,16 @@ int main(void)
 				break;	
 			case ECHO:
 				//Get the arguments
-				const char* echo_string = (const char*)meta.args;
-				wimp_log("%s\n", echo_string);
+                {
+                char* echo_string = (char*)meta.args;
+                wimp_log("%s\n", echo_string);
 
-				if (strcmp(echo_string, "Echo!") == 0)
-				{
-					PASS_MATRIX[STEP_INSTRUCTION_3].status = true;
-				}
-				break;		
+                if (strcmp(echo_string, "Echo!") == 0)
+                {
+                    PASS_MATRIX[STEP_INSTRUCTION_3].status = true;
+                }
+                break;
+                }
 			case WIMP_INSTRUCTION_LOG:
 				wimp_log("%s", meta.args);
 				break;

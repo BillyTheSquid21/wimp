@@ -20,10 +20,10 @@
 */
 typedef struct _SArena
 {
-	size_t _arena_size;
-	size_t _arena_capacity;
-	size_t _arena_pointer;
-	uint8_t* _data;
+    size_t _arena_size;
+    size_t _arena_capacity;
+    size_t _arena_pointer;
+    uint8_t* _data;
 } SArena;
 
 /*

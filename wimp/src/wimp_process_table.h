@@ -21,8 +21,8 @@
 /// @brief The result of WIMP process table operations
 enum WimpProcessTableResult
 {
-	WIMP_PROCESS_TABLE_SUCCESS = 0,	///< Result if process table operation is successful
-	WIMP_PROCESS_TABLE_FAIL    = -1,///< Result if process table operation fails for an unspecified reason
+    WIMP_PROCESS_TABLE_SUCCESS = 0,     ///< Result if process table operation is successful
+    WIMP_PROCESS_TABLE_FAIL    = -1,    ///< Result if process table operation fails for an unspecified reason
 };
 
 ///
@@ -32,10 +32,10 @@ enum WimpProcessTableResult
 ///
 typedef enum _WimpRelation
 {
-	WIMP_Process_Unknown		= 0x00, ///< An unknown process, which is usually an error
-	WIMP_Process_Child			= 0x01, ///< A child process which belongs to this process
-	WIMP_Process_Parent			= 0x02, ///< A parent process, which owns this process
-	WIMP_Process_Independent	= 0x03, ///< A process that has no defined relationship with this process
+    WIMP_Process_Unknown        = 0x00,     ///< An unknown process, which is usually an error
+    WIMP_Process_Child            = 0x01,   ///< A child process which belongs to this process
+    WIMP_Process_Parent            = 0x02,  ///< A parent process, which owns this process
+    WIMP_Process_Independent    = 0x03,     ///< A process that has no defined relationship with this process
 } WimpRelation;
 
 ///
@@ -43,11 +43,11 @@ typedef enum _WimpRelation
 ///
 typedef struct _WimpProcessData
 {
-	sds process_domain;			///< String representation of the process domain
-	PSocket* process_connection;///< Connection socket to the process
-	int32_t process_port;		///< Port the process runs on
-	int16_t process_active;		///< Whether the process is active or not
-	int16_t process_relation;	///< Relationship of the process to this process
+    sds process_domain;             ///< String representation of the process domain
+    PSocket* process_connection;    ///< Connection socket to the process
+    int32_t process_port;           ///< Port the process runs on
+    int16_t process_active;         ///< Whether the process is active or not
+    int16_t process_relation;       ///< Relationship of the process to this process
 } *WimpProcessData;
 
 ///
@@ -55,8 +55,8 @@ typedef struct _WimpProcessData
 ///
 typedef struct _WimpProcessTable
 {
-	HashString* _hash_table;
-	size_t _table_length;
+    HashString* _hash_table;
+    size_t _table_length;
 } WimpProcessTable;
 
 ///

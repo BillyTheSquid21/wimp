@@ -30,17 +30,17 @@
 /// @brief The result of WIMP data operations
 enum WimpDataResult
 {
-	WIMP_DATA_SUCCESS = 0, ///< Result if data operation is successful
-	WIMP_DATA_FAIL    = -1 ///< Result if data operation fails for an unspecified reason
+    WIMP_DATA_SUCCESS = 0, ///< Result if data operation is successful
+    WIMP_DATA_FAIL    = -1 ///< Result if data operation fails for an unspecified reason
 };
 
 /// @brief Defines a slot containing data in shared memory
 typedef struct _WimpDataSlot
 {
-	int32_t share_counter;
-	size_t size;
-	SArena data_arena;
-	char name[WIMP_SHARED_SLOT_MAX_NAME_BYTES];
+    int32_t share_counter;
+    size_t size;
+    SArena data_arena;
+    char name[WIMP_SHARED_SLOT_MAX_NAME_BYTES];
 } WimpDataSlot;
 
 ///
@@ -50,8 +50,8 @@ typedef struct _WimpDataSlot
 ///
 typedef struct _WimpDataArena
 {
-	SArena _arena;
-	PShm* _shm;
+    SArena _arena;
+    PShm* _shm;
 } WimpDataArena;
 
 /// @brief A relative pointer within a data arena

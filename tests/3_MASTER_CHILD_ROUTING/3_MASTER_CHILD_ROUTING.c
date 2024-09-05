@@ -25,7 +25,7 @@ enum TEST_ENUMS
 
 enum TEST_INSTRUCTIONS
 {
-	INSTR_HELLO = WINSTR('h','e','l','l','o')
+	INSTR_HELLO = 0
 };
 
 /*

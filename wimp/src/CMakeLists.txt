@@ -17,7 +17,7 @@ set_target_properties(${PROJECT_NAME} PROPERTIES
 target_include_directories(${PROJECT_NAME} PRIVATE ${DEPENDENCIES_DIRECTORY}/plibsys/src)
 
 if (WIN32)
-	target_link_libraries(${PROJECT_NAME} ws2_32)
+    target_link_libraries(${PROJECT_NAME} ws2_32)
 endif()
 
 add_dependencies(${PROJECT_NAME} plibsys)

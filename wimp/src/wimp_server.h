@@ -16,14 +16,14 @@
 /// @brief The result of wimp server operations
 enum WimpServerResult
 {
-	WIMP_SERVER_SUCCESS            =  0, ///< Result if server operation is successful
-	WIMP_SERVER_FAIL 	           = -1, ///< Result if server operation fails for an unspecified reason
-	WIMP_SERVER_ADDRESS_FAIL       = -2, ///< Result if server fails to create a new address
-	WIMP_SERVER_SOCKET_FAIL        = -3, ///< Result if server fails to create a new socket
-	WIMP_SERVER_BIND_FAIL          = -4, ///< Result if server fails to bind it's socket
-	WIMP_SERVER_LISTEN_FAIL        = -5, ///< Result if server socket fails to listen
-	WIMP_SERVER_TOO_FEW_PROCESSES  = -6, ///< Result if fewer processes than expected attempt to accept
-	WIMP_SERVER_UNEXPECTED_PROCESS = -7, ///< Result if an unexpected process attempts to accept
+    WIMP_SERVER_SUCCESS            =  0, ///< Result if server operation is successful
+    WIMP_SERVER_FAIL                = -1,///< Result if server operation fails for an unspecified reason
+    WIMP_SERVER_ADDRESS_FAIL       = -2, ///< Result if server fails to create a new address
+    WIMP_SERVER_SOCKET_FAIL        = -3, ///< Result if server fails to create a new socket
+    WIMP_SERVER_BIND_FAIL          = -4, ///< Result if server fails to bind it's socket
+    WIMP_SERVER_LISTEN_FAIL        = -5, ///< Result if server socket fails to listen
+    WIMP_SERVER_TOO_FEW_PROCESSES  = -6, ///< Result if fewer processes than expected attempt to accept
+    WIMP_SERVER_UNEXPECTED_PROCESS = -7, ///< Result if an unexpected process attempts to accept
 };
 
 #define WIMP_SERVER_ACCEPT_TIMEOUT 5000 //Waits 5000 ms before timing out on the blocking calls
@@ -39,21 +39,21 @@ typedef int32_t WimpServerType;
 ///
 typedef struct _WimpServer
 {
-	sds process_name;		///< Name of the server
-	PSocketAddress* addr;   ///< Server address structure
-	PSocket* server;		///< Server socket pointer
-	WimpProcessTable ptable;///< Process table tracking connected processes
-	const char* parent;		///< Name of the parent process - is null when no parent exists
+    sds process_name;       ///< Name of the server
+    PSocketAddress* addr;   ///< Server address structure
+    PSocket* server;        ///< Server socket pointer
+    WimpProcessTable ptable;///< Process table tracking connected processes
+    const char* parent;     ///< Name of the parent process - is null when no parent exists
 
-	//Ingoing and outgoing msg queues
-	WimpInstrQueue incomingmsg;	///< Incoming message queue
-	WimpInstrQueue outgoingmsg; ///< Outgoing message queue
+    //Ingoing and outgoing msg queues
+    WimpInstrQueue incomingmsg; ///< Incoming message queue
+    WimpInstrQueue outgoingmsg; ///< Outgoing message queue
 
-	//Buffers for writing/reading
-	WimpMsgBuffer sendbuffer; ///< Sending buffer
-	WimpMsgBuffer recbuffer;  ///< Recieving buffer
+    //Buffers for writing/reading
+    WimpMsgBuffer sendbuffer; ///< Sending buffer
+    WimpMsgBuffer recbuffer;  ///< Recieving buffer
 
-	int32_t active; ///< The active status of the server
+    int32_t active; ///< The active status of the server
 
 } WimpServer;
 

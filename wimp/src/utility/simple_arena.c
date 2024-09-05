@@ -2,63 +2,63 @@
 
 bool sarena_init_new(SArena* arena, size_t capacity)
 {
-	uint8_t* data = malloc(capacity);
-	if (data == NULL)
-	{
-		return false;
-	}
+    uint8_t* data = malloc(capacity);
+    if (data == NULL)
+    {
+        return false;
+    }
 
-	bool res = sarena_init(arena, data, capacity);
-	if (!res)
-	{
-		free(data);
-	}
+    bool res = sarena_init(arena, data, capacity);
+    if (!res)
+    {
+        free(data);
+    }
 
-	return res;
+    return res;
 }
 
 bool sarena_init(SArena* arena, uint8_t* ptr, size_t capacity)
 {
-	if (arena->_arena_capacity || arena->_data)
-	{
-		return false;
-	}
+    if (arena->_arena_capacity || arena->_data)
+    {
+        return false;
+    }
 
-	arena->_arena_capacity = capacity;
-	arena->_arena_size = 0;
-	arena->_data = ptr;
-	return true;
+    arena->_arena_capacity = capacity;
+    arena->_arena_size = 0;
+    arena->_data = ptr;
+    return true;
 }
 
 SArena sarena()
 {
-	SArena a = { 0, 0, 0, NULL };
-	return a;
+    SArena a = { 0, 0, 0, NULL };
+    return a;
 }
 
 void sarena_free(SArena* arena)
 {
-	arena->_arena_capacity = 0;
-	arena->_arena_size = 0;
-	if (arena->_data)
-	{
-		free(arena->_data);
-	}
-	arena->_data = NULL;
-	return;
+    arena->_arena_capacity = 0;
+    arena->_arena_size = 0;
+    if (arena->_data)
+    {
+        free(arena->_data);
+    }
+    arena->_data = NULL;
+    return;
 }
 
 SArenaPtr sarena_alloc(SArena* arena, size_t size)
 {
-	size_t new_arena_ptr = arena->_arena_pointer + size;
-	assert(new_arena_ptr <= arena->_arena_capacity && "Alloc out of bounds!");
-	if (new_arena_ptr >= arena->_arena_capacity)
-	{
-		return (SArenaPtr)NULL;
-	}
+    size_t new_arena_ptr = arena->_arena_pointer + size;
+    assert(new_arena_ptr <= arena->_arena_capacity && "Alloc out of bounds!");
+    if (new_arena_ptr >= arena->_arena_capacity)
+    {
+        return (SArenaPtr)NULL;
+    }
 
-	size_t old_arena_ptr = arena->_arena_pointer;
-	arena->_arena_pointer = new_arena_ptr;
-	arena->_arena_size += size;
-	return old_arena_ptr;
+    size_t old_arena_ptr = arena->_arena_pointer;
+    arena->_arena_pointer = new_arena_ptr;
+    arena->_arena_size += size;
+    return old_arena_ptr;
 }

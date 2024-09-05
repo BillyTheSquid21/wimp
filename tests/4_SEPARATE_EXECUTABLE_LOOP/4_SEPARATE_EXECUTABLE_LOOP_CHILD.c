@@ -10,9 +10,9 @@
 
 enum TEST_INSTRUCTIONS
 {
-	BLANK_INSTR = WINSTR('b','l','a','n','k'),
-	SAY_HELLO = WINSTR('h','e','l','l','o'),
-	ECHO = WINSTR('e','c','h','o'),
+	BLANK_INSTR = 0,
+	SAY_HELLO = 1,
+	ECHO = 2,
 };
 
 /*

@@ -27,10 +27,10 @@ enum TEST_ENUMS
 
 enum TEST_INSTRUCTIONS
 {
-	LONG_MESSAGE = WINSTR('l','o','n','g','_','m','e','s','s','a','g','e'),
-	RESPONSE_AWAIT = WINSTR('r','e','s','p','o','n','s','e','_','a','w','a','i','t'),
-	LONG_MESSAGE_PACKED = WINSTR('l','o','n','g','_','m','e','s','s','a','g','e','_','p','a','c','k','e','d'),
-	LONG_MESSAGES_PACKED = WINSTR('l','o','n','g','_','m','e','s','s','a','g','e','s','_','p','a','c','k','e','d'),
+	LONG_MESSAGE = 0,
+	RESPONSE_AWAIT = 1,
+	LONG_MESSAGE_PACKED = 2,
+	LONG_MESSAGES_PACKED = 3,
 };
 
 const char* long_message = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.";

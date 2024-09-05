@@ -13,10 +13,10 @@
 /// @brief The result of a WIMP process operation
 enum WimpProcessResult
 {
-	WIMP_PROCESS_SUCCESS            =  0, ///< Result if process operation is successful
-	WIMP_PROCESS_FAIL               = -1, ///< Result if process operation fails for an unspecified reason
-	WIMP_PROCESS_INVALID_PATH       = -2, ///< Result if path provided to process operation is invalid
-	WIMP_PROCESS_UNRESOLVED_EXE_DIR = -3  ///< Result if executable directory cannot be resolved
+    WIMP_PROCESS_SUCCESS            =  0, ///< Result if process operation is successful
+    WIMP_PROCESS_FAIL               = -1, ///< Result if process operation fails for an unspecified reason
+    WIMP_PROCESS_INVALID_PATH       = -2, ///< Result if path provided to process operation is invalid
+    WIMP_PROCESS_UNRESOLVED_EXE_DIR = -3  ///< Result if executable directory cannot be resolved
 };
 
 #define MAX_PORT_STRING_LEN 6
@@ -40,8 +40,8 @@ typedef char WimpPortStr[MAX_PORT_STRING_LEN];
 ///
 typedef struct _WimpMainEntry
 {
-	char** argv;
-	int argc;
+    char** argv;
+    int argc;
 } *WimpMainEntry;
 
 ///

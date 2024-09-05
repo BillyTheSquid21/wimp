@@ -35,8 +35,8 @@
 /// @brief The result of WIMP receiver operations
 enum WimpRecieverResult
 {
-	WIMP_RECIEVER_SUCCESS 	= 0, ///< Result if reciever operation is successful
-	WIMP_RECIEVER_FAIL 		= -1 ///< Result if reciever operation fails for an unspecified reason
+    WIMP_RECIEVER_SUCCESS     = 0,  ///< Result if reciever operation is successful
+    WIMP_RECIEVER_FAIL         = -1 ///< Result if reciever operation fails for an unspecified reason
 };
 
 ///
@@ -59,8 +59,8 @@ typedef uint8_t WimpMsgBuffer[WIMP_MESSAGE_BUFFER_BYTES];
 ///
 typedef struct _WimpHandshakeHeader
 {
-	int32_t handshake_header;
-	int32_t process_name_bytes;
+    int32_t handshake_header;
+    int32_t process_name_bytes;
 } WimpHandshakeHeader;
 
 ///
@@ -70,18 +70,18 @@ typedef struct _WimpHandshakeHeader
 ///
 typedef struct _RecieverArgs
 {
-	sds process_name;
-	sds recfrom_domain;
-	WimpInstrQueue* incoming_queue;
-	int32_t recfrom_port;
-	int32_t* active;
+    sds process_name;
+    sds recfrom_domain;
+    WimpInstrQueue* incoming_queue;
+    int32_t recfrom_port;
+    int32_t* active;
 } *RecieverArgs;
 
 #if defined __DEBUG && WIMP_PRINT_INSTRS
 
 static void _debug_wimp_print_instruction_meta(WimpInstrMeta meta)
 {
-	printf("\nREAL INSTRUCTION FROM: %s\nTO: %s\nINSTR: %lu\nARG SIZE: %d\nTOTAL SIZE: %d\n\n",meta.source_process,meta.dest_process,meta.instr,meta.arg_bytes,(int32_t)meta.total_bytes);
+    printf("\nREAL INSTRUCTION FROM: %s\nTO: %s\nINSTR: %lu\nARG SIZE: %d\nTOTAL SIZE: %d\n\n",meta.source_process,meta.dest_process,meta.instr,meta.arg_bytes,(int32_t)meta.total_bytes);
 }
 
 //Prints incoming instructions for debugging purposes
