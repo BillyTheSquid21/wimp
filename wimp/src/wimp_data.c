@@ -301,6 +301,7 @@ void wimp_data_unlink_from_data(const char* name)
 				//Decrease the counter and remove from cache
 				data_table[i].share_counter--;
 				p_shm_free(s_DataTableCache[i]);
+                s_DataTableCache[i] = NULL;
 
 				//Uncache the name and address
 				HashString_remove(s_DataTableCacheMap, name);
@@ -312,7 +313,7 @@ void wimp_data_unlink_from_data(const char* name)
 					data_table[i].size = 0;
 					sarena_init(&data_table[i].data_arena, NULL, 0);
 					memset(&data_table[i].name[0], 0, WIMP_SHARED_SLOT_MAX_NAME_BYTES);
-					wimp_log_important("%s was removed from shared data!\n", name);
+                    wimp_log_important("%s was removed from shared data!\n", name);
 				}
 				p_shm_unlock(s_DataTable, NULL);
 				return;
