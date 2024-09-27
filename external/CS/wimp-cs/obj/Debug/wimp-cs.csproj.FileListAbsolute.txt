@@ -1,6 +1,0 @@
-E:\Repos\wimp\build\bin\Debug\wimp-cs.dll
-E:\Repos\wimp\build\bin\Debug\wimp-cs.pdb
-E:\Repos\wimp\external\CS\wimp-cs\obj\Debug\wimp-cs.csproj.AssemblyReference.cache
-E:\Repos\wimp\external\CS\wimp-cs\obj\Debug\wimp-cs.csproj.CoreCompileInputs.cache
-E:\Repos\wimp\external\CS\wimp-cs\obj\Debug\wimp-cs.dll
-E:\Repos\wimp\external\CS\wimp-cs\obj\Debug\wimp-cs.pdb

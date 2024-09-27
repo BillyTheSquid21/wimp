@@ -4,55 +4,57 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{5974E1B8-DA5F-4230-8DD7-D93B97217EBF}</ProjectGuid>
-    <OutputType>Library</OutputType>
-    <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>WimpCS</RootNamespace>
-    <AssemblyName>wimp-cs</AssemblyName>
+    <ProjectGuid>{680D1213-2F79-4D17-B595-8B7B8913C870}</ProjectGuid>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>WIMP_CS_Test_01</RootNamespace>
+    <AssemblyName>WIMP-CS-Test-01</AssemblyName>
     <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
+    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <Deterministic>true</Deterministic>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <BaseIntermediateOutputPath>..\..\..\build\obj\</BaseIntermediateOutputPath>
+    <BaseIntermediateOutputPath>..\..\..\..\..\build\obj\</BaseIntermediateOutputPath>
+    <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
-    <OutputPath>..\..\..\build\bin\Debug\</OutputPath>
+    <OutputPath>..\..\..\..\..\build\bin\Debug\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <BaseIntermediateOutputPath>..\..\..\build\obj\</BaseIntermediateOutputPath>
+    <BaseIntermediateOutputPath>..\..\..\..\..\build\obj\</BaseIntermediateOutputPath>
+    <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
-    <OutputPath>..\..\..\build\bin\Release\</OutputPath>
+    <OutputPath>..\..\..\..\..\build\bin\Release\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'">
-    <BaseIntermediateOutputPath>..\..\..\build\obj\</BaseIntermediateOutputPath>
+    <BaseIntermediateOutputPath>..\..\..\..\..\build\obj\</BaseIntermediateOutputPath>
     <DebugSymbols>true</DebugSymbols>
-    <OutputPath>..\..\..\build\bin\Debug\</OutputPath>
+    <OutputPath>..\..\..\..\..\build\bin\Debug\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <DebugType>full</DebugType>
     <PlatformTarget>x64</PlatformTarget>
     <LangVersion>7.3</LangVersion>
     <ErrorReport>prompt</ErrorReport>
+    <Prefer32Bit>true</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'">
-    <BaseIntermediateOutputPath>..\..\..\build\obj\</BaseIntermediateOutputPath>
-    <OutputPath>..\..\..\build\bin\Release\</OutputPath>
+    <BaseIntermediateOutputPath>..\..\..\..\..\build\obj\</BaseIntermediateOutputPath>
+    <OutputPath>..\..\..\..\..\build\bin\Debug\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <Optimize>true</Optimize>
     <DebugType>pdbonly</DebugType>
     <PlatformTarget>x64</PlatformTarget>
     <LangVersion>7.3</LangVersion>
     <ErrorReport>prompt</ErrorReport>
+    <Prefer32Bit>true</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
@@ -65,8 +67,17 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="WimpCore.cs" />
+    <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="App.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\wimp-cs\wimp-cs.csproj">
+      <Project>{5974e1b8-da5f-4230-8dd7-d93b97217ebf}</Project>
+      <Name>wimp-cs</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
