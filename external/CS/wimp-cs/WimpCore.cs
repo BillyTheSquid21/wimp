@@ -1,13 +1,28 @@
 ﻿using System;
 using System.Runtime.InteropServices;
+using System.Threading;
+
+using static WimpCS.WimpCore;
 
 namespace WimpCS
 {
     /// 
     /// @brief Wraps the C bindings into C# code 
     ///
-    public class Wimp
+    public class WimpCore
     {
+        [StructLayout(LayoutKind.Sequential)]
+        public struct _WimpInstrMeta
+        {
+            public IntPtr source_process;
+            public IntPtr dest_process;
+            public UInt64 instr;
+            public IntPtr args;
+            public UInt64 total_bytes;
+            public Int32 arg_bytes;
+            public Int32 instr_bytes;
+        }
+
         public enum WIMPInstructionsCore : UInt64
         { 
             EXIT = 1540385,
@@ -71,6 +86,9 @@ namespace WimpCS
         public static extern void wimp_add_local_server([MarshalAs(UnmanagedType.LPStr)] String dest, UInt64 instr, IntPtr args, UInt64 arg_size_bytes);
 
         [DllImport("wimp.dll")]
+        public static extern Int32 wimp_add_local_server_process([MarshalAs(UnmanagedType.LPStr)] String process_name, [MarshalAs(UnmanagedType.LPStr)] String process_domain, Int32 process_port, Int32 relation);
+
+        [DllImport("wimp.dll")]
         public static extern Int32 wimp_assign_unused_local_port();
 
         [DllImport("wimp.dll")]
@@ -130,8 +148,8 @@ namespace WimpCS
         //[DllImport("wimp.dll")]
         //public static extern WimpInstrMeta wimp_instr_get_from_buffer(IntPtr buffer, UInt64 buffsize); - TODO find a portable alternative
 
-        //[DllImport("wimp.dll")]
-        //public static extern WimpInstrMeta wimp_instr_get_from_node(IntPtr node); - TODO find a portable alternative
+        [DllImport("wimp.dll")]
+        public static extern _WimpInstrMeta wimp_instr_get_from_node(IntPtr node);
 
         [DllImport("wimp.dll")]
         public static extern UInt64 wimp_instr_get_instruction_count(IntPtr queue, [MarshalAs(UnmanagedType.LPStr)] String instruction);
@@ -147,18 +165,6 @@ namespace WimpCS
 
         [DllImport("wimp.dll")]
         public static extern IntPtr wimp_instr_pack_strings(UInt64 count, __arglist);
-
-        [DllImport("wimp.dll")]
-        public static extern void wimp_log([MarshalAs(UnmanagedType.LPStr)] String format, __arglist);
-
-        [DllImport("wimp.dll")]
-        public static extern void wimp_log_fail([MarshalAs(UnmanagedType.LPStr)] String format, __arglist);
-
-        [DllImport("wimp.dll")]
-        public static extern void wimp_log_important([MarshalAs(UnmanagedType.LPStr)] String format, __arglist);
-
-        [DllImport("wimp.dll")]
-        public static extern void wimp_log_success([MarshalAs(UnmanagedType.LPStr)] String format, __arglist);
 
         [DllImport("wimp.dll")]
         public static extern Int32 wimp_process_table_add(IntPtr table, [MarshalAs(UnmanagedType.LPStr)] String process_name, [MarshalAs(UnmanagedType.LPStr)] String process_domain, Int32 process_port, Int32 relation, IntPtr connection);
@@ -182,6 +188,43 @@ namespace WimpCS
         public static extern Int32 wimp_start_executable_process([MarshalAs(UnmanagedType.LPStr)] String process_name, [MarshalAs(UnmanagedType.LPStr)] String executable, IntPtr entry);
 
         [DllImport("wimp.dll")]
+        public static extern Int32 wimp_start_local_server_reciever_thread([MarshalAs(UnmanagedType.LPStr)] String process_name, [MarshalAs(UnmanagedType.LPStr)] String process_domain, Int32 process_port, [MarshalAs(UnmanagedType.LPStr)] String recfrom_name, [MarshalAs(UnmanagedType.LPStr)] String recfrom_domain, Int32 recfrom_port);
+
+        [DllImport("wimp.dll")]
         public static extern Int32 wimp_start_reciever_thread([MarshalAs(UnmanagedType.LPStr)] String recfrom_name, [MarshalAs(UnmanagedType.LPStr)] String process_domain, Int32 process_port, IntPtr args);
+
+        [DllImport("wimp.dll")]
+        public static extern void wimp_incoming_queue_local_server_lock();
+
+        [DllImport("wimp.dll")]
+        public static extern void wimp_incoming_queue_local_server_unlock();
+
+        [DllImport("wimp.dll")]
+        public static extern IntPtr wimp_incoming_queue_local_server_pop();
+    }
+
+    public class Wimp
+    {
+        private static ThreadLocal<bool> m_IsInitialized = new ThreadLocal<bool>(() =>
+        {
+            return false;
+        });
+
+        public static WimpProcessResult Init()
+        {
+            WimpProcessResult res = (WimpProcessResult)wimp_init();
+            if (res == WimpProcessResult.SUCCESS)
+            {
+                m_IsInitialized.Value = true;
+                return res;
+            }
+            return res;
+        }
+
+        public static void Shutdown()
+        {
+            wimp_shutdown();
+            m_IsInitialized.Value = false;
+        }
     }
 }

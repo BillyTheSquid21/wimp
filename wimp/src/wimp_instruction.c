@@ -232,7 +232,6 @@ WimpInstrMeta wimp_instr_get_from_buffer(uint8_t* buffer, size_t buffsize)
     }
 
     instr.total_bytes = *(int32_t*)&buffer[0];
-
     return instr;
 }
 

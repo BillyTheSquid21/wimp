@@ -79,7 +79,7 @@ int32_t wimp_create_server(WimpServer* server, const char* process_name, const c
         return WIMP_SERVER_BIND_FAIL;
     }
     
-    server->process_name = process_name;
+    server->process_name = sdsnew(process_name);
     server->addr = addr;
     server->ptable = ptable;
     server->server = s;
@@ -159,6 +159,10 @@ int32_t wimp_server_process_accept(WimpServer* server, int pcount, ...)
                     wimp_log("Valid process found: %s\n", proc_name);
                     isvalid = true;
                     break;
+                }
+                else
+                {
+                    wimp_log_important("Invalid process found: %s\n", proc_name);
                 }
             }
 
@@ -467,9 +471,58 @@ void wimp_server_free(WimpServer* server)
     wimp_process_table_free(server->ptable);
     wimp_instr_queue_free(server->incomingmsg);
     wimp_instr_queue_free(server->outgoingmsg);
+    if (server->process_name)
+    {
+        sdsfree(server->process_name);
+    }
     if (server->parent)
     {
         sdsfree(server->parent);
     }
     WIMP_ZERO_BUFFER(server->recbuffer); WIMP_ZERO_BUFFER(server->sendbuffer);
+}
+
+int32_t wimp_start_local_server_reciever_thread(const char* process_name, const char* process_domain, int32_t process_port, const char* recfrom_name, const char* recfrom_domain, int32_t recfrom_port)
+{
+    WimpServer* server = wimp_get_local_server();
+
+    RecieverArgs args = wimp_get_reciever_args(process_name, recfrom_domain, recfrom_port, &server->incomingmsg, &server->active);
+
+    int32_t res = wimp_start_reciever_thread(recfrom_name, process_domain, process_port, args);
+    if (res != WIMP_RECIEVER_SUCCESS)
+    {
+        wimp_log_fail("Failed to start reciever thread for %s\n", recfrom_name);
+    }
+    return res;
+}
+
+int32_t wimp_add_local_server_process(const char* process_name, const char* process_domain, int32_t process_port, int32_t relation)
+{
+    WimpServer* server = wimp_get_local_server();
+
+    int32_t res = wimp_process_table_add(&server->ptable, process_name, process_domain, process_port, (WimpRelation)relation, NULL);
+    if (res != WIMP_PROCESS_SUCCESS)
+    {
+        return res;
+    }
+
+    return wimp_server_process_accept(server, 1, process_name);
+}
+
+void wimp_incoming_queue_local_server_lock()
+{
+    WimpServer* server = wimp_get_local_server();
+    wimp_instr_queue_high_prio_lock(&server->incomingmsg);
+}
+
+void wimp_incoming_queue_local_server_unlock()
+{
+    WimpServer* server = wimp_get_local_server();
+    wimp_instr_queue_high_prio_unlock(&server->incomingmsg);
+}
+
+WimpInstrNode wimp_incoming_queue_local_server_pop()
+{
+    WimpServer* server = wimp_get_local_server();
+    return wimp_instr_queue_pop(&server->incomingmsg);
 }

@@ -43,7 +43,7 @@ typedef struct _WimpServer
     PSocketAddress* addr;   ///< Server address structure
     PSocket* server;        ///< Server socket pointer
     WimpProcessTable ptable;///< Process table tracking connected processes
-    const char* parent;     ///< Name of the parent process - is null when no parent exists
+    sds parent;             ///< Name of the parent process - is null when no parent exists
 
     //Ingoing and outgoing msg queues
     WimpInstrQueue incomingmsg; ///< Incoming message queue
@@ -93,6 +93,49 @@ WIMP_API void wimp_close_local_server(void);
 /// @param arg_size_bytes The size of any arguments to copy
 ///
 WIMP_API void wimp_add_local_server(const char* dest, uint64_t instr, const void* args, size_t arg_size_bytes);
+
+///
+/// @brief Starts a reciever thread for the local server
+/// 
+/// @param process_name The name of the process the local server runs on
+/// @param process_domain The domain the local server runs on
+/// @param process_port The port the local server runs on
+/// @param recfrom_name The name of the process to recieve from
+/// @param recfrom_domain The domain to recieve from
+/// @param recfrom_port The port to recieve from
+/// 
+/// @return Returns a WimpRecieverResult enum
+/// 
+WIMP_API int32_t wimp_start_local_server_reciever_thread(const char* process_name, const char* process_domain, int32_t process_port, const char* recfrom_name, const char* recfrom_domain, int32_t recfrom_port);
+
+///
+/// @brief Locks the local server incoming queue
+/// 
+WIMP_API void wimp_incoming_queue_local_server_lock();
+
+///
+/// @brief Unlocks the local server incoming queue
+/// 
+WIMP_API void wimp_incoming_queue_local_server_unlock();
+
+///
+/// @brief Pops the front instruction from the local server incoming queue
+/// 
+/// @return Returns the instruction node
+/// 
+WIMP_API WimpInstrNode wimp_incoming_queue_local_server_pop();
+
+///
+/// @brief Adds a new process to the local server
+/// 
+/// @param process_name The name of the process to add
+/// @param process_domain The domain of the process to add
+/// @param process_port The port of the process to add
+/// @param relation The relation of the added process to this one
+/// 
+/// @return Returns a WimpProcessResult enum
+/// 
+WIMP_API int32_t wimp_add_local_server_process(const char* process_name, const char* process_domain, int32_t process_port, int32_t relation);
 
 ///
 /// @brief Creates an instance of a WIMP server

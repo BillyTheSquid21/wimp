@@ -65,6 +65,10 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="WimpInstruction.cs" />
+    <Compile Include="WimpLog.cs" />
+    <Compile Include="WimpReciever.cs" />
+    <Compile Include="WimpServer.cs" />
     <Compile Include="WimpCore.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
