@@ -77,6 +77,40 @@ namespace WIMP_CS_Test_01
             ECHO
         }
 
+        public struct PassMat
+        {
+            public PassMat(String name)
+            {
+                StepName = name;
+                Status = false;
+            }
+
+            public static implicit operator PassMat(string name)
+            {
+                return new PassMat() { StepName = name, Status = false };
+            }
+
+            public String StepName;
+            public bool Status;
+        }
+
+        public static PassMat[] Steps = {
+            "PROCESS VALIDATION",
+            "INSTRUCTION 1",
+            "INSTRUCTION 2",
+            "INSTRUCTION 3",
+            "INSTRUCTION 4" 
+        };
+
+        public enum TEST_ENUMS
+        {
+            STEP_PROCESS_VALIDATION = 0,
+            STEP_INSTRUCTION_1 = 1,
+            STEP_INSTRUCTION_2 = 2,
+            STEP_INSTRUCTION_3 = 3,
+            STEP_INSTRUCTION_4 = 4,
+        };
+
         /// 
         /// Ensures the console prints in color
         /// 
@@ -120,30 +154,44 @@ namespace WIMP_CS_Test_01
             //Add process
             WimpServer.AddProcess(reciever, WimpCore.WimpRelation.Child);
 
+            if (WimpServer.CheckProcessListening("client"))
+            {
+                WimpLog.Success("Process validated!\n");
+                Steps[(int)TEST_ENUMS.STEP_PROCESS_VALIDATION].Status = true;
+            }
+
             //Loop
             bool disconnect = false;
             while (!disconnect)
             {
                 WimpServer.Lock();
                 WimpInstructionNode currentnode = WimpServer.NextInstruction();
-                WimpInstructionNode.WimpInstrMeta meta = currentnode.GetMeta();
                 while(!currentnode.IsNull())
                 {
+                    WimpInstructionNode.WimpInstrMeta meta = currentnode.GetMeta();
                     switch (meta.Instruction())
                     {
                         case (UInt64)Instructions.BLANK_INSTR:
                             WimpLog.Log("\n");
+                            Steps[(int)TEST_ENUMS.STEP_INSTRUCTION_1].Status = true;
                             break;
                         case (UInt64)Instructions.SAY_HELLO:
                             WimpLog.Log("HELLO!\n");
+                            Steps[(int)TEST_ENUMS.STEP_INSTRUCTION_2].Status = true;
                             break;
                         case (UInt64)Instructions.ECHO:
                             //Get the arguments
                             String echo_str = Marshal.PtrToStringAnsi(meta.Arguments());
                             WimpLog.Log(echo_str);
+
+                            if (echo_str == "Echo!")
+                            {
+                                Steps[(int)TEST_ENUMS.STEP_INSTRUCTION_3].Status = true;
+                            }
                             break;
                         case (UInt64)WimpCore.WIMPInstructionsCore.EXIT:
                             WimpLog.Log("\n");
+                            Steps[(int)TEST_ENUMS.STEP_INSTRUCTION_4].Status = true;
                             disconnect = true;
                             break;
                         case (UInt64)WimpCore.WIMPInstructionsCore.LOG:
@@ -161,6 +209,23 @@ namespace WIMP_CS_Test_01
             Thread.Sleep(1000);
             WimpServer.CloseLocalServer();
             Wimp.Shutdown();
+
+            bool passed = true;
+            foreach(var step in Steps)
+            {
+                Console.WriteLine(step.StepName + ": " + step.Status.ToString());
+                passed &= step.Status;
+            }
+
+            if (passed)
+            {
+                Console.WriteLine("Test passed!");
+            }
+            else
+            {
+                Console.WriteLine("Test failed!");
+            }
+            Thread.Sleep(5000);
         }
     }
 }

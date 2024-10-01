@@ -499,7 +499,6 @@ int32_t wimp_start_local_server_reciever_thread(const char* process_name, const 
 int32_t wimp_add_local_server_process(const char* process_name, const char* process_domain, int32_t process_port, int32_t relation)
 {
     WimpServer* server = wimp_get_local_server();
-
     int32_t res = wimp_process_table_add(&server->ptable, process_name, process_domain, process_port, (WimpRelation)relation, NULL);
     if (res != WIMP_PROCESS_SUCCESS)
     {

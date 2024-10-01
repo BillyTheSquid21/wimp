@@ -62,6 +62,11 @@ namespace WimpCS
             return res;
         }
 
+        public static bool CheckProcessListening(String process)
+        {
+            return wimp_server_check_process_listening(s_ServerPtr.Value, process);
+        }
+
         public static void AddInstruction(String destination, UInt64 instr, IntPtr args, UInt64 argSize)
         {
             wimp_add_local_server(destination, instr, args, argSize);

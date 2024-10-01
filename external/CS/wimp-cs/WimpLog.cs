@@ -137,9 +137,6 @@ namespace WimpCS
         {
             switch (args.Length)
             {
-            case 0:
-                wimp_log(format);
-                break;
             case 1:
                 wimp_log(format, args[0]);
                 break;
@@ -158,9 +155,6 @@ namespace WimpCS
         {
             switch (args.Length)
             {
-                case 0:
-                    wimp_log(format);
-                    break;
                 case 1:
                     wimp_log(format, args[0]);
                     break;
@@ -179,9 +173,6 @@ namespace WimpCS
         {
             switch (args.Length)
             {
-                case 0:
-                    wimp_log(format);
-                    break;
                 case 1:
                     wimp_log(format, args[0]);
                     break;
@@ -196,13 +187,15 @@ namespace WimpCS
             }
         }
 
+        public static void Success([MarshalAs(UnmanagedType.LPStr)] String format)
+        {
+            wimp_log_success(format);
+        }
+
         public static void Success([MarshalAs(UnmanagedType.LPStr)] String format, params String[] args)
         {
             switch (args.Length)
             {
-                case 0:
-                    wimp_log_success(format);
-                    break;
                 case 1:
                     wimp_log_success(format, args[0]);
                     break;
@@ -221,9 +214,6 @@ namespace WimpCS
         {
             switch (args.Length)
             {
-                case 0:
-                    wimp_log_success(format);
-                    break;
                 case 1:
                     wimp_log_success(format, args[0]);
                     break;
@@ -242,9 +232,6 @@ namespace WimpCS
         {
             switch (args.Length)
             {
-                case 0:
-                    wimp_log_success(format);
-                    break;
                 case 1:
                     wimp_log_success(format, args[0]);
                     break;
@@ -259,13 +246,15 @@ namespace WimpCS
             }
         }
 
+        public static void Fail([MarshalAs(UnmanagedType.LPStr)] String format)
+        {
+            wimp_log_fail(format);
+        }
+
         public static void Fail([MarshalAs(UnmanagedType.LPStr)] String format, params String[] args)
         {
             switch (args.Length)
             {
-                case 0:
-                    wimp_log_fail(format);
-                    break;
                 case 1:
                     wimp_log_fail(format, args[0]);
                     break;
@@ -284,9 +273,6 @@ namespace WimpCS
         {
             switch (args.Length)
             {
-                case 0:
-                    wimp_log_fail(format);
-                    break;
                 case 1:
                     wimp_log_fail(format, args[0]);
                     break;
@@ -305,9 +291,6 @@ namespace WimpCS
         {
             switch (args.Length)
             {
-                case 0:
-                    wimp_log_fail(format);
-                    break;
                 case 1:
                     wimp_log_fail(format, args[0]);
                     break;
@@ -322,13 +305,15 @@ namespace WimpCS
             }
         }
 
+        public static void Important([MarshalAs(UnmanagedType.LPStr)] String format)
+        {
+            wimp_log_important(format);
+        }
+
         public static void Important([MarshalAs(UnmanagedType.LPStr)] String format, params String[] args)
         {
             switch (args.Length)
             {
-                case 0:
-                    wimp_log_important(format);
-                    break;
                 case 1:
                     wimp_log_important(format, args[0]);
                     break;
@@ -347,9 +332,6 @@ namespace WimpCS
         {
             switch (args.Length)
             {
-                case 0:
-                    wimp_log_important(format);
-                    break;
                 case 1:
                     wimp_log_important(format, args[0]);
                     break;
@@ -368,9 +350,6 @@ namespace WimpCS
         {
             switch (args.Length)
             {
-                case 0:
-                    wimp_log_important(format);
-                    break;
                 case 1:
                     wimp_log_important(format, args[0]);
                     break;

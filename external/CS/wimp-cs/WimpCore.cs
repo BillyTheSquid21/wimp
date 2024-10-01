@@ -173,9 +173,6 @@ namespace WimpCS
         public static extern bool wimp_server_check_process_listening(IntPtr server, [MarshalAs(UnmanagedType.LPStr)] String process_name);
 
         [DllImport("wimp.dll")]
-        public static extern Int32 wimp_server_process_accept(IntPtr server, Int32 pcount, __arglist);
-
-        [DllImport("wimp.dll")]
         public static extern Int32 wimp_server_send_instructions(IntPtr server);
 
         [DllImport("wimp.dll")]
