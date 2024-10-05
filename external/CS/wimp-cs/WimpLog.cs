@@ -30,13 +30,13 @@ namespace WimpCS
         private static extern void wimp_log([MarshalAs(UnmanagedType.LPStr)] String format, [MarshalAs(UnmanagedType.LPStr)] String s1, [MarshalAs(UnmanagedType.LPStr)] String s2, [MarshalAs(UnmanagedType.LPStr)] String s3);
 
         [DllImport("wimp.dll")]
-        private static extern void wimp_log([MarshalAs(UnmanagedType.LPStr)] String format, float f1);
+        private static extern void wimp_log([MarshalAs(UnmanagedType.LPStr)] String format, Single f1);
 
         [DllImport("wimp.dll")]
-        private static extern void wimp_log([MarshalAs(UnmanagedType.LPStr)] String format, float f1, float f2);
+        private static extern void wimp_log([MarshalAs(UnmanagedType.LPStr)] String format, Single f1, Single f2);
 
         [DllImport("wimp.dll")]
-        private static extern void wimp_log([MarshalAs(UnmanagedType.LPStr)] String format, float f1, float f2, float f3);
+        private static extern void wimp_log([MarshalAs(UnmanagedType.LPStr)] String format, Single f1, Single f2, Single f3);
 
         [DllImport("wimp.dll")]
         private static extern void wimp_log_success([MarshalAs(UnmanagedType.LPStr)] String format);
@@ -60,13 +60,13 @@ namespace WimpCS
         private static extern void wimp_log_success([MarshalAs(UnmanagedType.LPStr)] String format, [MarshalAs(UnmanagedType.LPStr)] String s1, [MarshalAs(UnmanagedType.LPStr)] String s2, [MarshalAs(UnmanagedType.LPStr)] String s3);
 
         [DllImport("wimp.dll")]
-        private static extern void wimp_log_success([MarshalAs(UnmanagedType.LPStr)] String format, float f1);
+        private static extern void wimp_log_success([MarshalAs(UnmanagedType.LPStr)] String format, Single f1);
 
         [DllImport("wimp.dll")]
-        private static extern void wimp_log_success([MarshalAs(UnmanagedType.LPStr)] String format, float f1, float f2);
+        private static extern void wimp_log_success([MarshalAs(UnmanagedType.LPStr)] String format, Single f1, Single f2);
 
         [DllImport("wimp.dll")]
-        private static extern void wimp_log_success([MarshalAs(UnmanagedType.LPStr)] String format, float f1, float f2, float f3);
+        private static extern void wimp_log_success([MarshalAs(UnmanagedType.LPStr)] String format, Single f1, Single f2, Single f3);
 
         [DllImport("wimp.dll")]
         private static extern void wimp_log_fail([MarshalAs(UnmanagedType.LPStr)] String format);
@@ -90,13 +90,13 @@ namespace WimpCS
         private static extern void wimp_log_fail([MarshalAs(UnmanagedType.LPStr)] String format, [MarshalAs(UnmanagedType.LPStr)] String s1, [MarshalAs(UnmanagedType.LPStr)] String s2, [MarshalAs(UnmanagedType.LPStr)] String s3);
 
         [DllImport("wimp.dll")]
-        private static extern void wimp_log_fail([MarshalAs(UnmanagedType.LPStr)] String format, float f1);
+        private static extern void wimp_log_fail([MarshalAs(UnmanagedType.LPStr)] String format, Single f1);
 
         [DllImport("wimp.dll")]
-        private static extern void wimp_log_fail([MarshalAs(UnmanagedType.LPStr)] String format, float f1, float f2);
+        private static extern void wimp_log_fail([MarshalAs(UnmanagedType.LPStr)] String format, Single f1, Single f2);
 
         [DllImport("wimp.dll")]
-        private static extern void wimp_log_fail([MarshalAs(UnmanagedType.LPStr)] String format, float f1, float f2, float f3);
+        private static extern void wimp_log_fail([MarshalAs(UnmanagedType.LPStr)] String format, Single f1, Single f2, Single f3);
 
         [DllImport("wimp.dll")]
         private static extern void wimp_log_important([MarshalAs(UnmanagedType.LPStr)] String format);
@@ -120,13 +120,19 @@ namespace WimpCS
         private static extern void wimp_log_important([MarshalAs(UnmanagedType.LPStr)] String format, [MarshalAs(UnmanagedType.LPStr)] String s1, [MarshalAs(UnmanagedType.LPStr)] String s2, [MarshalAs(UnmanagedType.LPStr)] String s3);
 
         [DllImport("wimp.dll")]
-        private static extern void wimp_log_important([MarshalAs(UnmanagedType.LPStr)] String format, float f1);
+        private static extern void wimp_log_important([MarshalAs(UnmanagedType.LPStr)] String format, Single f1);
 
         [DllImport("wimp.dll")]
-        private static extern void wimp_log_important([MarshalAs(UnmanagedType.LPStr)] String format, float f1, float f2);
+        private static extern void wimp_log_important([MarshalAs(UnmanagedType.LPStr)] String format, Single f1, Single f2);
 
         [DllImport("wimp.dll")]
-        private static extern void wimp_log_important([MarshalAs(UnmanagedType.LPStr)] String format, float f1, float f2, float f3);
+        private static extern void wimp_log_important([MarshalAs(UnmanagedType.LPStr)] String format, Single f1, Single f2, Single f3);
+
+        ///
+        /// Currently floats don't seem to correctly be interpreted
+        /// Workaround is to convert to string and treat that way
+        /// TODO: Fix
+        /// 
 
         public static void Log([MarshalAs(UnmanagedType.LPStr)] String format)
         {
@@ -171,16 +177,17 @@ namespace WimpCS
 
         public static void Log([MarshalAs(UnmanagedType.LPStr)] String format, params float[] args)
         {
+            String format_str = format.Replace("%f", "%s");
             switch (args.Length)
             {
                 case 1:
-                    wimp_log(format, args[0]);
+                    wimp_log(format_str, args[0].ToString());
                     break;
                 case 2:
-                    wimp_log(format, args[0], args[1]);
+                    wimp_log(format_str, args[0].ToString(), args[1].ToString());
                     break;
                 case 3:
-                    wimp_log(format, args[0], args[1], args[2]);
+                    wimp_log(format_str, args[0].ToString(), args[1].ToString(), args[2].ToString());
                     break;
                 default:
                     break;
@@ -230,16 +237,17 @@ namespace WimpCS
 
         public static void Success([MarshalAs(UnmanagedType.LPStr)] String format, params float[] args)
         {
+            String format_str = format.Replace("%f", "%s");
             switch (args.Length)
             {
                 case 1:
-                    wimp_log_success(format, args[0]);
+                    wimp_log_success(format_str, args[0].ToString());
                     break;
                 case 2:
-                    wimp_log_success(format, args[0], args[1]);
+                    wimp_log_success(format_str, args[0].ToString(), args[1].ToString());
                     break;
                 case 3:
-                    wimp_log_success(format, args[0], args[1], args[2]);
+                    wimp_log_success(format_str, args[0].ToString(), args[1].ToString(), args[2].ToString());
                     break;
                 default:
                     break;
@@ -289,16 +297,17 @@ namespace WimpCS
 
         public static void Fail([MarshalAs(UnmanagedType.LPStr)] String format, params float[] args)
         {
+            String format_str = format.Replace("%f", "%s");
             switch (args.Length)
             {
                 case 1:
-                    wimp_log_fail(format, args[0]);
+                    wimp_log_fail(format_str, args[0].ToString());
                     break;
                 case 2:
-                    wimp_log_fail(format, args[0], args[1]);
+                    wimp_log_fail(format_str, args[0].ToString(), args[1].ToString());
                     break;
                 case 3:
-                    wimp_log_fail(format, args[0], args[1], args[2]);
+                    wimp_log_fail(format_str, args[0].ToString(), args[1].ToString(), args[2].ToString());
                     break;
                 default:
                     break;
@@ -348,16 +357,17 @@ namespace WimpCS
 
         public static void Important([MarshalAs(UnmanagedType.LPStr)] String format, params float[] args)
         {
+            String format_str = format.Replace("%f", "%s");
             switch (args.Length)
             {
                 case 1:
-                    wimp_log_important(format, args[0]);
+                    wimp_log_important(format_str, args[0].ToString());
                     break;
                 case 2:
-                    wimp_log_important(format, args[0], args[1]);
+                    wimp_log_important(format_str, args[0].ToString(), args[1].ToString());
                     break;
                 case 3:
-                    wimp_log_important(format, args[0], args[1], args[2]);
+                    wimp_log_important(format_str, args[0].ToString(), args[1].ToString(), args[2].ToString());
                     break;
                 default:
                     break;

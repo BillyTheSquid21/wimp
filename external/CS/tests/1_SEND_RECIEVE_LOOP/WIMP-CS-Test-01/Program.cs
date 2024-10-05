@@ -57,7 +57,7 @@ namespace WIMP_CS_Test_01
             WimpServer.AddInstruction("master", (UInt64)Program.Instructions.ECHO, echo_string_marshalled, (UInt64)(echo_string.Length + 1));
             Marshal.FreeHGlobal(echo_string_marshalled);
 
-            //Instruction 4 - This simple tells the master to exit
+            //Instruction 4 - This tells the master to exit
             WimpServer.AddInstruction("master", (UInt64)WimpCore.WIMPInstructionsCore.EXIT, (IntPtr)0, 0);
 
             WimpServer.SendInstructions();

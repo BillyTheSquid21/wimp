@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "wimp-cs", "wimp-cs.csproj",
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WIMP-CS-Test-01", "..\tests\1_SEND_RECIEVE_LOOP\WIMP-CS-Test-01\WIMP-CS-Test-01.csproj", "{680D1213-2F79-4D17-B595-8B7B8913C870}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WIMP-CS-Test-02", "..\tests\2_INSTRUCTION_BRUTE_FORCE_TIME\WIMP-CS-Test-02\WIMP-CS-Test-02.csproj", "{5098BE0D-C931-4C6C-BA6F-D7323F8C8387}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -31,6 +33,14 @@ Global
 		{680D1213-2F79-4D17-B595-8B7B8913C870}.Release|Any CPU.Build.0 = Release|Any CPU
 		{680D1213-2F79-4D17-B595-8B7B8913C870}.Release|x64.ActiveCfg = Release|Any CPU
 		{680D1213-2F79-4D17-B595-8B7B8913C870}.Release|x64.Build.0 = Release|Any CPU
+		{5098BE0D-C931-4C6C-BA6F-D7323F8C8387}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5098BE0D-C931-4C6C-BA6F-D7323F8C8387}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5098BE0D-C931-4C6C-BA6F-D7323F8C8387}.Debug|x64.ActiveCfg = Debug|x64
+		{5098BE0D-C931-4C6C-BA6F-D7323F8C8387}.Debug|x64.Build.0 = Debug|x64
+		{5098BE0D-C931-4C6C-BA6F-D7323F8C8387}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5098BE0D-C931-4C6C-BA6F-D7323F8C8387}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5098BE0D-C931-4C6C-BA6F-D7323F8C8387}.Release|x64.ActiveCfg = Release|x64
+		{5098BE0D-C931-4C6C-BA6F-D7323F8C8387}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
