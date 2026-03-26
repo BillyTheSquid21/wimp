@@ -26,4 +26,4 @@ jobs:
               run: cd build && cmake --build . -j10
 
             - name: List test executables
-              run: ls build/bin/Debug/
+              run: ls build/bin/
