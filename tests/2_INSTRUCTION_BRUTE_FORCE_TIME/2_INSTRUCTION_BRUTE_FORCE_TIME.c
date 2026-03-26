@@ -387,5 +387,5 @@ int main(void)
 	wimp_shutdown();
 
 	bool passed = wimp_test_validate_passmat(PASS_MATRIX, 5);
-	return passed ? 1 : 0;
+	return passed ? 0 : 1;
 }
