@@ -25,5 +25,5 @@ jobs:
             - name: Build project
               run: cd build && cmake --build . -j10
 
-            - name: Initial Message
-              run: echo "Running tests for wimp"
+            - name: List test executables
+              run: ls build/bin/Debug/
