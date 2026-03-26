@@ -27,3 +27,8 @@ jobs:
 
             - name: List test executables
               run: ls build/bin/
+
+            - name: Run test executables
+              run: for file in build/bin/*Test*; do if [ -x "$file" ] && [[ "$file" != *_b ]]; then echo "Running $file"; ./$file; fi; done
+
+            
