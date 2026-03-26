@@ -283,7 +283,7 @@ WIMP_API bool wimp_instr_check(uint64_t instr1, uint64_t instr2);
 /// 
 /// @return Returns the instruction count
 ///
-WIMP_API size_t wimp_instr_get_instruction_count(WimpInstrQueue* queue, const char* instruction);
+WIMP_API size_t wimp_instr_get_instruction_count(WimpInstrQueue* queue, uint64_t instruction);
 
 ///
 /// @brief Packs a collection of up to WIMP_STR_PACK_MAX_STRINGS strings

@@ -1,5 +1,6 @@
 #include <wimp_instruction.h>
 #include <stdlib.h>
+#include <wimp_log.h>
 
 typedef struct _WimpInstrNode
 {
@@ -242,11 +243,10 @@ WimpInstrMeta wimp_instr_get_from_node(WimpInstrNode node)
 
 bool wimp_instr_check(uint64_t instr1, uint64_t instr2)
 {
-    //For now is just exportable strcmp
     return instr1 == instr2;
 }
 
-size_t wimp_instr_get_instruction_count(WimpInstrQueue* queue, const char* instruction)
+size_t wimp_instr_get_instruction_count(WimpInstrQueue* queue, uint64_t instruction)
 {
     size_t instr_count = 0;
 
@@ -261,7 +261,7 @@ size_t wimp_instr_get_instruction_count(WimpInstrQueue* queue, const char* instr
     while (current != NULL)
     {
         WimpInstrMeta meta = wimp_instr_get_from_node(current);
-        if (strcmp(meta.instr, instruction) == 0)
+        if (wimp_instr_check(meta.instr, instruction))
         {
             instr_count++;
         }
@@ -280,7 +280,7 @@ WimpStrPack wimp_instr_pack_strings(size_t count, ...)
     //Work out how many total bytes to allocate
     size_t total_bytes = sizeof(struct _WimpStrPack);
 
-    char** strings[WIMP_STR_PACK_MAX_STRINGS];
+    char* strings[WIMP_STR_PACK_MAX_STRINGS];
     size_t strings_sizes[WIMP_STR_PACK_MAX_STRINGS];
 
     for (size_t i = 0; i < count; ++i)
