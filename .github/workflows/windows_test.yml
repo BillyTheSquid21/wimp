@@ -1,0 +1,39 @@
+name: Run Tests
+
+on:
+    push:
+        branches: [ main, develop, features/* ]
+    pull_request:
+        branches: [ main ]
+
+jobs:
+    tests:
+        runs-on: windows-latest
+
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v4
+              with:
+                submodules: recursive
+
+            - name: Install dependencies
+              run: |
+                choco install ninja mingw --yes
+                echo "C:\ProgramData\mingw64\bin" >> $env:GITHUB_PATH
+
+            - name: Configure build
+              run: mkdir build && cd build && cmake .. -DCMAKE_CXX_COMPILER=gcc -G "Ninja" -DWIMP_BUILD_TESTS=1
+
+            - name: Build project
+              run: cd build && cmake --build . -j10
+
+            - name: List test executables
+              run: dir build\bin\
+              shell: cmd
+
+            - name: Run test executables
+              run: |
+                Get-ChildItem build\bin\*Test* | Where-Object { $_.Name -notlike "*_b*" } | ForEach-Object { Write-Host "Running $($_.FullName)"; & $_.FullName }
+              shell: pwsh
+
+            
