@@ -149,6 +149,7 @@ int client_main_entry(int argc, char** argv)
 
 	//Will get two arriving but this shouldn't matter
 	wimp_add_local_server("master", WIMP_INSTRUCTION_EXIT, NULL, 0);
+	wimp_server_send_instructions(server);
 
 	//This should also shut down the reciever
 	wimp_log("Client thread closed\n");

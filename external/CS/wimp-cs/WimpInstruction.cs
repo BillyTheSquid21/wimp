@@ -6,6 +6,14 @@ using static WimpCS.WimpCore;
 
 namespace WimpCS
 {
+    public enum WimpInstructionsCore : UInt64
+    {
+        EXIT = 1540385UL,
+        LOG = 161821UL,
+        PING = 1446181UL,
+        HANDSHAKE_STATUS = 27140846854UL
+    }
+
     public class WimpInstructionNode
     {
         public struct WimpInstrMeta
@@ -68,7 +76,8 @@ namespace WimpCS
             private Int32 m_InstrBytes;        
         }
 
-        private IntPtr m_Handle = (IntPtr)0;
+        public IntPtr m_Handle = (IntPtr)0;
+        private bool m_IsHandled = false;
 
         public WimpInstructionNode(IntPtr handle)
         {
@@ -77,7 +86,7 @@ namespace WimpCS
 
         ~WimpInstructionNode()
         {
-            if (m_Handle != (IntPtr)0)
+            if (m_Handle != (IntPtr)0 && !m_IsHandled)
             {
                 wimp_instr_node_free(m_Handle);
                 m_Handle = (IntPtr)0;
@@ -99,6 +108,18 @@ namespace WimpCS
             //Get the unmanaged data meta
             _WimpInstrMeta umeta = wimp_instr_get_from_node(m_Handle);
             return new WimpInstrMeta(umeta);
+        }
+
+        //Public but shouldn't be used by the user, only for internal use
+        public IntPtr _Handle()
+        {
+            return m_Handle;
+        }
+
+        //For when handing back to another process, we don't want the node to be freed by the destructor
+        public void MarkAsHandled()
+        {
+            m_IsHandled = true;
         }
     }
 

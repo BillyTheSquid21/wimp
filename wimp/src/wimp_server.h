@@ -126,7 +126,8 @@ WIMP_API void wimp_incoming_queue_local_server_unlock();
 WIMP_API WimpInstrNode wimp_incoming_queue_local_server_pop();
 
 ///
-/// @brief Adds a new process to the local server
+/// @brief Adds a new process to the local server.
+/// Can only add one process at a time. Any other processes trying to connect will be rejected.
 /// 
 /// @param process_name The name of the process to add
 /// @param process_domain The domain of the process to add

@@ -93,6 +93,16 @@ namespace WimpCS
             return new WimpInstructionNode(handle);
         }
 
+        public static bool NeedsRouting(String destProcess, WimpInstructionNode instrNode)
+        {
+            bool needsRouting = wimp_server_instr_routed(s_ServerPtr.Value, destProcess, instrNode._Handle());
+            if (needsRouting)
+            {
+                instrNode.MarkAsHandled();
+            }
+            return needsRouting;
+        }
+
         public static void Lock()
         {
             WimpCore.wimp_incoming_queue_local_server_lock();

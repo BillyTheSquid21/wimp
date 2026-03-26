@@ -124,6 +124,9 @@ int32_t wimp_server_process_accept(WimpServer* server, int pcount, ...)
     //Wait for pcount many connections to be made, perform checks/handshake
     int32_t accepted_count = 0;
     int32_t failure_reason = WIMP_SERVER_TOO_FEW_PROCESSES;
+
+	const int32_t MAX_RETRIES = 5;
+	int32_t retries = 0;
     for (int32_t i = 0; i < pcount; ++i)
     {
         PError* err = NULL;
@@ -214,8 +217,17 @@ int32_t wimp_server_process_accept(WimpServer* server, int pcount, ...)
         }
         else
         {
-            wimp_log_fail("Can't make connection (%d) %s\n", p_error_get_code(err), p_error_get_message(err));
-            p_error_free(err);
+			if (retries < MAX_RETRIES)
+            {
+                wimp_log_important("Accept number %d failed, retrying...\n", retries + 1);
+                i--; //Try again, hoping the next connection will succeed
+                retries++;
+            }
+            else
+            {
+                wimp_log_fail("Can't make connection (%d) %s\n", p_error_get_code(err), p_error_get_message(err));
+                p_error_free(err);
+            }
         }
     }
     free(pnames);
@@ -422,10 +434,13 @@ int32_t wimp_server_send_instructions(WimpServer* server)
                     memcpy(server->sendbuffer, WIMP_INSTR_OFFSET(currentn_meta, sent_bytes), bytes_to_send);
 
                     pssize sendres = p_socket_send(data->process_connection, server->sendbuffer, bytes_to_send, NULL);
-
                     WIMP_ZERO_BUFFER(server->sendbuffer);
                     sent_bytes += sendres;
                 }
+            }
+            else
+            {
+				wimp_log_fail("Process %s isn't active anymore, failed to send instruction!\n", currentn_meta.dest_process);
             }
         }
         wimp_instr_node_free(currentn);

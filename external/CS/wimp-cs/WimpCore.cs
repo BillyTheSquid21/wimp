@@ -173,10 +173,16 @@ namespace WimpCS
         public static extern bool wimp_server_check_process_listening(IntPtr server, [MarshalAs(UnmanagedType.LPStr)] String process_name);
 
         [DllImport("wimp.dll")]
+        public static extern Int32 wimp_server_process_accept(IntPtr server, Int32 pcount, __arglist);
+
+        [DllImport("wimp.dll")]
         public static extern Int32 wimp_server_send_instructions(IntPtr server);
 
         [DllImport("wimp.dll")]
         public static extern IntPtr wimp_server_wait_response(IntPtr server, UInt64 instr, Int32 timeout);
+
+        [DllImport("wimp.dll")]
+        public static extern bool wimp_server_instr_routed(IntPtr server, [MarshalAs(UnmanagedType.LPStr)] String dest_process, IntPtr instrnode);
 
         [DllImport("wimp.dll")]
         public static extern void wimp_shutdown();
