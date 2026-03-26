@@ -412,6 +412,6 @@ int main(void)
 	wimp_data_free();
 	wimp_shutdown();
 
-	wimp_test_validate_passmat(PASS_MATRIX, 11);
-	return 0;
+	bool passed = wimp_test_validate_passmat(PASS_MATRIX, 11);
+	return passed ? 0 : 1;
 }

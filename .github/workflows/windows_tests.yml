@@ -1,4 +1,4 @@
-name: Run Windows Tests
+name: Run Tests
 
 on:
     push:
@@ -33,7 +33,13 @@ jobs:
 
             - name: Run test executables
               run: |
-                Get-ChildItem build\bin\*Test* | Where-Object { $_.Name -notlike "*_b*" } | ForEach-Object { Write-Host "Running $($_.FullName)"; & $_.FullName }
+                Get-ChildItem build\bin\*Test* | Where-Object { $_.Name -notlike "*_b*" } | ForEach-Object { 
+                  Write-Host "Running $($_.FullName)"; 
+                  & $_.FullName; 
+                  if ($LASTEXITCODE -ne 0) { 
+                    throw "Test failed: $($_.FullName)" 
+                  } 
+                }
               shell: pwsh
 
             

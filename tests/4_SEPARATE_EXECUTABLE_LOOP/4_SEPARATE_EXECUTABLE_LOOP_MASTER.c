@@ -139,6 +139,6 @@ int main(void)
 	//Cleanup
 	wimp_shutdown();
 
-	wimp_test_validate_passmat(PASS_MATRIX, 5);
-	return 0;
+	bool passed = wimp_test_validate_passmat(PASS_MATRIX, 5);
+	return passed ? 0 : 1;
 }
