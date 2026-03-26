@@ -11,5 +11,19 @@ jobs:
         runs-on: ubuntu-latest
 
         steps:
+            - name: Checkout repository
+              uses: actions/checkout@v4
+              with:
+                submodules: recursive
+
+            - name: Install dependencies
+              run: sudo apt-get update && sudo apt-get install -y ninja-build
+
+            - name: Configure build
+              run: mkdir build && cd build && cmake .. -DCMAKE_CXX_COMPILER=gcc -G "Ninja" -DWIMP_BUILD_TESTS=1
+
+            - name: Build project
+              run: cd build && cmake --build . -j10
+
             - name: Initial Message
               run: echo "Running tests for wimp"
