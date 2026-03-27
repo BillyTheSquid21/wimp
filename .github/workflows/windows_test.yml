@@ -18,11 +18,14 @@ jobs:
 
             - name: Install dependencies
               run: |
-                choco install ninja mingw --yes
+                choco install ninja mingw-w64 --yes
                 echo "C:\ProgramData\mingw64\bin" >> $env:GITHUB_PATH
 
             - name: Configure build
-              run: mkdir build && cd build && cmake .. -DCMAKE_CXX_COMPILER=gcc -G "Ninja" -DWIMP_BUILD_TESTS=1
+              run: |
+                mkdir build
+                cd build
+                cmake .. -DCMAKE_CXX_COMPILER=x86_64-w64-mingw32-g++ -DCMAKE_C_COMPILER=x86_64-w64-mingw32-gcc -G "Ninja" -DWIMP_BUILD_TESTS=1
 
             - name: Build project
               run: cd build && cmake --build . -j10
