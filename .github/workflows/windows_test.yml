@@ -18,7 +18,7 @@ jobs:
 
             - name: Install dependencies
               run: |
-                choco install ninja mingw-w64 --yes
+                choco install ninja mingw-w64 --yes --pre
                 echo "C:\ProgramData\mingw64\bin" >> $env:GITHUB_PATH
 
             - name: Configure build
