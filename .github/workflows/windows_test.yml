@@ -31,14 +31,20 @@ jobs:
             - name: Run tests with coverage
               run: |
                 $testFiles = Get-ChildItem build\bin\Debug\*Test*.exe | Where-Object { $_.Name -notlike "*_b*" }
+                $inputCoverageArgs = @()
                 foreach ($test in $testFiles) {
                   Write-Host "Running $($test.FullName) with coverage"
-                  & "C:\Program Files\OpenCppCoverage\OpenCppCoverage.exe" --sources wimp --export_type html:coverage_$($test.BaseName) -- $test.FullName
+                  $covFile = "$($test.BaseName).cov"
+                  & "C:\Program Files\OpenCppCoverage\OpenCppCoverage.exe" --sources wimp --export_type binary:$covFile -- $test.FullName
+                  $inputCoverageArgs += "--input_coverage=$covFile"
                 }
+                
+                Write-Host "Generating merged coverage report"
+                & "C:\Program Files\OpenCppCoverage\OpenCppCoverage.exe" --sources wimp --export_type html:coverage_report @inputCoverageArgs -- cmd /c exit 0
               shell: pwsh
 
-            - name: Upload coverage reports
-              uses: actions/upload-artifact@v4
+            - name: Upload coverage report
+              uses: actions/upload-artifact@v3
               with:
-                name: coverage-reports
-                path: coverage_*/
+                name: coverage-report
+                path: coverage_report/
