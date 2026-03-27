@@ -35,7 +35,7 @@ jobs:
                 foreach ($test in $testFiles) {
                   Write-Host "Running $($test.FullName) with coverage"
                   $covFile = "$($test.BaseName).cov"
-                  & "C:\Program Files\OpenCppCoverage\OpenCppCoverage.exe" --sources wimp --export_type binary:$covFile -- $test.FullName
+                  & "C:\Program Files\OpenCppCoverage\OpenCppCoverage.exe" --modules wimp --excluded_modules plibsys --sources wimp --export_type binary:$covFile -- $test.FullName
                   $inputCoverageArgs += "--input_coverage=$covFile"
                 }
                 
