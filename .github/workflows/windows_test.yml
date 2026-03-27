@@ -17,20 +17,20 @@ jobs:
                 submodules: recursive
 
             - name: Install dependencies
-              run: choco install opencppcoverage ninja --yes
+              run: choco install opencppcoverage --yes
 
             - name: Configure build
               run: |
                 mkdir build
                 cd build
-                cmake .. -G "Ninja" -DCMAKE_CXX_COMPILER=cl -DCMAKE_C_COMPILER=cl -DWIMP_BUILD_TESTS=1
+                cmake .. -G "Visual Studio 17 2022" -A x64 -DWIMP_BUILD_TESTS=1
 
             - name: Build project
-              run: cd build && cmake --build . -j10
+              run: cd build && cmake --build . --config Debug
 
             - name: Run tests with coverage
               run: |
-                $testFiles = Get-ChildItem build\bin\*Test* | Where-Object { $_.Name -notlike "*_b*" -and $_.Extension -ne ".pdb" -and $_.Extension -eq ".exe" }
+                $testFiles = Get-ChildItem build\bin\Debug\*Test*.exe | Where-Object { $_.Name -notlike "*_b*" }
                 foreach ($test in $testFiles) {
                   Write-Host "Running $($test.FullName) with coverage"
                   & "C:\Program Files\OpenCppCoverage\OpenCppCoverage.exe" --sources wimp --export_type html:coverage_$($test.BaseName) -- $test.FullName
