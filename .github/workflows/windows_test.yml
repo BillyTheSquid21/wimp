@@ -40,7 +40,7 @@ jobs:
                 }
                 
                 Write-Host "Generating merged coverage report"
-                & "C:\Program Files\OpenCppCoverage\OpenCppCoverage.exe" --modules wimp --excluded_modules plibsys --sources wimp --export_type html:coverage_report @inputCoverageArgs - powershell -Command "Write-Host 'Done'"
+                & "C:\Program Files\OpenCppCoverage\OpenCppCoverage.exe" --modules wimp --sources wimp --export_type html:coverage_report @inputCoverageArgs -- cmd /c exit 0
               shell: pwsh
 
             - name: Upload coverage report
