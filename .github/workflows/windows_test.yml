@@ -26,12 +26,12 @@ jobs:
               run: cd build && cmake --build . --config Debug
 
             - name: List test executables
-              run: dir build\bin\
+              run: dir build\bin\Debug
               shell: cmd
 
             - name: Run test executables
               run: |
-                Get-ChildItem build\bin\*Test* | Where-Object { $_.Name -notlike "*_b*" } | ForEach-Object { Write-Host "Running $($_.FullName)"; & $_.FullName }
+                Get-ChildItem build\bin\Debug\*Test* | Where-Object { $_.Name -notlike "*_b*" } | ForEach-Object { Write-Host "Running $($_.FullName)"; & $_.FullName }
               shell: pwsh
 
             
