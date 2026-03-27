@@ -16,22 +16,29 @@ jobs:
               with:
                 submodules: recursive
 
+            - name: Install dependencies
+              run: choco install opencppcoverage ninja --yes
+
             - name: Configure build
               run: |
                 mkdir build
                 cd build
-                cmake .. -G "Visual Studio 17 2022" -A x64 -DWIMP_BUILD_TESTS=1
+                cmake .. -G "Ninja" -DCMAKE_CXX_COMPILER=cl -DCMAKE_C_COMPILER=cl -DWIMP_BUILD_TESTS=1
 
             - name: Build project
-              run: cd build && cmake --build . --config Debug
+              run: cd build && cmake --build . -j10
 
-            - name: List test executables
-              run: dir build\bin\Debug
-              shell: cmd
-
-            - name: Run test executables
+            - name: Run tests with coverage
               run: |
-                Get-ChildItem build\bin\Debug\*Test* | Where-Object { $_.Name -notlike "*_b*" -and $_.Extension -ne ".pdb" } | ForEach-Object { Write-Host "Running $($_.FullName)"; & $_.FullName }
+                $testFiles = Get-ChildItem build\bin\*Test* | Where-Object { $_.Name -notlike "*_b*" -and $_.Extension -ne ".pdb" -and $_.Extension -eq ".exe" }
+                foreach ($test in $testFiles) {
+                  Write-Host "Running $($test.FullName) with coverage"
+                  & "C:\Program Files\OpenCppCoverage\OpenCppCoverage.exe" --sources wimp --export_type html:coverage_$($test.BaseName) -- $test.FullName
+                }
               shell: pwsh
 
-            
+            - name: Upload coverage reports
+              uses: actions/upload-artifact@v3
+              with:
+                name: coverage-reports
+                path: coverage_*/
