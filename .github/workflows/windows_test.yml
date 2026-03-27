@@ -31,7 +31,7 @@ jobs:
 
             - name: Run test executables
               run: |
-                Get-ChildItem build\bin\Debug\*Test* | Where-Object { $_.Name -notlike "*_b*" } | ForEach-Object { Write-Host "Running $($_.FullName)"; & $_.FullName }
+                Get-ChildItem build\bin\Debug\*Test* | Where-Object { $_.Name -notlike "*_b*" -and $_.Extension -ne ".pdb" } | ForEach-Object { Write-Host "Running $($_.FullName)"; & $_.FullName }
               shell: pwsh
 
             
