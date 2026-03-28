@@ -35,14 +35,14 @@ jobs:
               run: dir build\bin\Debug
               shell: cmd
 
-            - name: Run Tests andGenerate Coverage Report
-              id: generate_test_report
+            - name: Run Regression and Generate Coverage Report
               shell: pwsh
               run: |
-                $testFiles = Get-ChildItem build\bin\Debug\*Test*.exe | Where-Object { $_.Name -notlike "*_b*" -and $_.Extension -ne ".pdb" }
+                $testFiles = Get-ChildItem build\bin\Debug\*Test*.exe | Where-Object { $_.Name -notlike "*_b*" }
                 foreach ($test in $testFiles) {
                   Write-Host "Running $($test.FullName) with coverage"
-                  OpenCppCoverage.exe --sources wimp --modules wimp --excluded_modules plibsys --export_type cobertura:{$test.Name.Replace('.exe', '')}_coverage.xml -- $test.FullName
+                  $outputFile = "$($test.BaseName)_coverage.xml"
+                  & "OpenCppCoverage.exe" --sources wimp --modules wimp --excluded_modules plibsys --export_type "cobertura:$outputFile" -- "$($test.FullName)"
                 }
 
             - name: Upload Report to Codecov
