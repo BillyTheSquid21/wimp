@@ -31,7 +31,7 @@ jobs:
             - name: Generate coverage report
               run: |
                 cd build
-                gcovr --root .. --verbose --filter '^../wimp/.*' --cobertura coverage.xml --gcov-ignore-parse-errors
+                gcovr --root .. --verbose --filter '^../wimp/.*' --cobertura coverage.xml --gcov-ignore-parse-errors=negative_hits.warn
 
             - name: Upload to Codecov
               uses: codecov/codecov-action@v2
