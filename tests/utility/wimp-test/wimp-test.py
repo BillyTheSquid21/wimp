@@ -6,6 +6,7 @@ import json
 import datetime
 import re
 import platform
+import sys
 
 # 7-bit C1 ANSI sequences
 ansi_escape = re.compile(r'''
@@ -193,7 +194,7 @@ def main():
         report_file_name = args.report_file
     json.dump(report, open(report_file_name, "w"), indent=4)
 
-    return report["results"]["summary"]["failed"]
+    sys.exit(report["results"]["summary"]["failed"])
 
 if __name__ == "__main__":
     main()
