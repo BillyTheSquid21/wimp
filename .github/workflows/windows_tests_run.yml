@@ -34,11 +34,20 @@ jobs:
                   cd ${{ github.workspace }}
                   python tests/utility/wimp-test/wimp-test.py --executable-root build/bin/Release --report-file windows_test_ctrf_report.json --compile-mode release --tests-root tests/configs/WIMP-C-Tests
             
-            - name: Publish Test Report
+            - name: Publish Summary Test Report
               uses: ctrf-io/github-test-reporter@v1
               with:
                 report-path: 'windows_test_ctrf_report.json'
                 summary-report: true
+              env:
+                GITHUB_TOKEN: ${{ secrets.PR_TOKEN }}  
+              if: always()
+
+            - name: Publish Test List Report
+              uses: ctrf-io/github-test-reporter@v1
+              with:
+                report-path: 'windows_test_ctrf_report.json'
+                test-list-report: true
               env:
                 GITHUB_TOKEN: ${{ secrets.PR_TOKEN }}  
               if: always()
