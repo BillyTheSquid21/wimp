@@ -38,5 +38,16 @@ jobs:
               uses: ctrf-io/github-test-reporter@v1
               with:
                 report-path: 'windows_test_ctrf_report.json'
-                github-report: true
+                summary-report: true
+                failed-report: true
+                flaky-report: true
+                slowest-report: true
+                test-report: true
+                insights-report: true
+                annotate: true
+                upload-artifact: true
+                fetch-previous-results: true
+                pull-request-report: true
+              env:
+                GITHUB_TOKEN: ${{ secrets.PR_TOKEN }}  
               if: always()
