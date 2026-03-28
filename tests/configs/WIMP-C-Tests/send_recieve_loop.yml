@@ -4,7 +4,7 @@ name:
 
 # The base test executable to run for this test
 base_test: 
-  WIMP-Test-01.exe
+  WIMP-Test-01
 
 suite:
   WIMP-C-Tests

@@ -95,6 +95,9 @@ def main():
         # Run the base test
         test_start = datetime.datetime.now()
         base_test = os.path.join(executable_root, data.get("base_test"))
+        # If windows append .exe to the executable root if not already present
+        if platform.system() == "Windows" and not base_test.endswith(".exe"):
+            base_test += ".exe"
         test_duration = (datetime.datetime.now() - test_start).total_seconds()
 
         if not os.path.isfile(base_test):

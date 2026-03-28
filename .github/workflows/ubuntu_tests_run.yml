@@ -1,4 +1,4 @@
-name: Ubuntu coverage report for Codecov
+name: Ubuntu Regression Tests
 
 on:
     push:
