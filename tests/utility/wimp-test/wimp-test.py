@@ -124,6 +124,7 @@ def main():
 
         # Parse the output and check for success
         overall_result = "failed"        
+        message = ""
 
         # Perform return code check
         expected_return_code = data.get("expected_return_code", 0)
@@ -132,6 +133,7 @@ def main():
             overall_result = "failed"
             print(f"Fail condition met: Return code was {result.returncode}, expected {expected_return_code}")
             print(f"STD ERR: {result.stderr}")
+            message += result.stderr
 
         # Perform pass conditions check (all pass conditions must be met for the test to pass)
         pass_conditions = data.get("pass_conditions", [])
@@ -140,6 +142,7 @@ def main():
                 overall_result = "failed"
                 # Print the fail line not just the condition
                 print(f"Pass condition not met: {condition}")
+                message += f"Pass condition not met: {condition}\n"
             else:
                 overall_result = "passed"
 
@@ -153,6 +156,7 @@ def main():
                     if condition in line:
                         # Remove any ANSI escape codes from the line before printing
                         print(f"Fail condition met: {ansi_escape.sub('', line)}")
+                        message += f"Fail condition met: {ansi_escape.sub('', line)}"
 
         # Perform warnings check
         warning_conditions = data.get("warning_conditions", [])
@@ -174,6 +178,7 @@ def main():
             "status": overall_result,
             "duration": test_duration,
             "suite": f"{current_platform}/{test_suite}",
+            "message": message
         }
         report["results"]["tests"].append(test)
         if overall_result == "passed":

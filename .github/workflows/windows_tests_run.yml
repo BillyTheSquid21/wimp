@@ -64,7 +64,7 @@ jobs:
               run: nuget restore external/CS/wimp-cs/wimp-cs.sln
 
             - name: Build Solution
-              run: msbuild external/CS/wimp-cs/wimp-cs.sln /p:Configuration=Release
+              run: msbuild external/CS/wimp-cs/wimp-cs.sln /p:Configuration=Release /p:Platform=x64
 
             - name: Run C# test files through wimp-test.py and generate report
               shell: pwsh
