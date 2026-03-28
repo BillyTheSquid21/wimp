@@ -119,6 +119,7 @@ def main():
             continue
 
         result = subprocess.run([base_test], capture_output=True, text=True)
+        print(f"Test output:\n{result.stdout}")
         output_lines = result.stdout.splitlines()
 
         # Parse the output and check for success
@@ -192,7 +193,8 @@ def main():
     if args.report_file:
         report_file_name = args.report_file
     json.dump(report, open(report_file_name, "w"), indent=4)
-    return 0
+
+    return report["results"]["summary"]["failed"]
 
 if __name__ == "__main__":
     main()
