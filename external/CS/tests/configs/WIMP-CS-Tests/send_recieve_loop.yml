@@ -1,0 +1,30 @@
+# The name of the test to post under the suite
+name:
+  send_recieve_loop
+
+# The base test executable to run for this test
+base_test: 
+  WIMP-CS-Test-01
+
+suite:
+  WIMP-CS-Tests
+
+# The lines that all should appear in the output to be considered a pass
+pass_conditions:
+  - "PROCESS VALIDATION: True"
+  - "INSTRUCTION 1: True"
+  - "INSTRUCTION 2: True"
+  - "INSTRUCTION 3: True"
+  - "INSTRUCTION 4: True"
+
+# The lines that will cause a fail if they appear in the output
+fail_conditions:
+  - "FAIL"
+  - "ERROR"
+
+# The lines that will cause a warning if they appear in the output
+warning_conditions:
+  - "WARNING"
+  - "Unexpected"
+
+expected_return_code: 0

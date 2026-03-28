@@ -7,6 +7,19 @@ import datetime
 import re
 import platform
 
+# 7-bit C1 ANSI sequences
+ansi_escape = re.compile(r'''
+    \x1B  # ESC
+    (?:   # 7-bit C1 Fe (except CSI)
+        [@-Z\\-_]
+    |     # or [ for CSI, followed by a control sequence
+        \[
+        [0-?]*  # Parameter bytes
+        [ -/]*  # Intermediate bytes
+        [@-~]   # Final byte
+    )
+''', re.VERBOSE)
+
 def main():
     # Obtain the cmd line arguments
     parser = argparse.ArgumentParser(description="WIMP test")
@@ -109,19 +122,22 @@ def main():
         output_lines = result.stdout.splitlines()
 
         # Parse the output and check for success
-        overall_result = "failed"
+        overall_result = "failed"        
 
         # Perform return code check
         expected_return_code = data.get("expected_return_code", 0)
         if result.returncode != expected_return_code:
             # This is part of the fail
             overall_result = "failed"
+            print(f"Fail condition met: Return code was {result.returncode}, expected {expected_return_code}")
 
         # Perform pass conditions check (all pass conditions must be met for the test to pass)
         pass_conditions = data.get("pass_conditions", [])
         for condition in pass_conditions:
             if not any(condition in line for line in output_lines):
                 overall_result = "failed"
+                # Print the fail line not just the condition
+                print(f"Pass condition not met: {condition}")
             else:
                 overall_result = "passed"
 
@@ -130,6 +146,11 @@ def main():
         for condition in fail_conditions:
             if any(condition in line for line in output_lines):
                 overall_result = "failed"
+                # Print the fail line not just the condition
+                for line in output_lines:
+                    if condition in line:
+                        # Remove any ANSI escape codes from the line before printing
+                        print(f"Fail condition met: {ansi_escape.sub('', line)}")
 
         # Perform warnings check
         warning_conditions = data.get("warning_conditions", [])
@@ -139,19 +160,6 @@ def main():
                 for line in output_lines:
                     if condition in line:
                         # Remove any ANSI escape codes from the line before printing
-                        # 7-bit C1 ANSI sequences
-                        ansi_escape = re.compile(r'''
-                            \x1B  # ESC
-                            (?:   # 7-bit C1 Fe (except CSI)
-                                [@-Z\\-_]
-                            |     # or [ for CSI, followed by a control sequence
-                                \[
-                                [0-?]*  # Parameter bytes
-                                [ -/]*  # Intermediate bytes
-                                [@-~]   # Final byte
-                            )
-                        ''', re.VERBOSE)
-
                         print(f"Warning condition met: {ansi_escape.sub('', line)}")
 
                 report["results"]["summary"]["warnings"] += 1
