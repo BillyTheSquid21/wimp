@@ -25,6 +25,9 @@ jobs:
             - name: Build project
               run: cd build && cmake --build . --config Release
 
+            - name: install pip dependencies
+              run: pip install -r tests/utility/wimp-test/requirements.txt
+
             - name: Run test files through wimp-test.py and generate report
               shell: pwsh
               run: |
