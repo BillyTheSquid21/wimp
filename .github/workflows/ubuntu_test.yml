@@ -17,18 +17,23 @@ jobs:
                 submodules: recursive
 
             - name: Install dependencies
-              run: sudo apt-get update && sudo apt-get install -y ninja-build
+              run: sudo apt-get update && sudo apt-get install -y ninja-build gcovr
 
             - name: Configure build
-              run: mkdir build && cd build && cmake .. -DCMAKE_CXX_COMPILER=gcc -G "Ninja" -DWIMP_BUILD_TESTS=1
+              run: mkdir build && cd build && cmake .. -DCMAKE_CXX_COMPILER=gcc -DCMAKE_C_COMPILER=gcc -G "Ninja" -DCMAKE_C_FLAGS="--coverage" -DCMAKE_CXX_FLAGS="--coverage" -DWIMP_BUILD_TESTS=1
 
             - name: Build project
               run: cd build && cmake --build . -j10
 
-            - name: List test executables
-              run: ls build/bin/
-
             - name: Run test executables
               run: for file in build/bin/*Test*; do if [ -x "$file" ] && [[ "$file" != *_b ]]; then echo "Running $file"; ./$file; fi; done
 
-            
+            - name: Run Regression and Generate coverage report
+              run: cd build && gcovr --root .. --sources ../wimp --filter '.*\.c$' --exclude-lines-by-pattern '.*assert.*' --cobertura coverage.xml
+
+            - name: Upload to Codecov
+              uses: codecov/codecov-action@v2
+              with:
+                files: ./build/coverage.xml
+                token: ${{ secrets.CODECOV_TOKEN }}
+                fail_ci_if_error: true
