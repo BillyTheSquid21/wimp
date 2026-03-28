@@ -48,15 +48,15 @@ jobs:
               id: generate_test_report
               shell: pwsh
               run: |
-                $testFiles = Get-ChildItem build\bin\Debug\*Test*.exe | Where-Object { $_.Name -notlike "*_b*" }
+                $testFiles = Get-ChildItem build\bin\Debug\*Test*.exe | Where-Object { $_.Name -notlike "*_b*" -and $_.Extension -ne ".pdb" }
                 foreach ($test in $testFiles) {
                   Write-Host "Running $($test.FullName) with coverage"
-                  OpenCppCoverage.exe --sources wimp --export_type cobertura:coverage.xml -- $test.FullName
+                  OpenCppCoverage.exe --sources wimp --modules wimp --excluded_modules plibsys --export_type cobertura:coverage.xml -- $test.FullName
                 }
 
             - name: Upload Report to Codecov
               uses: codecov/codecov-action@v2
               with:
-                files: ./HelloCov.xml
+                files: ./coverage.xml
                 fail_ci_if_error: true
                 functionalities: fix
