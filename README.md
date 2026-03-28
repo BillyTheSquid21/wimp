@@ -1,5 +1,5 @@
 # Overview
-[![codecov](https://codecov.io/github/billythesquid21/wimp/graph/badge.svg?token=JSFYLEAYAM)](https://codecov.io/github/billythesquid21/wimp)
+[![codecov](https://codecov.io/github/billythesquid21/wimp/branch/features%2Fcsharp-integration/graph/badge.svg?token=JSFYLEAYAM)](https://codecov.io/github/billythesquid21/wimp)
 
 Will's Interesting Message Protocol (WIMP) is designed to make it easier to make modular programs with many decoupled processes. It relies on plibsys for platform independent sockets, threads and shared memory. It works by each process having at least one associated "server" which recieves instructions from other servers by way of a "reciever" process, one for each process that the server is directly connected to. Servers and recievers are simply TCP sockets with some additional features, such as a instruction queues. A simple system with a master process and two other processes might look like this:
 
