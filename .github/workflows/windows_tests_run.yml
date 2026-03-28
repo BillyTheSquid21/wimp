@@ -1,0 +1,30 @@
+name: Run Windows Tests to obtain results report
+
+on:
+    push:
+        branches: [ main, develop, features/* ]
+    pull_request:
+        branches: [ main ]
+
+jobs:
+    tests:
+        runs-on: windows-latest
+
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v4
+              with:
+                submodules: recursive
+
+            - name: Configure build
+              run: |
+                mkdir build
+                cd build
+                cmake .. -G "Visual Studio 17 2022" -A x64 -DWIMP_BUILD_TESTS=1
+
+            - name: Build project
+              run: cd build && cmake --build . --config Release
+
+            - name: Run test files through wimp-test.py and generate report
+              shell: pwsh
+              run: mkdir test_reports && cd test_reports && python ..\..\tests\utility\wimp-test\wimp-test.py --executable-root ..\build\bin\Release --report-file windows_test_report.json --compile-mode release --tests-root ..\..\tests\configs\WIMP-C-Tests

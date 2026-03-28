@@ -80,3 +80,7 @@ Additional Flags
 To build the tests:
 -DWIMP_BUILD_TESTS=1
 
+# Running Tests
+Tests can be directly ran from compiled executable files if need be. To generate a proper report however, the python test environment needs to be set up. It is recommended if running locally to use a virtual environment setup for running tests, by executing `python -m venv .venv`. ".venv" is recommended as the pattern is in .gitignore. It is also recommended to create a testing folder called "test_runs" and to run the script from inside the folder to avoid polluting the repo.
+
+First ensure the test of interest is compiled and up to date.

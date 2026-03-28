@@ -1,10 +1,8 @@
-﻿################################################################################
-# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
-################################################################################
-
-/build
+﻿/build
 #/.vscode
 pathargs
 .vs
 bin
 obj
+.venv
+test_runs

@@ -1,0 +1,32 @@
+# The name of the test to post under the suite
+name:
+  long_strings
+
+# The base test executable to run for this test
+base_test: 
+  WIMP-Test-06.exe
+
+suite:
+  WIMP-C-Tests
+
+# The lines that all should appear in the output to be considered a pass
+pass_conditions:
+  - "PROCESS VALIDATION: PASSED"
+  - "RAW LONG MESSAGE: PASSED"
+  - "RESPONSE AWAITING: PASSED"
+  - "PACKED LONG MESSAGE: PASSED"
+  - "PACKED MULTIPLE LONG MESSAGES: PASSED"
+  - "Test case has passed!"
+
+
+# The lines that will cause a fail if they appear in the output
+fail_conditions:
+  - "FAIL"
+  - "ERROR"
+
+# The lines that will cause a warning if they appear in the output
+warning_conditions:
+  - "WARNING"
+  - "Unexpected"
+
+expected_return_code: 0

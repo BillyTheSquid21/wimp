@@ -1,0 +1,39 @@
+# The name of the test to post under the suite
+name:
+  shared_data_space
+
+# The base test executable to run for this test
+base_test: 
+  WIMP-Test-05_a.exe
+
+suite:
+  WIMP-C-Tests
+
+# The lines that all should appear in the output to be considered a pass
+pass_conditions:
+  - "DATA INIT: PASSED"
+  - "DATA RESERVE: PASSED"
+  - "CHILD1 LINK TABLE: PASSED"
+  - "CHILD1 LINK DATA: PASSED"
+  - "CHILD1 READ DATA: PASSED"
+  - "CHILD1 WRITE DATA: PASSED"
+  - "CHILD2 LINK TABLE: PASSED"
+  - "CHILD2 LINK DATA: PASSED"
+  - "CHILD2 READ DATA: PASSED"
+  - "CHILD2 WRITE DATA: PASSED"
+  - "PROCESS VALIDATION: PASSED"
+  - "Test case has passed!"
+
+
+
+# The lines that will cause a fail if they appear in the output
+fail_conditions:
+  - "FAIL"
+  - "ERROR"
+
+# The lines that will cause a warning if they appear in the output
+warning_conditions:
+  - "WARNING"
+  - "Unexpected"
+
+expected_return_code: 0

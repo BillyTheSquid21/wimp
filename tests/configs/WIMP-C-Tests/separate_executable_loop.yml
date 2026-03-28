@@ -1,0 +1,31 @@
+# The name of the test to post under the suite
+name:
+  separate_executable_loop
+
+# The base test executable to run for this test
+base_test: 
+  WIMP-Test-04_a.exe
+
+suite:
+  WIMP-C-Tests
+
+# The lines that all should appear in the output to be considered a pass
+pass_conditions:
+  - "PROCESS VALIDATION: PASSED"
+  - "INSTRUCTION 1: PASSED"
+  - "INSTRUCTION 2: PASSED"
+  - "INSTRUCTION 3: PASSED"
+  - "INSTRUCTION 4: PASSED"
+  - "Test case has passed!"
+
+# The lines that will cause a fail if they appear in the output
+fail_conditions:
+  - "FAIL"
+  - "ERROR"
+
+# The lines that will cause a warning if they appear in the output
+warning_conditions:
+  - "WARNING"
+  - "Unexpected"
+
+expected_return_code: 0
