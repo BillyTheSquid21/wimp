@@ -157,7 +157,7 @@ def main():
 
         current_platform = platform.system()
         test = {
-            "name": test_name,
+            "name": f"{current_platform}/{test_suite}/{test_name}",
             "status": overall_result,
             "duration": test_duration,
             "suite": f"{current_platform}/{test_suite}",

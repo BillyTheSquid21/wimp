@@ -1,4 +1,4 @@
-name: Run Ubuntu Tests to obtain coverage report for Codecov
+name: Ubuntu coverage report for Codecov
 
 on:
     push:

@@ -1,4 +1,4 @@
-name: Run Windows Tests
+name: Windows coverage report for Codecov
 
 on:
     push:

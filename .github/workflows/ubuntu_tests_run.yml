@@ -1,4 +1,4 @@
-name: Windows Regression Tests
+name: Ubuntu coverage report for Codecov
 
 on:
     push:
@@ -8,7 +8,7 @@ on:
 
 jobs:
     tests:
-        runs-on: windows-latest
+        runs-on: ubuntu-latest
 
         steps:
             - name: Checkout repository
@@ -16,28 +16,25 @@ jobs:
               with:
                 submodules: recursive
 
+            - name: Install dependencies
+              run: sudo apt-get update && sudo apt-get install -y ninja-build
+
             - name: Configure build
-              run: |
-                mkdir build
-                cd build
-                cmake .. -G "Visual Studio 17 2022" -A x64 -DWIMP_BUILD_TESTS=1
+              run: mkdir build && cd build && cmake .. -DCMAKE_CXX_COMPILER=gcc -DCMAKE_C_COMPILER=gcc -G "Ninja" -DWIMP_BUILD_TESTS=1
 
             - name: Build project
-              run: cd build && cmake --build . --config Release
+              run: cd build && cmake --build . -j10
 
             - name: install pip dependencies
               run: pip install -r tests/utility/wimp-test/requirements.txt
 
             - name: Run C test files through wimp-test.py and generate report
-              shell: pwsh
-              run: |
-                  cd ${{ github.workspace }}
-                  python tests/utility/wimp-test/wimp-test.py --executable-root build/bin/Release --report-file windows_test_ctrf_report.json --compile-mode release --tests-root tests/configs/WIMP-C-Tests
+              run: cd ${{ github.workspace }} && python tests/utility/wimp-test/wimp-test.py --executable-root build/bin --report-file ubuntu_test_ctrf_report.json --compile-mode release --tests-root tests/configs/WIMP-C-Tests
             
             - name: Publish Summary Test Report
               uses: ctrf-io/github-test-reporter@v1
               with:
-                report-path: 'windows_test_ctrf_report.json'
+                report-path: 'ubuntu_test_ctrf_report.json'
                 summary-report: true
               env:
                 GITHUB_TOKEN: ${{ secrets.PR_TOKEN }}  
@@ -46,8 +43,8 @@ jobs:
             - name: Publish Test List Report
               uses: ctrf-io/github-test-reporter@v1
               with:
-                report-path: 'windows_test_ctrf_report.json'
+                report-path: 'ubuntu_test_ctrf_report.json'
                 test-list-report: true
               env:
                 GITHUB_TOKEN: ${{ secrets.PR_TOKEN }}  
-              if: always()
+              if: always()            
