@@ -61,16 +61,16 @@ jobs:
               uses: microsoft/setup-msbuild@v2
 
             - name: Restore NuGet Packages
-              run: nuget restore ../external/CS/wimp-cs/wimp-cs.sln
+              run: nuget restore external/CS/wimp-cs/wimp-cs.sln
 
             - name: Build Solution
-              run: msbuild ../external/CS/wimp-cs/wimp-cs.sln /p:Configuration=Release
+              run: msbuild external/CS/wimp-cs/wimp-cs.sln /p:Configuration=Release
 
             - name: Run C# test files through wimp-test.py and generate report
               shell: pwsh
               run: |
                   cd ${{ github.workspace }}
-                  python tests/utility/wimp-test/wimp-test.py --executable-root build/bin/Release --report-file windows_cs_test_ctrf_report.json --compile-mode release --tests-root ../external/CS/tests/configs/WIMP-CS-Tests
+                  python tests/utility/wimp-test/wimp-test.py --executable-root build/bin/Release --report-file windows_cs_test_ctrf_report.json --compile-mode release --tests-root external/CS/tests/configs/WIMP-CS-Tests
 
             - name: Publish Summary Test Report
               uses: ctrf-io/github-test-reporter@v1
