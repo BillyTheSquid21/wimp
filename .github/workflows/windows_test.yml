@@ -45,6 +45,10 @@ jobs:
                   echo "Output file: $outputFile"
                   & "OpenCppCoverage.exe" --sources wimp --modules wimp --excluded_modules plibsys --export_type "cobertura:$outputFile" -- "$($test.FullName)"
                 }
+            
+            - name: Check generated files
+              shell: pwsh
+              run: Get-ChildItem -Recurse *_coverage.xml
 
             - name: Upload Report to Codecov
               uses: codecov/codecov-action@v2
