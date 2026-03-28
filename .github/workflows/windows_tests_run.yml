@@ -39,6 +39,8 @@ jobs:
               with:
                 report-path: 'windows_test_ctrf_report.json'
                 summary-delta-report: true
+                github-report: True
+                commit-report: True
                 insights-report: true
                 flaky-rate-report: true
                 fail-rate-report: true
