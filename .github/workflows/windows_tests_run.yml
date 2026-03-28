@@ -27,4 +27,6 @@ jobs:
 
             - name: Run test files through wimp-test.py and generate report
               shell: pwsh
-              run: python ..\tests\utility\wimp-test\wimp-test.py --executable-root bin\Release --report-file windows_test_report.json --compile-mode release --tests-root ..\tests\configs\WIMP-C-Tests
+              run: |
+                  cd ${{ github.workspace }}
+                  python tests/utility/wimp-test/wimp-test.py --executable-root build/bin/Release --report-file windows_test_report.json --compile-mode release --tests-root tests/configs/WIMP-C-Tests
