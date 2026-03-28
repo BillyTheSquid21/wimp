@@ -66,6 +66,10 @@ jobs:
             - name: Build Solution
               run: msbuild external/CS/wimp-cs/wimp-cs.sln /p:Configuration=Release
 
+            # List the files in the output directory for debugging purposes
+            - name: List output directory
+              run: build/bin/Release
+
             - name: Run C# test files through wimp-test.py and generate report
               shell: pwsh
               run: |
