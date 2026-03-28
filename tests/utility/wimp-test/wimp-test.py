@@ -131,6 +131,7 @@ def main():
             # This is part of the fail
             overall_result = "failed"
             print(f"Fail condition met: Return code was {result.returncode}, expected {expected_return_code}")
+            print(f"STD ERR: {result.stderr}")
 
         # Perform pass conditions check (all pass conditions must be met for the test to pass)
         pass_conditions = data.get("pass_conditions", [])
