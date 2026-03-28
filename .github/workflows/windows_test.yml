@@ -16,10 +16,6 @@ jobs:
               with:
                 submodules: recursive
 
-            - name: Setup VSTest and add to PATH
-              uses: darenm/Setup-VSTest@v1
-              id: setup_vstest
-
             - name: Setup OpenCppCoverage and add to PATh
               id: setup_opencppcoverage
               run: |
@@ -39,25 +35,20 @@ jobs:
               run: dir build\bin\Debug
               shell: cmd
 
-            - name: Run test executables
-              run: |
-                Get-ChildItem build\bin\Debug\*Test* | Where-Object { $_.Name -notlike "*_b*" -and $_.Extension -ne ".pdb" } | ForEach-Object { Write-Host "Running $($_.FullName)"; & $_.FullName }
-              shell: pwsh
-
-            - name: Generate Coverage Report
+            - name: Run Tests andGenerate Coverage Report
               id: generate_test_report
               shell: pwsh
               run: |
                 $testFiles = Get-ChildItem build\bin\Debug\*Test*.exe | Where-Object { $_.Name -notlike "*_b*" -and $_.Extension -ne ".pdb" }
                 foreach ($test in $testFiles) {
                   Write-Host "Running $($test.FullName) with coverage"
-                  OpenCppCoverage.exe --sources wimp --modules wimp --excluded_modules plibsys --export_type cobertura:coverage.xml -- $test.FullName
+                  OpenCppCoverage.exe --sources wimp --modules wimp --excluded_modules plibsys --export_type cobertura:{$test.Name.Replace('.exe', '')}_coverage.xml -- $test.FullName
                 }
 
             - name: Upload Report to Codecov
               uses: codecov/codecov-action@v2
               with:
-                files: ./coverage.xml
+                files: ./*_coverage.xml
                 token: ${{ secrets.CODECOV_TOKEN }}
                 fail_ci_if_error: true
                 functionalities: fix
