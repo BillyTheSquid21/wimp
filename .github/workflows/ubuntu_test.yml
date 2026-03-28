@@ -31,7 +31,7 @@ jobs:
             - name: Generate coverage report
               run: |
                 cd build
-                gcovr --root .. --verbose --filter '^../wimp/.*' --exclude-directory '.*plibsys.*' --cobertura coverage.xml
+                gcovr --root .. --verbose --filter '^../wimp/.*' --cobertura coverage.xml
 
             - name: Upload to Codecov
               uses: codecov/codecov-action@v2
