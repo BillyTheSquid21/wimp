@@ -33,6 +33,7 @@ jobs:
               with:
                 root: .
                 cobertura-out: coverage.xml
+                excludes: "*/test/*,*/plibsys/*"
 
             - name: Upload to Codecov
               uses: codecov/codecov-action@v2
