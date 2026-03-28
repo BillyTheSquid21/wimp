@@ -17,7 +17,7 @@ jobs:
                 submodules: recursive
 
             - name: Install dependencies
-              run: sudo apt-get update && sudo apt-get install -y ninja-build
+              run: sudo apt-get update && sudo apt-get install -y ninja-build gcovr
 
             - name: Configure build
               run: mkdir build && cd build && cmake .. -DCMAKE_CXX_COMPILER=gcc -DCMAKE_C_COMPILER=gcc -G "Ninja" -DCMAKE_C_FLAGS="--coverage -g -O0" -DCMAKE_CXX_FLAGS="--coverage -g -O0" -DWIMP_BUILD_TESTS=1
@@ -29,11 +29,9 @@ jobs:
               run: for file in build/bin/*Test*; do if [ -x "$file" ] && [[ "$file" != *_b ]]; then echo "Running $file"; ./$file; fi; done
 
             - name: Generate coverage report
-              uses: threeal/gcovr-action@v1.2.0
-              with:
-                root: .
-                cobertura-out: coverage.xml
-                excludes: "plibsys*"
+              run: |
+                cd build
+                gcovr --root .. --verbose --filter '^../wimp/.*' --exclude-directory '.*plibsys.*' --cobertura coverage.xml
 
             - name: Upload to Codecov
               uses: codecov/codecov-action@v2
