@@ -26,7 +26,7 @@ jobs:
               run: cd build && cmake --build . -j10
 
             - name: List test executables
-              run: ls bin/*Test*
+              run: ls bin/
 
             - name: install pip dependencies
               run: pip install -r tests/utility/wimp-test/requirements.txt
