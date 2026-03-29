@@ -118,11 +118,8 @@ def main():
             print(f"Error: Base test executable {base_test} not found")
             report["results"]["summary"]["skipped"] += 1
             continue
-
-        root_dir = os.getcwd()
-        print(f"root_dir: {root_dir}")
         
-        result = subprocess.run([base_test], capture_output=True, text=True, cwd=executable_root)
+        result = subprocess.run([base_test], capture_output=True, text=True)
         output_lines = result.stdout.splitlines()
 
         # Parse the output and check for success
