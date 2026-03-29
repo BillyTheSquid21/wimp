@@ -32,7 +32,7 @@ jobs:
               run: pip install -r tests/utility/wimp-test/requirements.txt
 
             - name: Run C test files through wimp-test.py and generate report
-              run: cd ${{ github.workspace }} && python tests/utility/wimp-test/wimp-test.py --executable-root ../build/bin --report-file ubuntu_test_ctrf_report.json --compile-mode release --tests-root tests/configs/WIMP-C-Tests
+              run: cd ${{ github.workspace }} && python tests/utility/wimp-test/wimp-test.py --executable-root wimp/build/bin --report-file ubuntu_test_ctrf_report.json --compile-mode release --tests-root tests/configs/WIMP-C-Tests
             
             - name: Publish Summary Test Report
               uses: ctrf-io/github-test-reporter@v1
