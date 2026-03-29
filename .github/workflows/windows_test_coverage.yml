@@ -43,7 +43,7 @@ jobs:
                   Write-Host "Running $($test.FullName) with coverage"
                   $outputFile = "$($test.BaseName)_coverage.xml"
                   echo "Output file: $outputFile"
-                  & "OpenCppCoverage.exe" --sources wimp --excluded_sources *utility*,*tests* --modules wimp --excluded_modules plibsys,Test,*tests* --export_type "cobertura:$outputFile" -- "$($test.FullName)"
+                  & "OpenCppCoverage.exe" --sources wimp --excluded_sources "*utility*" --excluded_sources "*tests*" --modules wimp --excluded_modules plibsys --excluded_modules Test --excluded_modules "*tests*" --export_type "cobertura:$outputFile" -- "$($test.FullName)"
                 }
 
             - name: Upload Report to Codecov
