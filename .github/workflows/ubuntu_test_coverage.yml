@@ -25,8 +25,11 @@ jobs:
             - name: Build project
               run: cd build && cmake --build . -j10
 
+            - name: List test executables
+              run: ls bin/*Test*
+
             - name: Run test executables
-              run: for file in build/bin/*Test*; do if [ -x "$file" ] && [[ "$file" != *_b ]]; then echo "Running $file"; ./$file; fi; done
+              run: for file in bin/*Test*; do if [ -x "$file" ] && [[ "$file" != *_b ]]; then echo "Running $file"; ./$file; fi; done
 
             - name: Generate coverage report
               run: |
