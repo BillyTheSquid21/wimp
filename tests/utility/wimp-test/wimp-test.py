@@ -119,7 +119,7 @@ def main():
             report["results"]["summary"]["skipped"] += 1
             continue
 
-        result = subprocess.run([base_test], capture_output=True, text=True, cwd=executable_root)
+        result = subprocess.run([os.path.basename(base_test)], capture_output=True, text=True, cwd=executable_root)
         output_lines = result.stdout.splitlines()
 
         # Parse the output and check for success
