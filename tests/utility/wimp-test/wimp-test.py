@@ -120,12 +120,7 @@ def main():
             continue
 
         root_dir = os.getcwd()
-
-        for root, dirs, files in os.walk(root_dir):
-            for name in dirs:
-                print(os.path.join(root, name))
-            for name in files:
-                print(os.path.join(root, name))
+        print(f"root_dir: {root_dir}")
         
         result = subprocess.run([base_test], capture_output=True, text=True, cwd=executable_root)
         output_lines = result.stdout.splitlines()
