@@ -47,7 +47,7 @@ namespace WIMP_CS_Test_03
 
             //Start a reciever thread for the master process that called this thread
             WimpReciever reciever = new WimpReciever("master", "127.0.0.1", master_port);
-            reciever.Start(processName, "127.0.0.1", process_port);
+            reciever.Start();
 
             //Add the master process to the table for tracking
             WimpServer.AddProcess(reciever, WimpCore.WimpRelation.Parent);
@@ -207,7 +207,7 @@ namespace WIMP_CS_Test_03
             //Start a reciever thread for the client processes that the master started
             //Currently only support adding one process at a time
             WimpReciever reciever1 = new WimpReciever("client1", "127.0.0.1", Int32.Parse(client1Port));
-            reciever1.Start("master", "127.0.0.1", Int32.Parse(masterPort));
+            reciever1.Start();
             WimpServer.AddProcess(reciever1, WimpCore.WimpRelation.Child);
 
             string[] entry2 = { "--master-port", masterPort, "--process-port", client2Port, "--process-name", "client2" };
@@ -217,7 +217,7 @@ namespace WIMP_CS_Test_03
             Thread.Sleep(500);
 
             WimpReciever reciever2 = new WimpReciever("client2", "127.0.0.1", Int32.Parse(client2Port));
-            reciever2.Start("master", "127.0.0.1", Int32.Parse(masterPort));
+            reciever2.Start();
             WimpServer.AddProcess(reciever2, WimpCore.WimpRelation.Child);
 
             if (WimpServer.CheckProcessListening("client1") && WimpServer.CheckProcessListening("client2"))

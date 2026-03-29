@@ -191,7 +191,7 @@ namespace WimpCS
         public static extern Int32 wimp_start_executable_process([MarshalAs(UnmanagedType.LPStr)] String process_name, [MarshalAs(UnmanagedType.LPStr)] String executable, IntPtr entry);
 
         [DllImport("wimp.dll")]
-        public static extern Int32 wimp_start_local_server_reciever_thread([MarshalAs(UnmanagedType.LPStr)] String process_name, [MarshalAs(UnmanagedType.LPStr)] String process_domain, Int32 process_port, [MarshalAs(UnmanagedType.LPStr)] String recfrom_name, [MarshalAs(UnmanagedType.LPStr)] String recfrom_domain, Int32 recfrom_port);
+        public static extern Int32 wimp_start_local_server_reciever_thread([MarshalAs(UnmanagedType.LPStr)] String recfrom_name, [MarshalAs(UnmanagedType.LPStr)] String recfrom_domain, Int32 recfrom_port);
 
         [DllImport("wimp.dll")]
         public static extern Int32 wimp_start_reciever_thread([MarshalAs(UnmanagedType.LPStr)] String recfrom_name, [MarshalAs(UnmanagedType.LPStr)] String process_domain, Int32 process_port, IntPtr args);

@@ -96,7 +96,7 @@ int32_t wimp_reciever_init(PSocket** recsock, PSocketAddress** rec_address, Reci
     WimpMsgBuffer recbuffer;
     WimpMsgBuffer sendbuffer;
     WIMP_ZERO_BUFFER(recbuffer); WIMP_ZERO_BUFFER(sendbuffer);
-    PError* err;
+    PError* err = NULL;
 
     //Create client socket, connect to recfrom server
     //Then send handshake and process name
@@ -142,7 +142,11 @@ int32_t wimp_reciever_init(PSocket** recsock, PSocketAddress** rec_address, Reci
 
     if (!con_success)
     {
-        pint code = p_error_get_code(err);
+        pint code = 0;
+        if (err != NULL)
+        {
+            p_error_get_code(err);
+        }
         wimp_log_fail("%s reciever failed to connect (%d)- expected connection at %s:%d\n", args->process_name, code, args->recfrom_domain, args->recfrom_port);
         p_socket_address_free(*rec_address);
         p_socket_free(*recsock);

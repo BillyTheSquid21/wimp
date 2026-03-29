@@ -23,7 +23,13 @@ int32_t wimp_init_local_server(const char* process_name, const char* domain, int
     }
 
     _local_server = malloc(sizeof(WimpServer));
-    return wimp_create_server(_local_server, process_name, domain, port);
+    int32_t result = wimp_create_server(_local_server, process_name, domain, port);
+	if (result != WIMP_SERVER_SUCCESS)
+    {
+        free(_local_server);
+        _local_server = NULL;
+    }
+	return result;
 }
 
 void wimp_close_local_server()
@@ -53,16 +59,18 @@ int32_t wimp_create_server(WimpServer* server, const char* process_name, const c
     WimpProcessTable ptable = wimp_create_process_table();
     WIMP_ZERO_BUFFER(server->recbuffer); WIMP_ZERO_BUFFER(server->sendbuffer);
 
-    PSocketAddress* addr;
-    PSocket* s;
-    PError* err;
+    PSocketAddress* addr = NULL;
+    PSocket* s = NULL;
+    PError* err = NULL;
 
-    if ((addr = p_socket_address_new(domain, port)) == NULL)
+    addr = p_socket_address_new(domain, port);
+    if (addr == NULL)
     {
         return WIMP_SERVER_ADDRESS_FAIL;
     }
 
-    if ((s = p_socket_new(P_SOCKET_FAMILY_INET, P_SOCKET_TYPE_STREAM, P_SOCKET_PROTOCOL_TCP, &err)) == NULL)
+    s = p_socket_new(P_SOCKET_FAMILY_INET, P_SOCKET_TYPE_STREAM, P_SOCKET_PROTOCOL_TCP, &err);
+    if (s == NULL)
     {
         wimp_log_fail("Failed to create server socket! (%d): %s\n", p_error_get_code(err), p_error_get_message(err));
         p_error_free(err);
@@ -80,6 +88,8 @@ int32_t wimp_create_server(WimpServer* server, const char* process_name, const c
     }
     
     server->process_name = sdsnew(process_name);
+	server->process_domain = sdsnew(domain);
+	server->process_port = port;
     server->addr = addr;
     server->ptable = ptable;
     server->server = s;
@@ -494,16 +504,21 @@ void wimp_server_free(WimpServer* server)
     {
         sdsfree(server->parent);
     }
+	if (server->process_domain)
+    {
+        sdsfree(server->process_domain);
+    }
+    server->process_port = -1;
     WIMP_ZERO_BUFFER(server->recbuffer); WIMP_ZERO_BUFFER(server->sendbuffer);
 }
 
-int32_t wimp_start_local_server_reciever_thread(const char* process_name, const char* process_domain, int32_t process_port, const char* recfrom_name, const char* recfrom_domain, int32_t recfrom_port)
+int32_t wimp_start_local_server_reciever_thread(const char* recfrom_name, const char* recfrom_domain, int32_t recfrom_port)
 {
-    WimpServer* server = wimp_get_local_server();
+    WimpServer* server = wimp_get_local_server(); 
 
-    RecieverArgs args = wimp_get_reciever_args(process_name, recfrom_domain, recfrom_port, &server->incomingmsg, &server->active);
+    RecieverArgs args = wimp_get_reciever_args(server->process_name, recfrom_domain, recfrom_port, &server->incomingmsg, &server->active);
 
-    int32_t res = wimp_start_reciever_thread(recfrom_name, process_domain, process_port, args);
+    int32_t res = wimp_start_reciever_thread(recfrom_name, server->process_domain, server->process_port, args);
     if (res != WIMP_RECIEVER_SUCCESS)
     {
         wimp_log_fail("Failed to start reciever thread for %s\n", recfrom_name);

@@ -40,6 +40,8 @@ typedef int32_t WimpServerType;
 typedef struct _WimpServer
 {
     sds process_name;       ///< Name of the server
+	sds process_domain;     ///< Domain the server is running on
+	int32_t process_port;   ///< Port the server is running on
     PSocketAddress* addr;   ///< Server address structure
     PSocket* server;        ///< Server socket pointer
     WimpProcessTable ptable;///< Process table tracking connected processes
@@ -97,16 +99,13 @@ WIMP_API void wimp_add_local_server(const char* dest, uint64_t instr, const void
 ///
 /// @brief Starts a reciever thread for the local server
 /// 
-/// @param process_name The name of the process the local server runs on
-/// @param process_domain The domain the local server runs on
-/// @param process_port The port the local server runs on
 /// @param recfrom_name The name of the process to recieve from
 /// @param recfrom_domain The domain to recieve from
 /// @param recfrom_port The port to recieve from
 /// 
 /// @return Returns a WimpRecieverResult enum
 /// 
-WIMP_API int32_t wimp_start_local_server_reciever_thread(const char* process_name, const char* process_domain, int32_t process_port, const char* recfrom_name, const char* recfrom_domain, int32_t recfrom_port);
+WIMP_API int32_t wimp_start_local_server_reciever_thread(const char* recfrom_name, const char* recfrom_domain, int32_t recfrom_port);
 
 ///
 /// @brief Locks the local server incoming queue

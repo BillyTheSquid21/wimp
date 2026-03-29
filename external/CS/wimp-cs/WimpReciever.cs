@@ -21,14 +21,14 @@ namespace WimpCS
             m_RecFromPort = recFromPort;
         }
 
-        public void Start(String processName, String processDomain, Int32 processPort)
+        public void Start()
         {
             if (this.m_IsRunning)
             {
                 return;
             }
 
-            WimpRecieverResult res = (WimpRecieverResult)wimp_start_local_server_reciever_thread(processName, processDomain, processPort, m_RecFromName, m_RecFromDomain, m_RecFromPort);
+            WimpRecieverResult res = (WimpRecieverResult)wimp_start_local_server_reciever_thread(m_RecFromName, m_RecFromDomain, m_RecFromPort);
             if (res != WimpRecieverResult.SUCCESS)
             {
                 return;

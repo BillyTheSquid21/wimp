@@ -1,0 +1,20 @@
+# The name of the test to post under the suite
+name:
+  send_recieve_loop_fail
+
+# The base test executable to run for this test
+base_test: 
+  WIMP-Test-07
+
+suite:
+  WIMP-C-Tests
+
+# The lines that all should appear in the output to be considered a pass
+pass_conditions:
+ - "FAIL_SECOND_LOCAL_SERVER: PASSED"
+ - "FAIL_CLOSE_SECOND_SERVER: PASSED"
+ - "FAIL_LOCAL_SERVER_ADDRESS: PASSED"
+ - "FAIL_IDENTICAL_ADDRESS: PASSED"
+ - "SUCCESS_PROCESS_VALIDATION: PASSED"
+
+expected_return_code: 0

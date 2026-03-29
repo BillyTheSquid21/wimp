@@ -38,7 +38,7 @@ namespace WIMP_CS_Test_01
 
             //Start reciever
             WimpReciever reciever = new WimpReciever("master", "127.0.0.1", master_port);
-            reciever.Start("client", "127.0.0.1", process_port);
+            reciever.Start();
 
             //Add process
             WimpServer.AddProcess(reciever, WimpCore.WimpRelation.Parent);
@@ -149,7 +149,7 @@ namespace WIMP_CS_Test_01
 
             //Start reciever
             WimpReciever reciever = new WimpReciever("client", "127.0.0.1", Int32.Parse(childPort));
-            reciever.Start("master", "127.0.0.1", Int32.Parse(parentPort));
+            reciever.Start();
 
             //Add process
             WimpServer.AddProcess(reciever, WimpCore.WimpRelation.Child);

@@ -124,7 +124,7 @@ typedef struct _WimpInstrMeta
 ///
 /// @return Returns the 64 bit hash of the instruction
 ///
-uint64_t wimp_instr(const char *text);
+WIMP_API uint64_t wimp_instr(const char *text);
 
 ///
 /// Get the start of the raw instruction data 

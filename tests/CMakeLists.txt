@@ -8,5 +8,6 @@ add_subdirectory(3_MASTER_CHILD_ROUTING)
 add_subdirectory(4_SEPARATE_EXECUTABLE_LOOP)
 add_subdirectory(5_SHARED_DATA_SPACE)
 add_subdirectory(6_LONG_STRINGS)
+add_subdirectory(7_SEND_RECIEVE_LOOP_FAIL)
 
 set(TEST_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
