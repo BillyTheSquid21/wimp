@@ -49,7 +49,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'">
     <BaseIntermediateOutputPath>..\..\..\..\..\build\obj\</BaseIntermediateOutputPath>
-    <OutputPath>..\..\..\..\..\build\bin\Debug\</OutputPath>
+    <OutputPath>..\..\..\..\..\build\bin\Release\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <Optimize>true</Optimize>
     <DebugType>pdbonly</DebugType>
