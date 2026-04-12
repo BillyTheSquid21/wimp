@@ -125,7 +125,25 @@ namespace WimpCS
         public static extern void wimp_free_entry(IntPtr entry);
 
         [DllImport("wimp.dll")]
-        public static extern IntPtr wimp_get_entry(Int32 argc, __arglist);
+        public static extern IntPtr wimp_get_entry(Int32 argc);
+
+        [DllImport("wimp.dll")]
+        public static extern IntPtr wimp_get_entry(Int32 argc, [MarshalAs(UnmanagedType.LPStr)] String str1);
+
+        [DllImport("wimp.dll")]
+        public static extern IntPtr wimp_get_entry(Int32 argc, [MarshalAs(UnmanagedType.LPStr)] String str1, [MarshalAs(UnmanagedType.LPStr)] String str2);
+
+        [DllImport("wimp.dll")]
+        public static extern IntPtr wimp_get_entry(Int32 argc, [MarshalAs(UnmanagedType.LPStr)] String str1, [MarshalAs(UnmanagedType.LPStr)] String str2, [MarshalAs(UnmanagedType.LPStr)] String str3);
+
+        [DllImport("wimp.dll")]
+        public static extern IntPtr wimp_get_entry(Int32 argc, [MarshalAs(UnmanagedType.LPStr)] String str1, [MarshalAs(UnmanagedType.LPStr)] String str2, [MarshalAs(UnmanagedType.LPStr)] String str3, [MarshalAs(UnmanagedType.LPStr)] String str4);
+
+        [DllImport("wimp.dll")]
+        public static extern IntPtr wimp_get_entry(Int32 argc, [MarshalAs(UnmanagedType.LPStr)] String str1, [MarshalAs(UnmanagedType.LPStr)] String str2, [MarshalAs(UnmanagedType.LPStr)] String str3, [MarshalAs(UnmanagedType.LPStr)] String str4, [MarshalAs(UnmanagedType.LPStr)] String str5);
+
+        [DllImport("wimp.dll")]
+        public static extern IntPtr wimp_get_entry(Int32 argc, [MarshalAs(UnmanagedType.LPStr)] String str1, [MarshalAs(UnmanagedType.LPStr)] String str2, [MarshalAs(UnmanagedType.LPStr)] String str3, [MarshalAs(UnmanagedType.LPStr)] String str4, [MarshalAs(UnmanagedType.LPStr)] String str5, [MarshalAs(UnmanagedType.LPStr)] String str6);
 
         [DllImport("wimp.dll")]
         public static extern IntPtr wimp_get_local_server();

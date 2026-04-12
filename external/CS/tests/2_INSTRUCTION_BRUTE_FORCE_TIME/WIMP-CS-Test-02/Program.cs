@@ -225,8 +225,8 @@ namespace WIMP_CS_Test_02
 
             string[] childArgs = { "--master-port", parentPort, "--process-port", childPort, };
 
-            Thread childThread = new Thread(() => ChildProgram.Run(childArgs));
-            childThread.Start();
+            WimpProcess childProcess = new WimpProcess();
+            childProcess.Start("client", childArgs, ChildProgram.Run);
 
             //Start reciever
             WimpReciever reciever = new WimpReciever("client", "127.0.0.1", Int32.Parse(childPort));

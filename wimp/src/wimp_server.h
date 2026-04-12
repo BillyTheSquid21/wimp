@@ -17,7 +17,7 @@
 enum WimpServerResult
 {
     WIMP_SERVER_SUCCESS            =  0, ///< Result if server operation is successful
-    WIMP_SERVER_FAIL                = -1,///< Result if server operation fails for an unspecified reason
+    WIMP_SERVER_FAIL               = -1, ///< Result if server operation fails for an unspecified reason
     WIMP_SERVER_ADDRESS_FAIL       = -2, ///< Result if server fails to create a new address
     WIMP_SERVER_SOCKET_FAIL        = -3, ///< Result if server fails to create a new socket
     WIMP_SERVER_BIND_FAIL          = -4, ///< Result if server fails to bind it's socket

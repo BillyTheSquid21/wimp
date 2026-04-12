@@ -198,8 +198,8 @@ namespace WIMP_CS_Test_03
 
             //Start the client processes, creating the command line arguments and creating a new thread
             string[] entry1 = { "--master-port", masterPort, "--process-port", client1Port, "--process-name", "client1" };
-            Thread child1Thread = new Thread(() => ChildProgram.Run(entry1));
-            child1Thread.Start();
+            WimpProcess client1 = new WimpProcess();
+            client1.Start("client1", entry1, ChildProgram.Run);
 
             //Give child threads time to start and initialize their servers
             Thread.Sleep(500);
@@ -211,8 +211,8 @@ namespace WIMP_CS_Test_03
             WimpServer.AddProcess(reciever1, WimpCore.WimpRelation.Child);
 
             string[] entry2 = { "--master-port", masterPort, "--process-port", client2Port, "--process-name", "client2" };
-            Thread child2Thread = new Thread(() => ChildProgram.Run(entry2));
-            child2Thread.Start();
+            WimpProcess client2 = new WimpProcess();
+            client2.Start("client2", entry2, ChildProgram.Run);
 
             Thread.Sleep(500);
 
